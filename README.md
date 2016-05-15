@@ -1,0 +1,2 @@
+# ChatConnect
+Высоконагруженный WebSocket Server
