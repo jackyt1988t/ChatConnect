@@ -198,7 +198,7 @@ namespace ChatConnect.Tcp.Protocol.WS
             GetsHead = false;
             GetsBody = false;
         }
-		public void SetHeader()
+		unsafe public void SetHeader()
 		{
 			int length = 0;
             this.LengHead = 2;
@@ -226,48 +226,53 @@ namespace ChatConnect.Tcp.Protocol.WS
             this.DataHead = new byte[this.LengHead];
 
             this.DataHead[0] = (byte)(this.BitFind << 7);
-            this.DataHead[0] = (byte)(this.DataHead[0] | (this.BitRsv1 << 6));
-            this.DataHead[0] = (byte)(this.DataHead[0] | (this.BitRsv2 << 5));
-            this.DataHead[0] = (byte)(this.DataHead[0] | (this.BitRsv3 << 4));
-            this.DataHead[0] = (byte)(this.DataHead[0] | (this.BitPcod));
+            this.DataHead[0] = (byte)(this.DataHead[0] | 
+            						  	   (this.BitRsv1 << 6));
+            this.DataHead[0] = (byte)(this.DataHead[0] | 
+            			                   (this.BitRsv2 << 5));
+            this.DataHead[0] = (byte)(this.DataHead[0] | 
+            							   (this.BitRsv3 << 4));
+            this.DataHead[0] = (byte)(this.DataHead[0] | 
+            							   (this.BitPcod));
             length++;
 
             this.DataHead[1] = (byte)(this.BitMask << 7);
-            this.DataHead[1] = (byte)(this.DataHead[1] | (this.BitLeng));
+            this.DataHead[1] = (byte)(this.DataHead[1] | 
+            							   (this.BitLeng));
             length++;
             
             if (this.BitLeng == 127)
             {
-                this.DataHead[length] = (byte)( ( this.LengBody >> 56));
+                this.DataHead[length] = *(byte *)( (&this.LengBody << 00 ));
                 length++;
-                this.DataHead[length] = (byte)( ( this.LengBody << 08 ) >> 56 );
+                this.DataHead[length] = *(byte *)( (&this.LengBody << 08 ));
                 length++;
-                this.DataHead[length] = (byte)( ( this.LengBody << 16 ) >> 56 );
+                this.DataHead[length] = *(byte *)( (&this.LengBody << 16 ));
                 length++;
-                this.DataHead[length] = (byte)( ( this.LengBody << 24 ) >> 56 );
+                this.DataHead[length] = *(byte *)( (&this.LengBody << 24 ));
                 length++;
-                this.DataHead[length] = (byte)( ( this.LengBody << 32 ) >> 56 );
+                this.DataHead[length] = *(byte *)( (&this.LengBody << 32 ));
                 length++;
-                this.DataHead[length] = (byte)( ( this.LengBody << 40 ) >> 56 );
+                this.DataHead[length] = *(byte *)( (&this.LengBody << 40 ));
                 length++;
             }
             if (this.BitLeng >= 126)
             {
-                this.DataHead[length] = (byte)( ( this.LengBody << 48 ) >> 56 );
+                this.DataHead[length] = *(byte *)( (&this.LengBody << 48) );
                 length++;
-                this.DataHead[length] = (byte)( ( this.LengBody << 56 ) >> 56 );
+                this.DataHead[length] = *(byte *)( (&this.LengBody << 56) );
                 length++;
             }
 
             if (this.BitMask == 1)
             {
-                this.DataHead[length] = (byte)( ( this.MaskVal >> 24 ) );
+                this.DataHead[length] = *(byte *)( (&this.MaskVal << 00) );
                 length++;
-                this.DataHead[length] = (byte)( ( this.MaskVal << 08 ) >> 24 );
+                this.DataHead[length] = *(byte *)( (&this.MaskVal << 08) );
                 length++;
-                this.DataHead[length] = (byte)( ( this.MaskVal << 16 ) >> 24 );
+                this.DataHead[length] = *(byte *)( (&this.MaskVal << 16) );
                 length++;
-                this.DataHead[length] = (byte)( ( this.MaskVal << 24 ) >> 24 );
+                this.DataHead[length] = *(byte *)( (&this.MaskVal << 24) );
                 length++;
             }
 		}
