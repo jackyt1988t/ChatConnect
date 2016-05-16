@@ -76,35 +76,44 @@ namespace ChatConnect.Tcp.Protocol.WS
         /// <summary>
         /// Событие которое наступает при проходе по циклу
         /// </summary>
-        public abstract event PHandlerEvent EventWork;
+        public event PHandlerEvent EventWork;
 		/// <summary>
 		/// Событие которое наступает когда приходит фрейм пинг
 		/// </summary>
-		public abstract event PHandlerEvent EventPing;
+		public event PHandlerEvent EventPing;
 		/// <summary>
 		/// Событие которое наступает когда приходит фрейм понг
 		/// </summary>
-		public abstract event PHandlerEvent EventPong;
+		public event PHandlerEvent EventPong;
 		/// <summary>
 		/// Событие которое наступает когда приходит фрейм с данными
 		/// </summary>
-		public abstract event PHandlerEvent EventData;
+		public event PHandlerEvent EventData;
 		/// <summary>
 		/// Событие которое наступает когда приходит заврешающий фрейм
 		/// </summary>
-		public abstract event PHandlerEvent EventClose;
+		public event PHandlerEvent EventClose;
 		/// <summary>
 		/// Событие которое наступает когда приходит при ошибке протокола
 		/// </summary>
-		public abstract event PHandlerEvent EventError;
+		public event PHandlerEvent EventError;
 		/// <summary>
 		/// Событие которое наступает когда приходит кусок отправленных данных
 		/// </summary>
-		public abstract event PHandlerEvent EventChunk;
+		public event PHandlerEvent EventChunk;
 		/// <summary>
 		/// Событие которое наступает при открвтии соединения когда получены заголвоки
 		/// </summary>
-		public abstract event PHandlerEvent EventConnect;
+		public event PHandlerEvent EventConnect;
+		
+		private event PHandlerEvent __EventWork;
+		private event PHandlerEvent __EventPing;
+		private event PHandlerEvent __EventPong;
+		private event PHandlerEvent __EventData;
+		private event PHandlerEvent __EventError;
+		private event PHandlerEvent __EventClose;
+		private event PHandlerEvent __EventChunk;
+		private event PHandlerEvent __EventConnect;
 
 		public bool Msg(SArray buffers)
 		{
