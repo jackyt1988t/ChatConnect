@@ -2,7 +2,7 @@
 
 namespace ChatConnect.Tcp.Protocol.WS
 {
-	struct WSFrameRFC75
+	struct WSFrameRFC75 : IWSFrame
 	{
 		/// <summary>
 		/// Text опкод
@@ -28,14 +28,6 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// Номер обработчика
 		/// </summary>
 		public int Handler
-		{
-			get;
-			set;
-		}
-		/// <summary>
-		/// Текущая позиция маски
-		/// </summary>
-		public int MaskPos
 		{
 			get;
 			set;
@@ -73,6 +65,14 @@ namespace ChatConnect.Tcp.Protocol.WS
 			set;
 		}
 		/// <summary>
+		/// бит RSV4
+		/// </summary>
+		public int BitRsv4
+		{
+			get;
+			set;
+		}
+		/// <summary>
 		/// Опкод
 		/// </summary>
 		public int BitPcod
@@ -83,7 +83,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// <summary>
 		/// Показывает установлена маска тела или нет
 		/// </summary>
-		public int BitMask
+		public int BitExtn
 		{
 			get;
 			set;
@@ -97,12 +97,12 @@ namespace ChatConnect.Tcp.Protocol.WS
 			set;
 		}
 		/// <summary>
-		/// Значение маски тела
+		/// 
 		/// </summary>
-		public int MaskVal
+		public bool SetsHead
 		{
 			get;
-			set;
+			private set;
 		}
 		/// <summary>
 		/// Если заголвоки получены true
@@ -129,6 +129,14 @@ namespace ChatConnect.Tcp.Protocol.WS
 			set;
 		}
 		/// <summary>
+		/// 
+		/// </summary>
+		public long PartExtn
+		{
+			get;
+			set;
+		}
+		/// <summary>
 		/// Текущее количество полученных байт заголвока
 		/// </summary>
 		public long PartHead
@@ -140,6 +148,14 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// Длинна заголвоков
 		/// </summary>
 		public long LengHead
+		{
+			get;
+			set;
+		}
+		/// <summary>
+		/// 
+		/// </summary>
+		public long LengExtn
 		{
 			get;
 			set;
@@ -161,6 +177,14 @@ namespace ChatConnect.Tcp.Protocol.WS
 			set;
 		}
 		/// <summary>
+		/// 
+		/// </summary>
+		public byte[] DataExtn
+		{
+			get;
+			set;
+		}
+		/// <summary>
 		/// Буффер тела
 		/// </summary>
 		public byte[] DataBody
@@ -174,15 +198,13 @@ namespace ChatConnect.Tcp.Protocol.WS
 		public void Clear()
 		{
 			Handler = 0;
-			MaskPos = 0;
 			BitFind = 0;
 			BitRsv1 = 0;
 			BitRsv2 = 0;
 			BitRsv3 = 0;
 			BitPcod = 0;
-			BitMask = 0;
+			BitExtn = 0;
 			BitLeng = 0;
-			MaskVal = 0;
 			PartBody = 0;
 			PartHead = 0;
 			LengHead = 0;
@@ -191,6 +213,86 @@ namespace ChatConnect.Tcp.Protocol.WS
 			DataBody = null;
 			GetsHead = false;
 			GetsBody = false;
+		}
+		public void SetHeader()
+		{
+			if (this.SetsHead)
+				return;
+
+			this.LengHead = 4;
+			this.SetsHead = true;
+			if (this.LengBody <= 125)
+			{
+				this.BitLeng = (int)this.LengBody;
+			}
+			else if (this.LengBody <= 65556)
+			{
+				this.BitLeng = 126;
+				this.LengHead += 2;
+			}
+			else if (this.LengBody >= 65557)
+			{
+				this.BitLeng = 127;
+				this.LengHead += 8;
+			}
+
+			int length = 0;
+			this.DataHead = new byte[this.LengHead];
+
+			this.DataHead[length] = (byte)(this.BitFind << 7);
+			this.DataHead[length] = (byte)(this.DataHead[length] |
+												(this.BitRsv1 << 6));
+			this.DataHead[length] = (byte)(this.DataHead[length] |
+												(this.BitRsv2 << 5));
+			this.DataHead[length] = (byte)(this.DataHead[length] |
+												(this.BitRsv3 << 4));
+			this.DataHead[length] = (byte)(this.DataHead[length] |
+													 (this.BitPcod));
+			length++;
+
+			this.DataHead[length] = (byte)(this.BitRsv4 << 7);
+			this.DataHead[length] = (byte)(this.DataHead[length] |
+													 (this.BitLeng));
+			length++;
+
+			if (this.BitLeng == 127)
+			{
+				this.DataHead[length] = (byte)(this.LengBody >> 56);
+				length++;
+				this.DataHead[length] = (byte)(this.LengBody >> 48);
+				length++;
+				this.DataHead[length] = (byte)(this.LengBody >> 40);
+				length++;
+				this.DataHead[length] = (byte)(this.LengBody >> 32);
+				length++;
+				this.DataHead[length] = (byte)(this.LengBody >> 24);
+				length++;
+				this.DataHead[length] = (byte)(this.LengBody >> 16);
+				length++;
+			}
+			if (this.BitLeng >= 126)
+			{
+				this.DataHead[length] = (byte)(this.LengBody >> 08);
+				length++;
+				this.DataHead[length] = (byte)(this.LengBody >> 00);
+				length++;
+			}
+
+				this.DataHead[length] = (byte)(this.BitExtn >> 08);
+				length++;
+				this.DataHead[length] = (byte)(this.BitExtn << 00);
+				length++;
+		}
+		public byte[] GetDataFrame()
+		{
+			SetHeader();
+
+			byte[] buffer = new byte[this.LengHead + this.LengBody];
+
+			this.DataHead.CopyTo(buffer, 0);
+			this.DataBody.CopyTo(buffer, this.LengHead);
+
+			return buffer;
 		}
 	}
 }

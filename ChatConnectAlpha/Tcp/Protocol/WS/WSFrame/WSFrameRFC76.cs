@@ -8,7 +8,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		All = 2,
 		Unset = 1,
 	}
-    struct WSFrameRFC76
+    struct WSFrameRFC76 : IWSFrame
     {
 		/// <summary>
 		/// Text опкод
@@ -110,16 +110,14 @@ namespace ChatConnect.Tcp.Protocol.WS
             get;
             set;
         }
-        public bool SetsHead
-        {
-            get;
-            private set;
-        }
-        public bool SetsBody
-        {
-            get;
-            private set;
-        }
+		/// <summary>
+		/// 
+		/// </summary>
+		public bool SetsHead
+		{
+			get;
+			private set;
+		}
 		/// <summary>
 		/// Если заголвоки получены true
 		/// </summary>
@@ -184,7 +182,6 @@ namespace ChatConnect.Tcp.Protocol.WS
             get;
             set;
         }
-        public string Protocol = "RFC76";
 		/// <summary>
 		/// Сбрасывает все перменный в стандартные значения
 		/// </summary>
@@ -206,16 +203,17 @@ namespace ChatConnect.Tcp.Protocol.WS
             LengBody = 0;
             DataHead = null;
             DataBody = null;
+			SetsHead = false;
             GetsHead = false;
             GetsBody = false;
         }
-        unsafe public void SetHeader()
-	{
-			if (this.SetHead)
+		public void SetHeader()
+		{
+			if (this.SetsHead)
 				return;
-			
+						
             this.LengHead = 2;
-            this.SetsHead = true;
+			this.SetsHead = true;
 			if (this.BitMask == 1)
             {
 				this.MaskVal = new Random().Next();
@@ -235,69 +233,75 @@ namespace ChatConnect.Tcp.Protocol.WS
                 this.BitLeng = 127;
                 this.LengHead += 8;
             }
-
-            
+			
+            int length = 0;
             this.DataHead = new byte[this.LengHead];
 
-            this.DataHead[length] = (byte)(this.DataHead[length] |
-            										  (this.BitFind << 7));
+            this.DataHead[length] = (byte)(this.BitFind << 7);
             this.DataHead[length] = (byte)(this.DataHead[length] | 
-            						  	              (this.BitRsv1 << 6));
+												(this.BitRsv1 << 6));
             this.DataHead[length] = (byte)(this.DataHead[length] | 
-            			                              (this.BitRsv2 << 5));
+												(this.BitRsv2 << 5));
             this.DataHead[length] = (byte)(this.DataHead[length] | 
-            							              (this.BitRsv3 << 4));
+												(this.BitRsv3 << 4));
             this.DataHead[length] = (byte)(this.DataHead[length] | 
-            							                   (this.BitPcod));
-            length++;
+													 (this.BitPcod));
+				length++;
 
             this.DataHead[length] = (byte)(this.BitMask << 7);
             this.DataHead[length] = (byte)(this.DataHead[length] | 
-            							                   (this.BitLeng));
-            length++;
+													 (this.BitLeng));
+				length++;
             
             if (this.BitLeng == 127)
             {
-                this.DataHead[length] = *(byte*)( &(this.LengBody << 00) );
+                this.DataHead[length] = (byte)( this.LengBody >> 56 );
                 length++;
-                this.DataHead[length] = *(byte*)( &(this.LengBody << 08) );
+                this.DataHead[length] = (byte)( this.LengBody >> 48 );
                 length++;
-                this.DataHead[length] = *(byte*)( &(this.LengBody << 16) );
+                this.DataHead[length] = (byte)( this.LengBody >> 40 );
                 length++;
-                this.DataHead[length] = *(byte*)( &(this.LengBody << 24) );
+                this.DataHead[length] = (byte)( this.LengBody >> 32 );
                 length++;
-                this.DataHead[length] = *(byte*)( &(this.LengBody << 32) );
+                this.DataHead[length] = (byte)( this.LengBody >> 24 );
                 length++;
-                this.DataHead[length] = *(byte*)( &(this.LengBody << 40) );
+                this.DataHead[length] = (byte)( this.LengBody >> 16 );
                 length++;
             }
             if (this.BitLeng >= 126)
             {
-                this.DataHead[length] = *(byte*)( &(this.LengBody << 48) );
+                this.DataHead[length] = (byte)( this.LengBody >> 08 );
                 length++;
-                this.DataHead[length] = *(byte*)( &(this.LengBody << 56) );
+                this.DataHead[length] = (byte)( this.LengBody >> 00 );
                 length++;
             }
 
             if (this.BitMask == 1)
             {
-                this.DataHead[length] = *(byte*)( &(this.MaskVal << 00) );
+                this.DataHead[length] = (byte) ( this.MaskVal >> 24 );
                 length++;
-                this.DataHead[length] = *(byte*)( &(this.MaskVal << 08) );
+                this.DataHead[length] = (byte) ( this.MaskVal << 16 );
                 length++;
-                this.DataHead[length] = *(byte*)( &(this.MaskVal << 16) );
+                this.DataHead[length] = (byte) ( this.MaskVal << 08 );
                 length++;
-                this.DataHead[length] = *(byte*)( &(this.MaskVal << 24) );
+                this.DataHead[length] = (byte) ( this.MaskVal << 00 );
                 length++;
             }
 		}
-        public byte[] GetDataFrame()
+		public byte[] GetDataFrame()
 		{
 			SetHeader();
-			byte[] buffer = new byte[ this.LengHead   +   this.LengBody ];
+
+			byte[] buffer = new byte[ this.LengHead + this.LengBody ];
+
 			this.DataHead.CopyTo(buffer, 0);
-			this.DataBody.CopyTo(buffer, this.LengHead);
+			this.DataBody.CopyTo(buffer, this.LengHead );
+
 			return buffer;
+		}
+		public override string ToString()
+		{
+			return "RFC76";
 		}
 	}
 }

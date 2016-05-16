@@ -110,6 +110,7 @@
     <Compile Include="Tcp\Protocol\WS\WsEnum.cs" />
     <Compile Include="Tcp\Protocol\WS\WSErrors.cs" />
     <Compile Include="Tcp\Protocol\WS\WSException.cs" />
+    <Compile Include="Tcp\Protocol\WS\WSFrame\IWSFrame.cs" />
     <Compile Include="Tcp\Protocol\WS\WSFrame\WSFrameRFC75.cs" />
     <Compile Include="Tcp\Protocol\WS\WSFrame\WSFrameRFC76.cs" />
     <Compile Include="Tcp\Protocol\WS\WSProtocols.cs" />
