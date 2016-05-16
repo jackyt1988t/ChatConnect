@@ -110,6 +110,16 @@ namespace ChatConnect.Tcp.Protocol.WS
             get;
             set;
         }
+        public bool SetsHead
+        {
+            get;
+            private set;
+        }
+        public bool SetsBody
+        {
+            get;
+            private set;
+        }
 		/// <summary>
 		/// Если заголвоки получены true
 		/// </summary>
@@ -174,6 +184,7 @@ namespace ChatConnect.Tcp.Protocol.WS
             get;
             set;
         }
+        public string Protocol = "RFC76";
 		/// <summary>
 		/// Сбрасывает все перменный в стандартные значения
 		/// </summary>
@@ -198,10 +209,13 @@ namespace ChatConnect.Tcp.Protocol.WS
             GetsHead = false;
             GetsBody = false;
         }
-	unsafe public void SetHeader()
+        unsafe public void SetHeader()
 	{
-			int length = 0;
+			if (this.SetHead)
+				return;
+			
             this.LengHead = 2;
+            this.SetsHead = true;
 			if (this.BitMask == 1)
             {
 				this.MaskVal = new Random().Next();
@@ -225,7 +239,8 @@ namespace ChatConnect.Tcp.Protocol.WS
             
             this.DataHead = new byte[this.LengHead];
 
-            this.DataHead[length] = (byte)(this.BitFind << 7);
+            this.DataHead[length] = (byte)(this.DataHead[length] |
+            										  (this.BitFind << 7));
             this.DataHead[length] = (byte)(this.DataHead[length] | 
             						  	              (this.BitRsv1 << 6));
             this.DataHead[length] = (byte)(this.DataHead[length] | 
@@ -237,7 +252,7 @@ namespace ChatConnect.Tcp.Protocol.WS
             length++;
 
             this.DataHead[length] = (byte)(this.BitMask << 7);
-            this.DataHead[length] = (byte)(this.DataHead[1] | 
+            this.DataHead[length] = (byte)(this.DataHead[length] | 
             							                   (this.BitLeng));
             length++;
             
@@ -276,18 +291,13 @@ namespace ChatConnect.Tcp.Protocol.WS
                 length++;
             }
 		}
-		public byte[] GetDataFrame()
+        public byte[] GetDataFrame()
 		{
-			byte[] buffer = new byte[ this.LengHead
-									+ this.LengBody ];
-			this.DataHead.CopyTo( buffer, 0 );
-			this.DataBody.CopyTo( buffer, 
-									  this.LengHead );
+			SetHeader();
+			byte[] buffer = new byte[ this.LengHead   +   this.LengBody ];
+			this.DataHead.CopyTo(buffer, 0);
+			this.DataBody.CopyTo(buffer, this.LengHead);
 			return buffer;
-		}
-		public override string ToString()
-		{
-			return "RFC76";
 		}
 	}
 }
