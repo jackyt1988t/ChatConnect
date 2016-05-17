@@ -90,15 +90,20 @@ namespace ChatConnect.Tcp.Protocol.WS
 
 			return Send(frame.GetDataFrame());
 		}
-		public override bool Message(byte[] message, WSOpcod opcod, int fin)
+		public override bool Message(byte[] message, WSOpcod opcod, WSFin fin)
 		{
+			int Fin = 0;
 			int Opcod = 0;
+			if (fin == WSFin.Last)
+				Fin = 0;
+			else if (fin == WSFin.Next)
+				Fin = 1;
 			if (opcod == WSOpcod.Text)
 				Opcod = WSFrameSample.TEXT;
 			else if (opcod == WSOpcod.Binnary)
 				Opcod = WSFrameSample.BINNARY;
 			WSFrameSample frame = new WSFrameSample();
-						  frame.BitFind  = 0;
+						  frame.BitFind  = Fin;
 						  frame.BitPcod  = Opcod;
 						  frame.BitLeng  = message.Length;
 						  frame.DataBody = message;

@@ -295,8 +295,8 @@ static	private event PHandlerEvent __EventConnect;
 		public bool Message(string message)
 		{
 			byte[] _buffer = Encoding.UTF8.GetBytes(
-											message);
-			return Message(_buffer, WSOpcod.Text, 1);
+											    message);
+			return Message(_buffer, WSOpcod.Text, WSFin.Last);
 		}
 		/// <summary>
 		/// Отправляет текстовый фрейм текущему подключению
@@ -305,7 +305,7 @@ static	private event PHandlerEvent __EventConnect;
 		/// <returns>true в случае ечсли данные можно отправить</returns>
 		public bool Message(byte[] message)
 		{
-			return Message(message, WSOpcod.Binnary, 1);
+			return Message(message, WSOpcod.Binnary, WSFin.Last);
 		}
 		/// <summary>
 		/// Функция 1 прохода обработки ws протокола соединения
@@ -444,7 +444,7 @@ static	private event PHandlerEvent __EventConnect;
 		/// </summary>
 		/// <param name="message">массив байт для отправки</param>
 		/// <returns>true в случае ечсли данные можно отправить</returns>
-		public abstract bool Message(byte[] message, WSOpcod opcod, int fin);
+		public abstract bool Message(byte[] message, WSOpcod opcod, WSFin fin);
 
 
 		/// <summary>
