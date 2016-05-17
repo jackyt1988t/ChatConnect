@@ -128,11 +128,11 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 		{
 			throw new NotSupportedException();
 		}
-		public bool Send(string message)
+		public bool Message(string message)
 		{
-			return Send(Encoding.UTF8.GetBytes(message));
+			return Message(Encoding.UTF8.GetBytes(message));
 		}
-		public bool Send(byte[] message)
+		public bool Message(byte[] message)
 		{
 			throw new NotSupportedException();
 		}

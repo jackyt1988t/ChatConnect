@@ -10,30 +10,65 @@ namespace ChatConnect.Tcp.Protocol.WS
 	}
     struct WSFrameRFC76 : IWSFrame
     {
+        const int TEXT   = 0x01;		
+        const int PING   = 0x09;		
+        const int PONG   = 0x0A;
+        const int CLOSE  = 0x08;
+        const int BINARY = 0x02;
 		/// <summary>
 		/// Text опкод
 		/// </summary>
-        public const int TEXT = 0x01;
+		public int Text
+		{
+			get
+			{
+				return TEXT;
+			}
+		}
 		/// <summary>
 		/// Ping опкод
 		/// </summary>
-        public const int PING = 0x09;
+		public int Ping
+		{
+			get
+			{
+				return PING;
+			}
+		}
 		/// <summary>
 		/// Pong опкод
 		/// </summary>
-        public const int PONG = 0x0A;
+		public int Pong
+		{
+			get
+			{
+				return PONG;
+			}
+		}
 		/// <summary>
 		/// close опкод
 		/// </summary>
-        public const int CLOSE = 0x08;
+		public int Close
+		{
+			get
+			{
+				return CLOSE;
+			}
+		}
 		/// <summary>
 		/// Binary опкод
 		/// </summary>
-        public const int BINARY = 0x02;
+		public int Binnary
+		{
+			get
+			{
+				return BINARY;
+			}
+		}
 		/// <summary>
 		/// Номер обработчика
 		/// </summary>
-        public int Handler
+		public int Handler
         {
             get;
             set;

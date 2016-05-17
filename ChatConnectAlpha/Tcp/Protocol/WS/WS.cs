@@ -12,7 +12,17 @@ namespace ChatConnect.Tcp.Protocol.WS
 {
     abstract class WS : IProtocol
     {
- static public bool Deb;
+		private static readonly string S_WORK = "work";
+		private static readonly string S_SEND = "send";
+		private static readonly string S_DATA = "data";
+		private static readonly string S_PING = "ping";
+		private static readonly string S_PONG = "pong";
+		private static readonly string S_CHUNK = "chunk";
+		private static readonly string S_ERROR = "error";
+		private static readonly string S_CLOSE = "close";
+		private static readonly string S_CONNECT = "connect";
+
+		static public bool Deb;
  		/// <summary>
 		/// tcp/ip соединение
 		/// </summary>
@@ -53,6 +63,22 @@ namespace ChatConnect.Tcp.Protocol.WS
 			protected set;
 		}
 		/// <summary>
+		/// 
+		/// </summary>
+abstract
+		public WStream Reader
+		{
+			get;
+		}
+		/// <summary>
+		/// 
+		/// </summary>
+abstract
+		public WStream Writer
+		{
+			get;
+		}
+		/// <summary>
 		/// Заголвоки полученные при открытии соединеия
 		/// </summary>
 		public IHeader Request
@@ -73,69 +99,165 @@ namespace ChatConnect.Tcp.Protocol.WS
         	get;
             protected set;
 		}
-        /// <summary>
-        /// Событие которое наступает при проходе по циклу
-        /// </summary>
-        public abstract event PHandlerEvent EventWork;
+		/// <summary>
+		/// Событие которое наступает при проходе по циклу
+		/// </summary>
+		public event PHandlerEvent EventWork
+		{
+			add
+			{
+				lock (SyncEvent)
+					__EventWork += value;
+
+			}
+			remove
+			{
+				lock (SyncEvent)
+					__EventWork -= value;
+			}
+		}
 		/// <summary>
 		/// Событие которое наступает когда приходит фрейм пинг
 		/// </summary>
-		public abstract event PHandlerEvent EventPing;
+		public event PHandlerEvent EventPing
+		{
+			add
+			{
+				lock (SyncEvent)
+					__EventPing += value;
+
+			}
+			remove
+			{
+				lock (SyncEvent)
+					__EventPing -= value;
+			}
+		}
 		/// <summary>
 		/// Событие которое наступает когда приходит фрейм понг
 		/// </summary>
-		public abstract event PHandlerEvent EventPong;
+		public event PHandlerEvent EventPong
+		{
+			add
+			{
+				lock (SyncEvent)
+					__EventPong += value;
+
+			}
+			remove
+			{
+				lock (SyncEvent)
+					__EventPong -= value;
+			}
+		}
 		/// <summary>
 		/// Событие которое наступает когда приходит фрейм с данными
 		/// </summary>
-		public abstract event PHandlerEvent EventData;
+		public event PHandlerEvent EventData
+		{
+			add
+			{
+				lock (SyncEvent)
+					__EventData += value;
+
+			}
+			remove
+			{
+				lock (SyncEvent)
+					__EventData -= value;
+			}
+		}
 		/// <summary>
 		/// Событие которое наступает когда приходит заврешающий фрейм
 		/// </summary>
-		public abstract event PHandlerEvent EventClose;
+		public event PHandlerEvent EventClose
+		{
+			add
+			{
+				lock (SyncEvent)
+					__EventClose += value;
+
+			}
+			remove
+			{
+				lock (SyncEvent)
+					__EventClose -= value;
+			}
+		}
 		/// <summary>
 		/// Событие которое наступает когда приходит при ошибке протокола
 		/// </summary>
-		public abstract event PHandlerEvent EventError;
+		public event PHandlerEvent EventError
+		{
+			add
+			{
+				lock (SyncEvent)
+					__EventError += value;
+
+			}
+			remove
+			{
+				lock (SyncEvent)
+					__EventError -= value;
+			}
+		}
 		/// <summary>
 		/// Событие которое наступает когда приходит кусок отправленных данных
 		/// </summary>
-		public abstract event PHandlerEvent EventChunk;
+		public event PHandlerEvent EventChunk
+		{
+			add
+			{
+				lock (SyncEvent)
+					__EventChunk += value;
+
+			}
+			remove
+			{
+				lock (SyncEvent)
+					__EventChunk -= value;
+			}
+		}
 		/// <summary>
 		/// Событие которое наступает при открвтии соединения когда получены заголвоки
 		/// </summary>
-		public abstract event PHandlerEvent EventConnect;
-
-		public bool Msg(SArray buffers)
+		public event PHandlerEvent EventConnect
 		{
-			if (state == 4 || state == 5 || state == 7)
-				return false;
-			try
+			add
 			{
-				MessageSend(buffers);
-				return true;
+				lock (SyncEvent)
+					__EventConnect += value;
+
 			}
-			catch (WSException exc)
+			remove
 			{
-				state = 4;
-				Error(exc);
-				state = 5;
-				close = new WSClose(    "Server", exc.Closes    );
-				return false;
+				lock (SyncEvent)
+					__EventConnect -= value;
 			}
 		}
+
+		private object SyncEvent = new object();
+		private event PHandlerEvent __EventWork;
+		private event PHandlerEvent __EventPing;
+		private event PHandlerEvent __EventPong;
+		private event PHandlerEvent __EventData;
+		private event PHandlerEvent __EventError;
+		private event PHandlerEvent __EventClose;
+		private event PHandlerEvent __EventChunk;
+static	private event PHandlerEvent __EventConnect;
+		
 		/// <summary>
 		/// Отправляет данные текущему подключению
 		/// </summary>
 		/// <param name="message">массив байт для отправки</param>
 		/// <returns>true в случае ечсли данные можно отправить</returns>
-		public bool Msg(byte[] message)
+		public bool Send(byte[] message)
 		{
 			if (state == 4 || state == 5 || state == 7)
 				return false;
 			try
 			{
-				MessageSend(message);
+				Write(message);
 				return true;
 			}
 			catch (WSException exc)
@@ -147,229 +269,43 @@ namespace ChatConnect.Tcp.Protocol.WS
 				return false;
 			}
 		}
-  async public void File(string pathlog)
-		{
-			await Task.Run(() =>
-			{
-				file(pathlog);
-			});
-		}
-		/// <summary>
-		/// Отправка файла поверх протокола ws
-		/// </summary>
-		/// <param name="pathlog">путь к файлу</param>
-		public void file(string pathlog)
-		{
-			int i = 0;
-			int sleep = 30;
-			int maxlen = 1000 * 128;
-			using (FileStream sr = new FileStream(pathlog, FileMode.Open, FileAccess.Read))
-			{
-				int count = (int)(sr.Length / maxlen);
-				int length = (int)(sr.Length - count * maxlen);
-				try
-				{
-					while (i++ < count)
-					{
-						int __read = 0;
-						int recive = 0;
-						byte[ ] header;
-						if (  i == 1  )
-						{
-							recive = 7;
-							header = new byte[7];
-							header[0] = 0;
-							BitConverter.GetBytes(sr.Length).CopyTo(header, 1);
-						}
-						else
-						{
-							recive = 1;
-							header = new byte[1];
-							header[0] = 1;
-						}
-						byte[] buffer = new byte [recive];
-							   header.CopyTo( buffer, 0 );
-						while (__read < maxlen)
-						{
-							__read = sr.Read(buffer, (recive + __read), 
-													 (maxlen - __read));
-						}
-						Frame (buffer, WSFrameRFC76.BINARY, 1);
-						if (Response.SegmentsBuffer.Count < 10)
-						{
-							if (sleep  > 30)
-								sleep -= 30;
-						}
-						else
-								sleep += 30;
-						Thread.Sleep( sleep );
-					}
-					if (length > 0)
-					{
-						int __read = 0;
-						int recive = 0;
-						byte[ ] header;
-						if (  i == 1  )
-						{
-							recive = 7;
-							header = new byte[7];
-							header[0] = 0;
-							BitConverter.GetBytes(sr.Length).CopyTo(header, 1);
-						}
-						else
-						{
-							recive = 1;
-							header = new byte[1];
-							header[0] = 1;
-						}
-						byte[] buffer = new byte[recive];
-						       header.CopyTo( buffer, 0 );
-						while (__read < maxlen)
-						{
-							__read = sr.Read(buffer, (recive + __read),
-													 (maxlen - __read));
-						}
-						Frame (buffer, WSFrameRFC76.BINARY, 1);
-					}
-				}
-				catch (Exception exc)
-				{
-					byte[] header = new byte[1];
-					header[0] = 2;
-					Frame(header, WSFrameRFC76.BINARY, 1);
-					Log.Logout.AddMessage(exc.Message, "Log/log.log", Log.Log.Fatail);
-				}
-			}
-		}
-		/// <summary>
-		/// Отправляет текстовый фрейм текущему подключению
-		/// </summary>
-		/// <param name="message">массив байт для отправки</param>
-		/// <returns>true в случае ечсли данные можно отправить</returns>
-		public bool Send(   byte[] message   )
-		{
-			return Frame(   message, WSFrameRFC76.TEXT, 1  );
-		}
-		/// <summary>
-		/// Отправляет текстовый фрейм текущему подключению
-		/// </summary>
-		/// <param name="message">строка данных для отправки</param>
-		/// <returns>true в случае ечсли данные можно отправить</returns>
-		public bool Send(   string message   )
-		{
-			return Send(Encoding.UTF8.GetBytes(message));
-		}
 		/// <summary>
 		/// Отправляет фрейм пинг текущему подключению
 		/// </summary>
 		/// <param name="message">строка данных для отправки</param>
 		/// <returns>true в случае ечсли данные можно отправить</returns>
-		public bool Ping(	string message	 )
+		public bool Ping(string message)
 		{
 			return Ping(Encoding.UTF8.GetBytes(message));
 		}
 		/// <summary>
-		/// Отправляет фрейм пинг текущему подключению
-		/// </summary>
-		/// <param name="message">массив данных для отправки</param>
-		/// <returns>true в случае ечсли данные можно отправить</returns>
-		public bool Ping(	byte[] message	 )
-        {
-			return Frame(   message, WSFrameRFC76.PING, 1   );
-        }
-		/// <summary>
 		/// Отправляет фрейм понг текущему подключению
 		/// </summary>
 		/// <param name="message">строка данных для отправки</param>
 		/// <returns>true в случае ечсли данные можно отправить</returns>
-		public bool Pong(	string message	 )
+		public bool Pong(string message)
 		{
 			return Pong(Encoding.UTF8.GetBytes(message));
 		}
 		/// <summary>
-		/// Отправляет фрейм понг текущему подключению
-		/// </summary>
-		/// <param name="message">массив данных для отправки</param>
-		/// <returns>true в случае ечсли данные можно отправить</returns>
-		public bool Pong(	byte[] message	 )
-        {
-			return Frame(   message, WSFrameRFC76.PONG, 1   );
-		}
-		/// <summary>
-		/// Отправляет закрывающий фрейм с кодом 1000.
+		/// Отправляет текстовый фрейм текущему подключению
 		/// </summary>
 		/// <param name="message">строка данных для отправки</param>
 		/// <returns>true в случае ечсли данные можно отправить</returns>
-		public bool Close(   string message   )
-        {
-			return Close(         message, 1000         );
-        }
-		/// <summary>
-		/// Отправляет указанный ws фрейм текущему соединению
-		/// </summary>
-		/// <param name="wsframe">пользовательский ws фрейм</param>
-		/// <returns>true в случае ечсли данные можно отправить</returns>
-		public bool Frame(  IWSFrame wsframe  )
+		public bool Message(string message)
 		{
-			return Msg(     wsframe.GetDataFrame()     );
+			byte[] _buffer = Encoding.UTF8.GetBytes(
+											message);
+			return Message(_buffer, WSOpcod.Text, 1);
 		}
 		/// <summary>
-		/// Отправляет завршающия фрейм и закрывает соединение
+		/// Отправляет текстовый фрейм текущему подключению
 		/// </summary>
 		/// <param name="message">строка данных для отправки</param>
-		/// <param name="number">код закрытия соденинеия 1000-1012</param>
 		/// <returns>true в случае ечсли данные можно отправить</returns>
-		public bool Close( string message, int number)
-        {
-			if (number < 1000 || number > 1012)
-				throw new ArgumentNullException( "number" );
-
-			State = States.Close;
-			close = new WSClose(Address(), (WSCloseNum)number);
-
-			if (string.IsNullOrEmpty(message))
-				message = WSCloseMsg.Message((WSCloseNum)number);
-			byte[] _wsbody = Encoding.UTF8.GetBytes(  message  );
-            byte[] _wsdata = new byte [  2  +  _wsbody.Length  ];
-
-			_wsdata[0] = (byte)(number  >>  08);
-			_wsdata[1] = (byte)(number  <<  24 >> 24);
-				         _wsbody.CopyTo( _wsdata, 2 );
-
-			return Frame(  _wsdata, WSFrameRFC76.CLOSE, 1  );
-		}
-		public void Reset(Socket socket, IHeader requset)
+		public bool Message(byte[] message)
 		{
-			if (State != States.Disconnect)
-				throw new InvalidOperationException("State is not disconnect");
-			if (socket == null || !socket.Connected)
-				throw new ArgumentNullException("Socket is null or disconnect");
-			if (requset == null || string.IsNullOrEmpty( requset.StartString ))
-				throw new ArgumentNullException("Headers is null or empty values");
-
-			Tcp      = socket;			
-			State    = States.Connection;
-			Request  = requset;
-			Response = new Header();
-			TaskResult.Option = TaskOption.Loop;
-		}
-		/// <summary>
-		/// Отправляет указанный ws фрейм текущему соединению
-		/// </summary>
-		/// <param name="message">массив данных для отправки</param>
-		/// <param name="pcod">опкод</param>
-		/// <param name="find">бит заврешения отправки данных 0-1</param>
-		/// <returns></returns>
-		public bool Frame(byte[] message, int pcod, int find)
-		{
-				IWSFrame wsframe = new WSFrameRFC76();
-						 wsframe.BitFind = find;
-						 wsframe.BitPcod = pcod;
-						 wsframe.DataBody = message;
-						 wsframe.LengBody = message.Length;
-						 wsframe.SetHeader();
-
-			return Frame(wsframe);
+			return Message(message, WSOpcod.Binnary, 1);
 		}
 		/// <summary>
 		/// Функция 1 прохода обработки ws протокола соединения
@@ -391,15 +327,16 @@ namespace ChatConnect.Tcp.Protocol.WS
 					Проверяет сокет были получены данные или нет если. Если 
 					данные были получены Запускает функцию для получения данных.
 					В случае если соединеие было закрыто назначается 
-					соотвествующий обработчик, если нет утсанавливает обработчик						отправки данных.
+					соотвествующий обработчик, если нет утсанавливает обработчик 
+					отправки данных.
 				==================================================================*/
 					if (Interlocked.CompareExchange(ref state, 1, 0) != 0)
-						return TaskResult;
+						return TaskResult;					
 					if (Tcp.Poll(0, SelectMode.SelectRead))
 					{
 						if (Tcp.Available > 0)
 						{
-							Data();
+							Read();
 						}
 						else
 						{
@@ -409,6 +346,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 							return TaskResult;
 						}
 					}
+					Data();
 				/*==================================================================
 					Проверяет возможность отправки данных. Если данные можно 
 					отправить запускает функцию для отправки данных, в случае 
@@ -421,46 +359,38 @@ namespace ChatConnect.Tcp.Protocol.WS
 					{
 						Send();
 					}
-					else if (!Tcp.Connected)
-					{
+						else if (!Tcp.Connected)
+						{
 							state = 5;
 							close = new WSClose(Address(),
 												     WSCloseNum.Abnormal);
-					}
+						}
 					if (Interlocked.CompareExchange(ref state, 0, 2) == 2)
 						return TaskResult;
 				}						
 
-					if (state == 5)
-					{
-						if (close.Host == "Server")
-						{
-							if (Response.SegmentsBuffer.Count > 0)
-							{
-								Send();
-								return TaskResult;
-							}
+						if (state == 5)
+						{	
+							Close(close);
+							state = 7;
 						}
-							TaskResult.Option = TaskOption.Delete;
-							if (Tcp.Connected
-								&& !Tcp.Poll(0, SelectMode.SelectError))
-								Tcp.Close();
-
-						state = 7;
-						Close();
-					}
 						if (state == 6)
 						{
-							Connection();
-							Interlocked.CompareExchange(ref state, 0, 6);
+							Connection(Request, Response);
+							Interlocked.CompareExchange (ref state, 0, 6);
+						}
+						if (state == 7)
+						{
+							if (Tcp.Connected)
+								Tcp.Close();
 						}
             }
             catch (WSException exc)
             {
-				if (exc.Closes == WSCloseNum.ServerError)
+				/*if (exc.Closes == WSCloseNum.ServerError)
 					Response.SegmentsBuffer.Clear();					
 				else
-					Close( WSCloseMsg.Message(exc.Closes ), (int)exc.Closes);
+					Close( WSCloseMsg.Message(exc.Closes ), (int)exc.Closes);*/
 
                 state = 4;
 				Error(  exc  );
@@ -477,7 +407,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// Возвращает адрес удаленной стороны текущего соденинения
 		/// </summary>
 		/// <returns>строковое представдение ip адреса</returns>
-		public string Address()
+		public virtual string Address()
 		{
 			return ((IPEndPoint)Tcp.RemoteEndPoint).Address.ToString();
 		}
@@ -489,41 +419,182 @@ namespace ChatConnect.Tcp.Protocol.WS
         {
         	return "WS";
         }
-		
-        /// <summary>
-        /// 
-        /// </summary>
-        protected abstract void Work();
-        /// <summary>
-        /// 
-        /// </summary>
-        protected abstract void Send();
-        /// <summary>
-        /// 
-        /// </summary>
-        protected abstract void Data();
+
+
+		/// <summary>
+		/// Отправляет фрейм пинг текущему подключению
+		/// </summary>
+		/// <param name="message">массив данных для отправки</param>
+		/// <returns>true в случае ечсли данные можно отправить</returns>
+		public abstract bool Ping(byte[] message);
+		/// <summary>
+		/// Отправляет фрейм понг текущему подключению
+		/// </summary>
+		/// <param name="message">массив данных для отправки</param>
+		/// <returns>true в случае ечсли данные можно отправить</returns>
+		public abstract bool Pong(byte[] message);
+		/// <summary>
+		/// Отправляет закрывающий фрейм с кодом 1000.
+		/// </summary>
+		/// <param name="message">строка данных для отправки</param>
+		/// <returns>true в случае ечсли данные можно отправить</returns>
+		public abstract bool Close(string message);
+		/// <summary>
+		/// Отправляет текстовый фрейм текущему подключению
+		/// </summary>
+		/// <param name="message">массив байт для отправки</param>
+		/// <returns>true в случае ечсли данные можно отправить</returns>
+		public abstract bool Message(byte[] message, WSOpcod opcod, int fin);
+
+
+		/// <summary>
+		/// 
+		/// </summary>
+		private void Read()
+		{
+			int recive = 0;
+			int length = Tcp.Available;
+			if (length > 4000)
+				length = 4000;
+			byte[] buffer = new byte[length];
+
+			SocketError error;
+			recive += Tcp.Receive(buffer, recive, length, SocketFlags.None, out error);
+			if ( error != SocketError.Success && error != SocketError.WouldBlock )
+			{
+				throw new WSException("Ошибка при чтении данных из Socketа...", error,
+															   WSCloseNum.ServerError);
+			}
+			try
+			{
+				Reader.Write(buffer, 0, recive);
+			}
+			catch (IOException exc)
+			{
+				throw new WSException("Ошибка при чтении данных из Socketа...", 
+														    WsError.BufferLimitLength,
+															   WSCloseNum.ServerError);
+			}
+		}
+		/// <summary>
+		/// Отправляет сообщение
+		/// </summary>
+		/// <param name="data">Данные</param>
+		private void Write(byte[] buffer)
+		{
+			int recive = 0;
+			int length = buffer.Length;
+
+			SocketError error;
+			recive   =   Tcp.Send(buffer, recive, length, SocketFlags.None, out error);
+			if ( error != SocketError.Success )
+			{
+				if (error != SocketError.WouldBlock
+					&& error != SocketError.NoBufferSpaceAvailable)
+					{
+						throw new WSException("Ошибка записи данных в Socket.", error,
+															   WSCloseNum.ServerError);
+					}
+			}
+		}
+		protected void OnEventWork()
+		{
+			PHandlerEvent e;
+			lock (SyncEvent)
+				e = __EventWork;
+			if (e != null)
+				e(this, PEventArgs.EmptyArgs);
+		}
+		protected void OnEventData(WSBinnary frame)
+		{
+			string m = "Получен фрейм Data";
+			PHandlerEvent e;
+			lock (SyncEvent)
+				e = __EventData;
+			if (e != null)
+				e(this, new PEventArgs(S_DATA, m, frame));
+		}
+		protected void OnEventPing(WSBinnary frame)
+		{
+			string m = "Получен фрейм Ping";
+			PHandlerEvent e;
+			lock (SyncEvent)
+				e = __EventPing;
+			if (e != null)
+				e(this, new PEventArgs(S_PING, m, frame));
+		}
+		protected void OnEventPong(WSBinnary frame)
+		{
+			string m = "Получен фрейм Pong";
+			PHandlerEvent e;
+			lock (SyncEvent)
+				e = __EventPong;
+			if (e != null)
+				e(this, new PEventArgs(S_PONG, m, frame));
+		}
+		protected void OnEventClose(WSClose _close)
+		{
+			string m = _close.ToString();
+
+			PHandlerEvent e;
+			lock (SyncEvent)
+				e = __EventClose;
+			if (e != null)
+				e(this, new PEventArgs(S_CLOSE, m, _close));
+		}
+		protected void OnEventChunk(WSBinnary frame)
+		{
+			string m = "Получена часть данных";
+
+			PHandlerEvent e;
+			lock (SyncEvent)
+				e = __EventChunk;
+			if (e != null)
+				e(this, new PEventArgs(S_CHUNK, m, frame));
+		}
+		protected void OnEventError(WSException _error)
+		{
+			string m = _error.ToString();
+			PHandlerEvent e;
+			lock (SyncEvent)
+				e = __EventError;
+			if (e != null)
+				e(this, new PEventArgs(S_ERROR, m, _error));
+		}
+		protected void OnEventConnect(IHeader request, IHeader response)
+		{
+			string m = "Подключение было установлено";
+			PHandlerEvent e;
+			lock (SyncEvent)
+				e = __EventConnect;
+			if (e != null)
+				e(this, new PEventArgs(S_CONNECT, m, null));
+		}
+		/// <summary>
+		/// 
+		/// </summary>
+		protected abstract void Work();
+		/// <summary>
+		/// 
+		/// </summary>
+		protected abstract void Send();
+		/// <summary>
+		/// 
+		/// </summary>
+		protected abstract void Data();
+		/// <summary>
+		/// 
+		/// </summary>
+		protected abstract void Close(WSClose close);
 		/// <summary>
 		/// 
 		/// </summary>
 		/// <param name="error"></param>
 		protected abstract void Error(WSException error);
+		
 		/// <summary>
 		/// 
 		/// </summary>
-		protected abstract void Close();
-		/// <summary>
-		/// 
-		/// </summary>
-		protected abstract void Connection();
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="data"></param>
-		protected abstract void MessageSend(SArray data);
-		/// <summary>
-		/// Отправляет сообщение
-		/// </summary>
-		/// <param name="data">Данные</param>
-		protected abstract void MessageSend(byte[] data);
+		protected abstract void Connection(IHeader reauest, IHeader response);
     }
 }

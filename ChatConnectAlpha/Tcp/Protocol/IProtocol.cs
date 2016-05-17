@@ -21,18 +21,6 @@ namespace ChatConnect.Tcp.Protocol
 		{
 			get;
 		}
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="data"></param>
-		/// <returns></returns>
-		bool Send(byte[] data);
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="message"></param>
-        /// <returns></returns>
-		bool Send(string message);
         /// <summary>
         /// 
         /// </summary>
@@ -45,17 +33,22 @@ namespace ChatConnect.Tcp.Protocol
         /// <param name="message"></param>
         /// <returns></returns>
 		bool Close(string message);
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="number"></param>
-        /// <param name="message"></param>
-        /// <returns></returns>
-        bool Close(string message, int number);
-        /// <summary>
-        /// 
-        /// </summary>
-        event PHandlerEvent EventWork;
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="data"></param>
+		/// <returns></returns>
+		bool Message(byte[] message);
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="message"></param>
+		/// <returns></returns>
+		bool Message(string message);
+		/// <summary>
+		/// 
+		/// </summary>
+		event PHandlerEvent EventWork;
         /// <summary>
         /// 
         /// </summary>

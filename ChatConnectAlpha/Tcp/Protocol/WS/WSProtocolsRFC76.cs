@@ -49,27 +49,27 @@ namespace ChatConnect.Tcp.Protocol.WS
 					if (stream.ReadHeader(ref __WSFrame) == -1)
 						break;
 
-					if (__WSFrame.BitRsv1 == (int)WSChecking.Rcv1)
+					if (__WSFrame.BitRsv1 == (int)WSChecks.Rcv1)
 					{
 						throw new WSException("Установлен бит rcv1. rcv1", WsError.HeaderFrameError,
 																			 WSCloseNum.PolicyViolation);
 					}
-					if (__WSFrame.BitRsv2 == (int)WSChecking.Rcv2)
+					if (__WSFrame.BitRsv2 == (int)WSChecks.Rcv2)
 					{
 						throw new WSException("Установлен бит rcv2. rcv2", WsError.HeaderFrameError,
 																			 WSCloseNum.PolicyViolation);
 					}
-					if (__WSFrame.BitRsv3 == (int)WSChecking.Rcv3)
+					if (__WSFrame.BitRsv3 == (int)WSChecks.Rcv3)
 					{
 						throw new WSException("Установлен бит rcv3. rcv3", WsError.HeaderFrameError,
 																			 WSCloseNum.PolicyViolation);
 					}
-					if (__WSFrame.BitMask == (int)WSChecking.Mask)
+					if (__WSFrame.BitMask == (int)WSChecks.Mask)
 					{
 						throw new WSException("Установлен бит mask. mask", WsError.HeaderFrameError,
 																			 WSCloseNum.PolicyViolation);
 					}
-					if (__WSFrame.LengBody == 0 || __WSFrame.LengBody > WSChecking.Leng)
+					if (__WSFrame.LengBody == 0 || __WSFrame.LengBody > WSChecks.Leng)
 					{
 						throw new WSException("Длинна: " + __WSFrame.LengBody, WsError.BodyFrameError,
 																				 WSCloseNum.PolicyViolation);

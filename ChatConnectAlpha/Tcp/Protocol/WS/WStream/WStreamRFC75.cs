@@ -3,92 +3,20 @@ using System.IO;
 
 namespace ChatConnect.Tcp.Protocol.WS
 {
-	class WStreamRFC75 : IWStream
+	class WStreamSample : WStream
 	{
-		
-		public int Length
+		public WSFrameSample Frame = 
+				  new WSFrameSample();
+		public WStreamSample(int length)
 		{
-			get;
-			private set;
+			_len = length;
+			_buffer  =  new byte[length];
 		}
-		public int Position
+		public override int ReadBody()
 		{
-			get;
-			set;
+			return -1;
 		}
-		public byte[] __Buffer
-		{
-			get;
-			set;
-		}
-
-		public WStreamRFC75(byte[] buffer)
-		{
-			Position = 0;
-			__Buffer = buffer;
-			  Length = buffer.Length;
-		}
-		public WStreamRFC75(byte[] buffer, int pos)
-		{
-			Position = pos;
-			__Buffer = buffer;
-			  Length = buffer.Length;
-		}
-		public WStreamRFC75(byte[] buffer, int pos, int length)
-		{
-			Position = pos;
-			__Buffer = buffer;
-					   Length = length;
-		}
-
-		public int ReadByte()
-		{
-			if (__Buffer == null)
-				throw new ArgumentNullException("DataBuffer");
-			if (__Buffer.Length <= Position)
-				return -1;
-
-			return __Buffer[Position++];
-		}
-		unsafe public int ReadExtn(ref IWSFrame Frame)
-		{
-
-		}
-		unsafe public int ReadBody(ref IWSFrame Frame)
-		{
-			int _read = 0;
-
-			if (Frame.DataBody == null)
-				Frame.DataBody = new byte[Frame.LengBody];
-
-			fixed (byte* sourse = __Buffer, target = Frame.DataBody)
-			{
-				byte* ps = sourse + Position;
-				byte* pt = target + Frame.PartBody;
-
-				while (Position < Length)
-				{
-					if (Frame.MaskPos > 3)
-						Frame.MaskPos = 0;
-
-					*pt = *ps;
-					ps++;
-					pt++;
-
-					_read++;
-					Position++;
-
-					if (++Frame.PartBody == Frame.LengBody)
-					{
-						Frame.GetsBody = true;
-						return _read;
-					}
-				}
-			}
-			_read = -1;
-			return _read;
-		}
-		public int ReadHeader(ref IWSFrame Frame)
+		public override int ReadHead()
 		{
 			int _read = 0;
 			int _byte = -1;
@@ -121,7 +49,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 						break;
 					case 1:
 						/*      Бит маски тела сообщения      */
-						Frame.BitMask = (int)((uint)_byte >> 7);
+						Frame.BitRsv4 = (int)((uint)_byte >> 7);
 						/*     Длинна полученного тела сообщения     */
 						Frame.BitLeng = (int)((uint)_byte << 25 >> 25);
 

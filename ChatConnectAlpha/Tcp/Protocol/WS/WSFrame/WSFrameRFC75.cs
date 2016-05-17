@@ -2,7 +2,7 @@
 
 namespace ChatConnect.Tcp.Protocol.WS
 {
-	struct WSFrameRFC75 : IWSFrame
+	class WSFrameSample
 	{
 		/// <summary>
 		/// Text опкод
@@ -23,7 +23,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// <summary>
 		/// Binary опкод
 		/// </summary>
-		public const int BINARY = 0x02;
+		public const int BINNARY = 0x02;
 		/// <summary>
 		/// Номер обработчика
 		/// </summary>

@@ -164,7 +164,7 @@ namespace ChatConnect.WebModul
         }
         public void Message(string data)
         {
-            WS.Send(data);
+            WS.Message(data);
         }
   async public void MsgFile(string path)
 		{
@@ -219,7 +219,7 @@ namespace ChatConnect.WebModul
 		}
 		public void Helpers(JsHelp help)
 		{
-			WS.Send(new WsJson("Help", JsonConvert.SerializeObject(
+			WS.Message(new WsJson("Help", JsonConvert.SerializeObject(
 												   help)).ToJson());
 		}		
         public void EventWork(object sender, PEventArgs e)
@@ -335,7 +335,7 @@ namespace ChatConnect.WebModul
 				throw new ArgumentNullException("sender");
 
 			byte[] buffer = sender as byte[];
-			WS.Msg(buffer);
+			WS.Send(buffer);
 		}
 
 	}
