@@ -5,6 +5,16 @@ namespace ChatConnect.Tcp.Protocol.WS
 {
 	class WStream : Stream
 	{
+		public long Clear
+		{
+			get
+			{
+				if (_p_w < _p_r)
+					return (_p_r - _p_w);
+				else
+					rerurn (_len - _p_w) + _p_r;
+			}
+		}
 		public bool isRead
 		{
 			get
@@ -91,7 +101,12 @@ namespace ChatConnect.Tcp.Protocol.WS
 		}				
 		public override void SetLength(long value)
 		{
-			throw new NotImplementedException();
+			if (value > Clear)
+				throw new IOException();
+			if (_p_w + value < _len)
+				_p_w = _p_w + value;
+			else
+				_p_w = value - (_len - _p_w);
 		}
 		public override long Seek(long offset, SeekOrigin origin)
 		{
