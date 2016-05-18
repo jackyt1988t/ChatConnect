@@ -324,7 +324,7 @@ static	private event PHandlerEvent __EventConnect;
 				{
 					Work();
 				/*==================================================================
-					Проверяет сокет были получены данные или нет если. Если 
+					Проверяет сокет были получены данные или нет. Если 
 					данные были получены Запускает функцию для получения данных.
 					В случае если соединеие было закрыто назначается 
 					соотвествующий обработчик, если нет утсанавливает обработчик 
@@ -520,9 +520,9 @@ static	private event PHandlerEvent __EventConnect;
 										       				   WSCloseNum.ServerError);
 					}
 			}
-			length = length  - recive;
-			if (length > 0)
+			if (recive < length)
 			{
+				length = length  - recive;
 				if (Writer.Clear > length)
 				{
 					Writer.Write(buffer, recive, length);
