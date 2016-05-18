@@ -5,7 +5,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 {
 	class WStream : Stream
 	{
-		public int Count
+		public long Count
 		{
 			get
 			{
@@ -16,7 +16,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		{
 			get
 			{
-				return _buffer;
+				return _p_w;
 			}
 		}
 		public long Clear
