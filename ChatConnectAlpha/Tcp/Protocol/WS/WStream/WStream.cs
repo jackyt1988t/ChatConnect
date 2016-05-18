@@ -137,13 +137,25 @@ namespace ChatConnect.Tcp.Protocol.WS
 		}
 		public override long Seek(long offset, SeekOrigin origin)
 		{
-			if (offset > Length)
+			if (offset > 0)
+			{
+				if (offset > Length)
 					throw new IOException;
-			if (offset + _p_r < _len)
-				_p_r = _p_r + offset;
-			else
-				_p_r = offset - (_len - _p_r);
-			return offset;
+				if (offset + _p_r < _len)
+					_p_r = _p_r + offset;
+				else
+					_p_r = offset - (_len - _p_r)
+	return offset;
+}
+			else {
+				if (offset > Clear)
+					throw new IOException();
+				if (_p_r - offset > 0)
+				_p_r = _p_r - offset;
+				else
+					_p_r = _len - (offset - _p_r);
+				return offset * -1;
+			{
 		}
 		unsafe public override int Read(byte[] buffer, int pos, int len)
 		{
