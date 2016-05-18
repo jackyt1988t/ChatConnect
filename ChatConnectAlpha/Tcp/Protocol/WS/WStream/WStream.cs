@@ -5,11 +5,18 @@ namespace ChatConnect.Tcp.Protocol.WS
 {
 	class WStream : Stream
 	{
+		public int Count
+		{
+			get
+			{
+				return _len;
+			}
+		}
 		public long Write
 		{
 			get
 			{
-				return _p_w;
+				return _buffer;
 			}
 		}
 		public long Clear
