@@ -483,6 +483,9 @@ static	private event PHandlerEvent __EventConnect;
 		private void Write(byte[] buffer)
 		{
 			int recive = 0;
+			lock (Sync)
+			{
+			    if (Writer.IsRead)
 			int length = buffer.Length;
 
 			SocketError error;
