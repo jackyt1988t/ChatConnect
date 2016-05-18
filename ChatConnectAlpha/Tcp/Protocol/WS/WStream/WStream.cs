@@ -130,19 +130,13 @@ namespace ChatConnect.Tcp.Protocol.WS
 		}
 		public override long Seek(long offset, SeekOrigin origin)
 		{
-			switch (origin)
-			{
-				case SeekOrigin.End:
-					_p_r = _p_w;
-					return _p_w;
-				case SeekOrigin.Begin:
-					return 0;
-				case SeekOrigin.Current:
-					_p_r = offset;
-					return offset;
-				default:
-					return 0;
-			}
+			if (offset > Length)
+					throw new IOException;
+			if (offset + _p_r < _len)
+				_p_r = _p_r + offset;
+			else
+				_p_r = offset - (_len - _p_r);
+			return offset;
 		}
 		unsafe public override int Read(byte[] buffer, int pos, int len)
 		{
