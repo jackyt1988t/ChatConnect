@@ -18,11 +18,12 @@ namespace ChatConnect.WebModul.Chat
             base()
             {
                 __timelast = 0;
-            }
+			}
         public HandlerModuleU(IWebModule wm) :
             base(wm)
             {
                 __timelast = 0;
+				wm.WS.EventWork -= EventWork;
             }
         public virtual void Info(IWebModule module, JsInfo io)
         {

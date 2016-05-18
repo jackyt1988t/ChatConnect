@@ -116,10 +116,9 @@
     <Compile Include="Tcp\Protocol\WS\WSFrame\WSFrame.cs" />
     <Compile Include="Tcp\Protocol\WS\WSProtocols.cs" />
     <Compile Include="Tcp\Protocol\WStateEnum.cs" />
-    <Compile Include="Tcp\Protocol\WS\WSProtocolsRFC75.cs" />
-    <Compile Include="Tcp\Protocol\WS\WSProtocolsRFC76.cs" />
+    <Compile Include="Tcp\Protocol\WS\WSProtocols7.cs" />
     <Compile Include="Tcp\Protocol\WS\WStream\WStreamRFC75.cs" />
-    <Compile Include="Tcp\Protocol\WS\WStream\WStreamRFC76.cs" />
+    <Compile Include="Tcp\Protocol\WS\WStream\WStream7.cs" />
     <Compile Include="Tcp\Protocol\WS\WStream\WStream.cs" />
     <Compile Include="Tcp\Segment.cs" />
     <Compile Include="WSModul\Chats.cs" />

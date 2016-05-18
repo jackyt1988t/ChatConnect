@@ -5,27 +5,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 {
 	class WStream : Stream
 	{
-		public long Read
-		{
-			get
-			{
-				return _p_r;
-			}
-		}
-		public long Count
-		{
-			get
-			{
-				return _len;
-			}
-		}
-		public long Write
-		{
-			get
-			{
-				return _p_w;
-			}
-		}
+		
 		public long Clear
 		{
 			get
@@ -33,7 +13,46 @@ namespace ChatConnect.Tcp.Protocol.WS
 				if (_p_w < _p_r)
 					return (_p_r - _p_w);
 				else
-					rerurn (_len - _p_w) + _p_r;
+					return (_len - _p_w) + _p_r;
+			}
+		}
+		public long Counts
+		{
+			get
+			{
+				return _len;
+			}
+		}
+		long _p_w;
+		public long PointR
+		{
+			get
+			{
+				return _p_r;
+			}
+			protected set
+			{
+				if (value < _len)
+					_p_r = value;
+				else
+					_p_r = 0;
+			}
+		}
+		long _p_r;
+		public long PointW
+		{
+			get
+			{
+				return _p_w;
+			}
+			protected set
+			{
+				if (value < _len)
+					_p_w = value;
+				else
+					_p_w = 0;
+				if (_p_w == _p_r)
+					throw new IOException("Переаолнение буффера");
 			}
 		}
 		public bool isRead
@@ -61,22 +80,10 @@ namespace ChatConnect.Tcp.Protocol.WS
 		{
 			get
 			{
-				if (_p_w >= _p_r)
-					_p_w - _p_r;
+				if (_p_w < _p_r)
+					return (_len - _p_r) + _p_w;					
 				else
-					return (_len - _p_r) + _p_w;
-			}
-		}
-		public override long Position
-		{
-			get
-			{
-				return 0;
-			}
-
-			set
-			{
-				Seek(value);
+					return (_p_w - _p_r);
 			}
 		}
 		public override bool CanRead
@@ -93,6 +100,18 @@ namespace ChatConnect.Tcp.Protocol.WS
 				return true;
 			}
 		}
+		public override long Position
+		{
+			get
+			{
+				return 0;
+			}
+
+			set
+			{
+				Seek(value, SeekOrigin.Begin);
+			}
+		}
 		public override bool CanWrite
 		{
 			get
@@ -100,16 +119,10 @@ namespace ChatConnect.Tcp.Protocol.WS
 				return true;
 			}
 		}
-
-		private long _p_r;
-		private long _p_w;
 		protected long _len;
 		protected byte[] _buffer;
 
-		public override void Flush()
-		{
-			throw new NotImplementedException();
-		}
+
 		public virtual int ReadHead()
 		{
 			throw new NotImplementedException();
@@ -118,11 +131,13 @@ namespace ChatConnect.Tcp.Protocol.WS
 		{
 			throw new NotImplementedException();
 		}
+		public override void Flush()
+		{
+			throw new NotImplementedException();
+		}
 		public override int ReadByte()
 		{
-			if (_p_r == _len)
-				_p_r = 0;
-			if (_p_r == _p_w)
+			if (!isRead)
 				return -1;
 			return _buffer[_p_r++];
 		}				
@@ -130,32 +145,33 @@ namespace ChatConnect.Tcp.Protocol.WS
 		{
 			if (value > Clear)
 				throw new IOException();
-			if (_p_w + value < _len)
-				_p_w = _p_w + value;
+			if (PointW + value < _len)
+				PointW = PointW + value;
 			else
-				_p_w = value - (_len - _p_w);
+				PointW = value - (_len - PointW);
 		}
 		public override long Seek(long offset, SeekOrigin origin)
 		{
 			if (offset > 0)
 			{
 				if (offset > Length)
-					throw new IOException;
-				if (offset + _p_r < _len)
-					_p_r = _p_r + offset;
+					throw new IOException();
+				if (offset + PointR < _len)
+					PointR = PointR + offset;
 				else
-					_p_r = offset - (_len - _p_r)
-	return offset;
-}
-			else {
+					PointR = offset - (_len - PointR);
+				return offset;
+			}
+			else
+			{
 				if (offset > Clear)
 					throw new IOException();
-				if (_p_r - offset > 0)
-				_p_r = _p_r - offset;
+				if (PointR - offset > 0)
+					PointR = PointR - offset;
 				else
-					_p_r = _len - (offset - _p_r);
+					PointR = _len - (offset - PointR);
 				return offset * -1;
-			{
+			}
 		}
 		unsafe public override int Read(byte[] buffer, int pos, int len)
 		{
@@ -168,13 +184,11 @@ namespace ChatConnect.Tcp.Protocol.WS
 				byte* ps = source + pos;
 				for (  i = 0; i < len; i++  )
 				{
-					byte* pt = target + _p_r;
-						  ps = pt;
-				
+					byte* pt = target + PointR;
+
+					*ps = *pt;
 					ps++;
-					_p_w++;
-					if (_p_r == _len)
-						_p_r = 0;
+					PointR++;
 					if (_p_r == _p_w)
 						return i;
 				}
@@ -189,15 +203,11 @@ namespace ChatConnect.Tcp.Protocol.WS
 				byte* pt = target + pos;
 				for (  i = 0; i < len; i++  )
 				{
-					byte* ps = source + _p_w;
-						  ps = pt;
-					
+					byte* ps = source + PointW;
+
+					*ps = *pt;					
 					pt++;
-					_p_w++;
-					if (_p_w == _len)
-						_p_w = 0;
-					if (_p_w == _p_r)
-						throw new IOException("Переаолнение буффера");
+					PointW++;
 				}
 			}
 		}

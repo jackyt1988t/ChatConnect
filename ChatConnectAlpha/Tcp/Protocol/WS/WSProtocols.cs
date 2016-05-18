@@ -19,11 +19,8 @@ namespace ChatConnect.Tcp.Protocol.WS
 		{
 			get;
 		}
-		/// <summary>
-		/// Объект для проверки данных заголвока
-		/// </summary>
-		
-		protected WSBinnary __Binnary;
+			
+		private WSBinnary __Frame ;
 		
 		/// <summary>
 		/// Ининцилазириует класс протокола WS без подключения
@@ -123,14 +120,18 @@ namespace ChatConnect.Tcp.Protocol.WS
 		{
 			OnEventWork();
 		}
-		protected override void Send()
-		{
-						
-		}
+		
 		protected override void Data()
 		{
 			if(!Reader.isRead)
 				return;
+		}
+		protected override void Write()
+		{
+			if (!Writer.isWrite)
+			{
+				return;
+			}
 		}
 		protected override void Close(WSClose close)
 		{

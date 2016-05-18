@@ -242,7 +242,7 @@ namespace ChatConnect.WebModul
                 throw new ArgumentNullException("WsMessage");
 			IHandlerModule handlermodule   =   HandlerModule;
 			WebMooduleJson js = new WebMooduleJson();
-			if (binnary.Opcod == WSFrameRFC76.BINARY)
+			if (binnary.Opcod == WSFrame7.BINNARY)
 			{
 				js.JsEvent = "Wav";
 				js.JsData = binnary.Buffer;
@@ -298,13 +298,13 @@ namespace ChatConnect.WebModul
                 if (handlermodule != null)
                     handlermodule.HandlerError(this, exc);
 
-                WS.Close(exc.Message, 1000);
+                WS.Close(exc.Message);
                 Logout.AddMessage("Пользовательскся ошибка: " + exc.Message, 
                     @"Log/user.log", Log.Log.Info);
             }
             catch (Exception exc)
             {
-                WS.Close(exc.Message, 1000);
+                WS.Close(exc.Message);
                 Logout.AddMessage("Ошибка в пользовательском модуле: " + exc.Message + "\r\n" + exc.StackTrace, 
                     @"Log/user.log", Log.Log.Debug);
             }

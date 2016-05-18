@@ -120,17 +120,13 @@ namespace ChatConnect.WebModul.Chat
 		}
 		public void TestM(byte[] message)
 		{
-			int pcod = WSFrameRFC76.BINARY;
-			IWSFrame wsframe = new WSFrameRFC76();
+			int pcod = WSFrame7.BINNARY;
+			WSFrame7 wsframe = new WSFrame7();
 			wsframe.BitFind = 1;
 			wsframe.BitPcod = pcod;
 			wsframe.DataBody = message;
 			wsframe.LengBody = message.Length;
-			wsframe.SetHeader();
-			byte[] buffer = new byte[wsframe.LengHead
-									+ wsframe.LengBody];
-			wsframe.DataHead.CopyTo(buffer, 0);
-			wsframe.DataBody.CopyTo(buffer, wsframe.LengHead);
+			byte[] buffer = wsframe.GetDataFrame();
 
 			PHandlerEvent h;
 			lock (SyncEvent)
@@ -140,17 +136,13 @@ namespace ChatConnect.WebModul.Chat
 		}
 		public void Message(byte[] message)
 		{
-			int pcod = WSFrameRFC76.TEXT;
-			IWSFrame wsframe = new WSFrameRFC76();
+			int pcod = WSFrame7.TEXT;
+			WSFrame7 wsframe = new WSFrame7();
 					 wsframe.BitFind = 1;
 					 wsframe.BitPcod = pcod;
 					 wsframe.DataBody = message;
 					 wsframe.LengBody = message.Length;
-					 wsframe.SetHeader();
-			byte[] buffer = new byte[ wsframe.LengHead
-									+ wsframe.LengBody];
-			wsframe.DataHead.CopyTo(buffer, 0);
-			wsframe.DataBody.CopyTo(buffer, wsframe.LengHead);
+			byte[] buffer = wsframe.GetDataFrame();
 
 			PHandlerEvent h;
 			lock (SyncEvent)

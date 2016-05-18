@@ -2,53 +2,19 @@
 
 namespace ChatConnect.Tcp.Protocol.WS
 {
-    class WStreamRFC76
+    class WStream7 : WStream
     {
-        public int Length
+		public WSFrame7 Frame;
+
+        public WStream7(int length)
         {
-            get;
-            private set;
-        }
-        public int Position
-        {
-            get;
-            set;
-        }
-        public byte[] __Buffer
-        {
-            get;
-            private set;
+			Frame  =  new WSFrame7();
+
+			_len = length;
+			_buffer = new byte[ length ];
         }
 
-        public WStreamRFC76(byte[] buffer)
-        {
-            Position = 0;
-            __Buffer = buffer;
-                Length = buffer.Length;
-        }
-		public WStreamRFC76(byte[] buffer, int pos)
-		{
-			Position = pos;
-			__Buffer = buffer;
-				Length = buffer.Length;
-		}
-		public WStreamRFC76(byte[] buffer, int pos, int length)
-		{
-			Position = pos;
-			__Buffer = buffer;
-				Length = length;
-		}
-
-		public int ReadByte()
-        {
-            if (__Buffer == null)
-                throw new ArgumentNullException("DataBuffer");
-            if (__Buffer.Length <= Position)
-                return -1;
-
-            return __Buffer[  Position++  ];
-        }
- unsafe public int ReadBody ( ref WSFrameRFC76 Frame )
+		unsafe public override int ReadBody()
         {
             int _read = 0;
 
@@ -57,22 +23,21 @@ namespace ChatConnect.Tcp.Protocol.WS
 
             if (  Frame.BitMask == 0  )
             {
-				fixed (byte* sourse = __Buffer, target = Frame.DataBody)
+				fixed (byte* sourse = _buffer, target = Frame.DataBody)
 				{
-					byte* ps = sourse + Position;
+					byte* ps = sourse + PointR;
 					byte* pt = target + Frame.PartBody;
 
-					while (Position < Length)
+					while (isRead)
 					{
 						if (Frame.MaskPos > 3)
 							Frame.MaskPos = 0;
 
 						*pt = *ps;
 						ps++;
-						pt++;
-
+						pt++;						
 						_read++;
-						Position++;
+						PointR++;
 
 						if (++Frame.PartBody == Frame.LengBody)
 						{
@@ -91,22 +56,22 @@ namespace ChatConnect.Tcp.Protocol.WS
                        mask[2] = (byte)((Frame.MaskVal << 16) >> 24);
                        mask[3] = (byte)((Frame.MaskVal << 24) >> 24);
 
-				fixed (byte * sourse = __Buffer, target = Frame.DataBody)
+				fixed (byte * sourse = _buffer, target = Frame.DataBody)
 				{
-					byte* ps = sourse + Position;
+					byte* ps = sourse + PointR;
 					byte* pt = target + Frame.PartBody;
 
-					while (Position < Length)
+					while (isRead)
 					{
 						if (Frame.MaskPos > 3)
 							Frame.MaskPos = 0;
-
+						if (PointR == Counts)
+							;
 						*pt = (byte)(*ps ^ mask[Frame.MaskPos]);
 						ps++;
 						pt++;
-
 						_read++;
-						Position++;
+						PointR++;
 						Frame.MaskPos++;
 
 						if (++Frame.PartBody == Frame.LengBody)
@@ -121,7 +86,7 @@ namespace ChatConnect.Tcp.Protocol.WS
             _read = -1;
             return _read;
         }
-        public int ReadHeader ( ref WSFrameRFC76 Frame )
+        public override int ReadHead()
         {
             int _read = 0;
             int _byte = -1;

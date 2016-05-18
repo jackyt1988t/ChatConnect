@@ -39,7 +39,7 @@ namespace ChatConnect.Tcp
 					else
 					{
 						agregator.TaskLoopHandler();
-						if (loop++ > 1500)
+						if (loop++ > 500)
 						{
 							loop = 0;
 							Thread.Sleep(1);
@@ -60,7 +60,7 @@ namespace ChatConnect.Tcp
 		{
 			if (_nextloop < DateTime.Now.Ticks)
 			{
-				_nextloop = DateTime.Now.Ticks + 10 * 1000 * 25;
+				_nextloop = DateTime.Now.Ticks + 10 * 1000 * 20;
 				TaskResult TaskResult = Protocol.TaskLoopHandlerProtocol();
 				switch (TaskResult.Option)
 				{
@@ -70,7 +70,7 @@ namespace ChatConnect.Tcp
 					case TaskOption.Protocol:
 						if (TaskResult.Protocol == TaskProtocol.WSRFC76)
 							Protocol =
-							   new WSProtocolRFC76(Protocol, Connect);
+							   new WSProtocol7(Protocol);
 						Container.Enqueue(this);
 						break;
 					case TaskOption.Threading:

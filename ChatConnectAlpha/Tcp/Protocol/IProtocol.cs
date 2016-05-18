@@ -61,9 +61,5 @@ namespace ChatConnect.Tcp.Protocol
         /// 
         /// </summary>
         event PHandlerEvent EventClose;
-        /// <summary>
-        /// 
-        /// </summary>
-        event PHandlerEvent EventConnect;
     }
 }

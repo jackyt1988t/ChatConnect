@@ -84,7 +84,7 @@ namespace ChatConnect.WebModul.Chat
 		public override void EventWork(object sender, PEventArgs e)
         {
             if (_wait != 0 && _wait + TimeWait < DateTime.Now.Ticks)
-                __WM.WS.Close(	  string.Empty, 1000   );
+                __WM.WS.Close(  string.Empty  );
         }
         public override bool HandlerJson(IWebModule module, WebMooduleJson js)
         {

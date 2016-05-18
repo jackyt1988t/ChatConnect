@@ -29,26 +29,18 @@ namespace ChatConnect
 			IPEndPoint point = new IPEndPoint(IPAddress.Parse("0.0.0.0"), 8081);
 			Socket listener = new Socket(point.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 			listener.Bind(point);
-			listener.Listen (80);
+			listener.Listen(1000);
 
 			LingerOption LOption = new LingerOption(true, 0);
 			
-			Agregator.Connection(
+			WS.EventConnect +=
 				new PHandlerEvent((object sender, PEventArgs e) =>
 			{
-				switch (sender.ToString())
-				{
-					case "WS":
-						WS ws = 
-							(WS)sender;
-						WebModule wm = 
-							new WebModule(ws); 
-						break;
-					case "HTTP":
-						HTTP http = (HTTP)sender;
-						break;
-				}
-			}));
+				WS ws = 
+					(WS)sender;
+				WebModule wm = 
+					new WebModule(ws);
+			});
 			while ( true )
 			{
 				Socket socket = null;

@@ -221,18 +221,17 @@ abstract
 		/// <summary>
 		/// Событие которое наступает при открвтии соединения когда получены заголвоки
 		/// </summary>
+  static 
 		public event PHandlerEvent EventConnect
 		{
 			add
 			{
-				lock (SyncEvent)
-					__EventConnect += value;
+				__EventConnect += value;
 
 			}
 			remove
 			{
-				lock (SyncEvent)
-					__EventConnect -= value;
+				__EventConnect -= value;
 			}
 		}
 
@@ -257,8 +256,8 @@ static	private event PHandlerEvent __EventConnect;
 				return false;
 			try
 			{
-				Write(message);
-				return true;
+				lock (Sync)
+					Write(message);				
 			}
 			catch (WSException exc)
 			{
@@ -268,6 +267,7 @@ static	private event PHandlerEvent __EventConnect;
 				close = new WSClose(    "Server", exc.Closes    );
 				return false;
 			}
+			return true;
 		}
 		/// <summary>
 		/// Отправляет фрейм пинг текущему подключению
@@ -357,7 +357,8 @@ static	private event PHandlerEvent __EventConnect;
 						return TaskResult;
 					if (Tcp.Poll(0, SelectMode.SelectWrite))
 					{
-						Send();
+						lock (Sync)
+							Write();
 					}
 						else if (!Tcp.Connected)
 						{
@@ -452,29 +453,34 @@ static	private event PHandlerEvent __EventConnect;
 		/// </summary>
 		private void Read()
 		{
-			int recive = 0;
-			int length = Tcp.Available;
+			SocketError error;
+
+			var length = 
+				Tcp.Available;
 			if (length > 4000)
 				length = 4000;
-			byte[] buffer = new byte[length];
+			byte[] buffer = 
+				   Reader.Buffers;
+			if (Reader.Clear == 0)
+			{
+				error = SocketError.NoBufferSpaceAvailable;
+				throw new WSException("Ошибка при чтении данных из Socketа...", error,
+															   WSCloseNum.ServerError);
+			}
+			int recive =
+				   (int)Reader.PointW;
+			if (Reader.Counts - recive < length)
+				length = 
+				   (int)(Reader.Counts - recive);
 
-			SocketError error;
-			recive += Tcp.Receive(buffer, recive, length, SocketFlags.None, out error);
-			if ( error != SocketError.Success && error != SocketError.WouldBlock )
+			recive = Tcp.Receive(buffer, recive, length, SocketFlags.None, out error);
+															  Reader.SetLength(recive);
+			if (error  !=  SocketError.Success  &&  error  !=  SocketError.WouldBlock)
 			{
 				throw new WSException("Ошибка при чтении данных из Socketа...", error,
 															   WSCloseNum.ServerError);
 			}
-			try
-			{
-				Reader.Write(buffer, 0, recive);
-			}
-			catch (IOException exc)
-			{
-				throw new WSException("Ошибка при чтении данных из Socketа...", 
-														    WsError.BufferLimitLength,
-															   WSCloseNum.ServerError);
-			}
+			
 		}
 		/// <summary>
 		/// Отправляет сообщение
@@ -482,13 +488,28 @@ static	private event PHandlerEvent __EventConnect;
 		/// <param name="data">Данные</param>
 		private void Write(byte[] buffer)
 		{
+			SocketError error;
+
 			int recive = 0;
-			lock (Sync)
-			{
-			    if (Writer.IsRead)
 			int length = buffer.Length;
 
-			SocketError error;
+			if (Writer.isWrite)
+			{
+				if (Writer.Clear > length)
+				{
+					Writer.Write(buffer, 0, length);
+					return;
+				}
+				else
+				{
+					error = SocketError.NoBufferSpaceAvailable;
+						throw new WSException("Ошибка записи данных в Socket.", error,
+															   WSCloseNum.ServerError);
+				}
+				
+			}
+
+			
 			recive   =   Tcp.Send(buffer, recive, length, SocketFlags.None, out error);
 			if ( error != SocketError.Success )
 			{
@@ -580,11 +601,11 @@ static	private event PHandlerEvent __EventConnect;
 		/// <summary>
 		/// 
 		/// </summary>
-		protected abstract void Send();
+		protected abstract void Data();
 		/// <summary>
 		/// 
 		/// </summary>
-		protected abstract void Data();
+		protected abstract void Write();
 		/// <summary>
 		/// 
 		/// </summary>
