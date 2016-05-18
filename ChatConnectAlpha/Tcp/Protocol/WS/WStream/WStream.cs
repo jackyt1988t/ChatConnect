@@ -5,6 +5,13 @@ namespace ChatConnect.Tcp.Protocol.WS
 {
 	class WStream : Stream
 	{
+		public long Read
+		{
+			get
+			{
+				return _p_r;
+			}
+		}
 		public long Count
 		{
 			get
@@ -43,7 +50,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 				return (_p_r != _p_w);
 			}
 		}
-		public byte[] SBuffer
+		public byte[] Buffers
 		{
 			get
 			{
@@ -64,12 +71,12 @@ namespace ChatConnect.Tcp.Protocol.WS
 		{
 			get
 			{
-				return _p_r;
+				return 0;
 			}
 
 			set
 			{
-				_p_r = value;
+				Seek(value);
 			}
 		}
 		public override bool CanRead
