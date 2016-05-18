@@ -517,8 +517,24 @@ static	private event PHandlerEvent __EventConnect;
 					&& error != SocketError.NoBufferSpaceAvailable)
 					{
 						throw new WSException("Ошибка записи данных в Socket.", error,
-															   WSCloseNum.ServerError);
+										       				   WSCloseNum.ServerError);
 					}
+			}
+			length = length  - recive;
+			if (length > 0)
+			{
+				if (Writer.Clear > length)
+				{
+					Writer.Write(buffer, recive, length);
+					return;
+				}
+				else
+				{
+					error = SocketError.NoBufferSpaceAvailable;
+						throw new WSException("Ошибка записи данных в Socket.", error,
+										       				   WSCloseNum.ServerError);
+				}
+				
 			}
 		}
 		protected void OnEventWork()
