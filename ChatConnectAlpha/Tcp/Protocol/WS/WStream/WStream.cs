@@ -5,6 +5,13 @@ namespace ChatConnect.Tcp.Protocol.WS
 {
 	class WStream : Stream
 	{
+		public long Write
+		{
+			get
+			{
+				return _p_w;
+			}
+		}
 		public long Clear
 		{
 			get
@@ -29,7 +36,13 @@ namespace ChatConnect.Tcp.Protocol.WS
 				return (_p_r != _p_w);
 			}
 		}
-		
+		public byte[] SBuffer
+		{
+			get
+			{
+				return _buffer;
+			}
+		}
 		public override long Length
 		{
 			get
@@ -71,13 +84,6 @@ namespace ChatConnect.Tcp.Protocol.WS
 			get
 			{
 				return true;
-			}
-		}
-		public byte[] WSBuffer
-		{
-			get
-			{
-				return _buffer;
 			}
 		}
 
