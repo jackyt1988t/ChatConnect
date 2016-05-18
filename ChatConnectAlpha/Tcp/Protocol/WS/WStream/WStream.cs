@@ -73,6 +73,13 @@ namespace ChatConnect.Tcp.Protocol.WS
 				return true;
 			}
 		}
+		public byte[] WSBuffer
+		{
+			get
+			{
+				return _buffer;
+			}
+		}
 
 		private long _p_r;
 		private long _p_w;
