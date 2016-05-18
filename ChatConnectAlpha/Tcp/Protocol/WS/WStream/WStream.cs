@@ -24,10 +24,10 @@ namespace ChatConnect.Tcp.Protocol.WS
 		{
 			get
 			{
-				if (_p_w < _p_r)
-					return (_len - _p_r) + _p_w;
+				if (_p_w >= _p_r)
+					_p_w - _p_r;
 				else
-					return (_len - _p_w) - _p_r;
+					return (_len - _p_r) + _p_w;
 			}
 		}
 		public override long Position
@@ -98,11 +98,10 @@ namespace ChatConnect.Tcp.Protocol.WS
 			switch (origin)
 			{
 				case SeekOrigin.End:
-					_p_w = _len;
-					return _len;
+					_p_r = _p_w;
+					return _p_w;
 				case SeekOrigin.Begin:
-					_p_r = _len;
-					return _len;
+					return 0;
 				case SeekOrigin.Current:
 					_p_r = offset;
 					return offset;
