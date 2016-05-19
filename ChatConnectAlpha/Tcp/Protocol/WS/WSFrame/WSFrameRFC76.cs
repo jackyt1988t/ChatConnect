@@ -15,6 +15,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		public const int PONG   = 0x0A;
 		public const int CLOSE  = 0x08;
 		public const int BINNARY = 0x02;
+		public const int CONTINUE = 0x00;
 		/// <summary>
 		/// Номер обработчика
 		/// </summary>

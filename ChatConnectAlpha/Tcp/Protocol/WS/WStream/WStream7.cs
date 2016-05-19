@@ -65,8 +65,6 @@ namespace ChatConnect.Tcp.Protocol.WS
 					{
 						if (Frame.MaskPos > 3)
 							Frame.MaskPos = 0;
-						if (PointR == Count)
-							;
 						*pt = (byte)(*ps ^ mask[Frame.MaskPos]);
 						ps++;
 						pt++;

@@ -495,26 +495,27 @@ static	private event PHandlerEvent __EventConnect;
 			SocketError error;			
 			if ( Writer.Empty )
 			{
-				int write = 
+				int start = 
 					(int)Writer.PointR;
-				int length = 
+				int write = 
 					(int)Writer.Length;
+				if (write > 16000)
+					write = 16000;
 				byte[] buffer = 
 						 Writer.Buffer;
-				if (length > 16000)
-					length = 16000;
-				if (Writer.Count - write < length)
-					length =
-					   (int)(Writer.Count - write);
-				write  =  Tcp.Send(buffer, write, length, SocketFlags.None, out error);
-											        Writer.Seek(write, SeekOrigin.End);
+				
+				if (Writer.Count - start < write)
+					write =
+					  (int)(Writer.Count - start);
+				start  =  Tcp.Send(buffer, start, write, SocketFlags.None, out error);
+											       Writer.Seek(start, SeekOrigin.End);
 				if (error != SocketError.Success)
 				{
 					if (error != SocketError.WouldBlock
 						&& error != SocketError.NoBufferSpaceAvailable)
 					{
-						throw new WSException("Ошибка записи данных в Socket.", error,
-															      WSClose.ServerError);
+						throw new WSException("Ошибка записи данных в Socket", error,
+															     WSClose.ServerError);
 					}
 				}					
 			}

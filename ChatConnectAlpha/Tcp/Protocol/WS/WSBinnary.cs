@@ -40,8 +40,8 @@ namespace ChatConnect.Tcp.Protocol.WS
             else
             {
                 byte[] part = new byte[Buffer.Length + buffer.Length];
-                Buffer.CopyTo(part, 0);
-                buffer.CopyTo(part, Buffer.Length);
+                Buffer.CopyTo(   part, 0   );
+                buffer.CopyTo(   part, Buffer.Length   );
                 Buffer = part;
             }
 				Mofieid = DateTime.Now;
