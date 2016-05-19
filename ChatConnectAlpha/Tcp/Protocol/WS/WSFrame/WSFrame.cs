@@ -3,6 +3,10 @@
 	enum WSOpcod : int
 	{
 		Text = 0,
-		Binnary = 1
+		Ping = 1,
+		Pong = 2,
+		Close = 3,
+		Binnary = 4,
+		Continue = 5
 	}
 }

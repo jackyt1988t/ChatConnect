@@ -50,8 +50,8 @@ namespace ChatConnect
 					socket = listener.Accept();
 					socket.Blocking = false;
 					socket.LingerState = LOption;
-					socket.SendBufferSize = 1000 * 1024;
-					socket.ReceiveBufferSize = 1000 * 1024;
+					socket.SendBufferSize = 1000 * 64;
+					socket.ReceiveBufferSize = 1000 * 32;
 					Agregator ObjectProtocol = new Agregator(socket);
 
 				}

@@ -5,7 +5,20 @@ namespace ChatConnect.Tcp.Protocol.WS
 {
 	class WStream : Stream
 	{
-		
+		public long Count
+		{
+			get
+			{
+				return _len;
+			}
+		}
+		public bool Empty
+		{
+			get
+			{
+				return (_p_r != _p_w);
+			}
+		}
 		public long Clear
 		{
 			get
@@ -15,14 +28,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 				else
 					return (_len - _p_w) + _p_r;
 			}
-		}
-		public long Counts
-		{
-			get
-			{
-				return _len;
-			}
-		}
+		}		
 		long _p_w;
 		public long PointR
 		{
@@ -32,10 +38,10 @@ namespace ChatConnect.Tcp.Protocol.WS
 			}
 			protected set
 			{
-				if (value == _len)
-					_p_r = 0;
-				else
+				if (value < _len)
 					_p_r = value;
+				else
+					_p_r = 0;
 			}
 		}
 		long _p_r;
@@ -47,29 +53,15 @@ namespace ChatConnect.Tcp.Protocol.WS
 			}
 			protected set
 			{
-				if (value == _len)
-					_p_w = 0;
-				else
+				if (value < _len)
 					_p_w = value;
-				if (_p_w  ==  _p_r)
+				else
+					_p_w = 0;
+				if (_p_w == _p_r)
 					throw new IOException("Переаолнение буффера");
 			}
 		}
-		public bool isRead
-		{
-			get
-			{
-				return (_p_r != _p_w);
-			}
-		}
-		public bool isWrite
-		{
-			get
-			{
-				return (_p_r != _p_w);
-			}
-		}
-		public byte[] Buffers
+		public byte[] Buffer
 		{
 			get
 			{
@@ -100,6 +92,13 @@ namespace ChatConnect.Tcp.Protocol.WS
 				return true;
 			}
 		}
+		public override bool CanWrite
+		{
+			get
+			{
+				return true;
+			}
+		}
 		public override long Position
 		{
 			get
@@ -110,13 +109,6 @@ namespace ChatConnect.Tcp.Protocol.WS
 			set
 			{
 				Seek(value, SeekOrigin.Begin);
-			}
-		}
-		public override bool CanWrite
-		{
-			get
-			{
-				return true;
 			}
 		}
 		protected long _len;
@@ -137,7 +129,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		}
 		public override int ReadByte()
 		{
-			if (!isRead)
+			if (!Empty)
 				return -1;
 			return _buffer[_p_r++];
 		}				
@@ -148,7 +140,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 			if (PointW + value < _len)
 				PointW = PointW + value;
 			else
-				PointW = value - (Counts - PointW);
+				PointW = value - (Count - PointW);
 		}
 		public override long Seek(long offset, SeekOrigin origin)
 		{
@@ -156,10 +148,10 @@ namespace ChatConnect.Tcp.Protocol.WS
 			{
 				if (offset > Length)
 					throw new IOException();
-				if (offset + PointR < Counts)
+				if (offset + PointR < Count)
 					PointR = PointR + offset;
 				else
-					PointR = offset - (Counts - PointR);
+					PointR = offset - (Count - PointR);
 				return offset;
 			}
 			else
@@ -169,14 +161,14 @@ namespace ChatConnect.Tcp.Protocol.WS
 				if (PointR - offset > 0)
 					PointR = PointR - offset;
 				else
-					PointR = Counts - (offset - PointR);
+					PointR = Count - (offset - PointR);
 				return offset * -1;
 			}
 		}
 		unsafe public override int Read(byte[] buffer, int pos, int len)
 		{
 			int i;
-			if (!isRead)
+			if (!Empty)
 				return -1;
 			fixed(byte* source = buffer, target = _buffer)
 			{
@@ -189,7 +181,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 					*ps = *pt;
 					ps++;
 					PointR++;
-					if (!isRead)
+					if (!Empty)
 						return i;
 				}
 			}

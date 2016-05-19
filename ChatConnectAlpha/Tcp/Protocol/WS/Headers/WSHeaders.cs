@@ -17,17 +17,17 @@ namespace ChatConnect.Tcp.Protocol.WS
 			{
 				if (!req.ContainsKey("sec-websocket-key"))
 					throw new WSException("sec-websocket-key", WsError.HandshakeError,
-															   WSCloseNum.TLSHandshake);
+															   WSClose.TLSHandshake);
 				Versions(req, res);
 			}
 			else
 			{
 				if (!req.ContainsKey("sec-websocket-key1"))
 					throw new WSException("sec-websocket-key", WsError.HandshakeError,
-															   WSCloseNum.TLSHandshake);
+															   WSClose.TLSHandshake);
 				if (!req.ContainsKey("sec-websocket-key2"))
 					throw new WSException("sec-websocket-key", WsError.HandshakeError,
-															   WSCloseNum.TLSHandshake);
+															   WSClose.TLSHandshake);
 				VersionSample(req, res);
 			}
 		}

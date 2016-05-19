@@ -100,13 +100,12 @@
     <Compile Include="Tcp\Protocol\IProtocol.cs" />
     <Compile Include="Tcp\Protocol\WS\Debug\WSDebug.cs" />
     <Compile Include="Tcp\Protocol\WS\Headers\WSHeaders.cs" />
-    <Compile Include="Tcp\Protocol\WS\WSClose\WSClose.cs" />
+    <Compile Include="Tcp\Protocol\WS\WSClose\Close.cs" />
     <Compile Include="Tcp\Protocol\WS\WS.cs" />
     <Compile Include="Tcp\Protocol\WS\WSBinnary.cs" />
     <Compile Include="Tcp\Protocol\Buffer\IBuffer.cs" />
     <Compile Include="Tcp\Protocol\WS\WSChecks.cs" />
-    <Compile Include="Tcp\Protocol\WS\WSClose\WSCloseMsg.cs" />
-    <Compile Include="Tcp\Protocol\WS\WSClose\WSCloseNum.cs" />
+    <Compile Include="Tcp\Protocol\WS\WSClose\WSClose.cs" />
     <Compile Include="Tcp\Protocol\WS\WsEnum.cs" />
     <Compile Include="Tcp\Protocol\WS\WSErrors.cs" />
     <Compile Include="Tcp\Protocol\WS\WSException.cs" />

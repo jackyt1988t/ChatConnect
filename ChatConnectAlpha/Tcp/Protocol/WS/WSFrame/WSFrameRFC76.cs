@@ -8,7 +8,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		All = 2,
 		Unset = 1,
 	}
-    class WSFrame7
+    class WSFrameN13
     {
         public const int TEXT   = 0x01;
 		public const int PING   = 0x09;
@@ -34,7 +34,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// <summary>
 		/// бит FIN 
 		/// </summary>
-        public int BitFind
+        public int BitFin
         {
             get;
             set;
@@ -174,7 +174,7 @@ namespace ChatConnect.Tcp.Protocol.WS
         {
             Handler = 0;
             MaskPos = 0;
-            BitFind = 0;
+            BitFin = 0;
             BitRsv1 = 0;
             BitRsv2 = 0;
             BitRsv3 = 0;
@@ -222,7 +222,7 @@ namespace ChatConnect.Tcp.Protocol.WS
             int length = 0;
             this.DataHead = new byte[this.LengHead];
 
-            this.DataHead[length] = (byte)(this.BitFind << 7);
+            this.DataHead[length] = (byte)(this.BitFin << 7);
             this.DataHead[length] = (byte)(this.DataHead[length] | 
 													   (this.BitRsv1 << 6));
             this.DataHead[length] = (byte)(this.DataHead[length] | 

@@ -41,6 +41,14 @@ namespace ChatConnect.Tcp.Protocol.WS
 		}
 		volatile int state;
 		/// <summary>
+		/// Информации о закрытии соединения
+		/// </summary>
+		public Close close
+		{
+			get;
+			protected set;
+		}
+		/// <summary>
 		/// Текщий статус протокола
 		/// </summary>
 		public States State
@@ -54,14 +62,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 				state = ( int )value;
 			}
         }
-		/// <summary>
-		/// Информации о закрытии соединения
-		/// </summary>
-		public WSClose close
-		{
-			get;
-			protected set;
-		}
+		
 		/// <summary>
 		/// 
 		/// </summary>
@@ -254,20 +255,21 @@ static	private event PHandlerEvent __EventConnect;
 		{
 			if (state == 4 || state == 5 || state == 7)
 				return false;
-			try
+
+			int recive = 0;
+			int length = message.Length;
+			lock(Writer)
 			{
-				lock (Sync)
-					Write(message);				
+				if (Writer.Clear < length)
+				{
+					state = 5;
+					close = new Close(Address(),
+										WSClose.Abnormal);
+					return false;
+				}
+				Writer.Write(  message, recive, length  );
+				return true;
 			}
-			catch (WSException exc)
-			{
-				state = 4;
-				Error(exc);
-				state = 5;
-				close = new WSClose(    "Server", exc.Closes    );
-				return false;
-			}
-			return true;
 		}
 		/// <summary>
 		/// Отправляет фрейм пинг текущему подключению
@@ -288,6 +290,24 @@ static	private event PHandlerEvent __EventConnect;
 			return Pong(Encoding.UTF8.GetBytes(message));
 		}
 		/// <summary>
+		/// Отправляет фрейм пинг текущему подключению
+		/// </summary>
+		/// <param name="message">массив данных для отправки</param>
+		/// <returns>true в случае ечсли данные можно отправить</returns>
+		public bool Ping(byte[] message)
+		{
+			return Message(message, WSOpcod.Ping, WSFin.Last);
+		}
+		/// <summary>
+		/// Отправляет фрейм понг текущему подключению
+		/// </summary>
+		/// <param name="message">массив данных для отправки</param>
+		/// <returns>true в случае ечсли данные можно отправить</returns>
+		public bool Pong(byte[] message)
+		{
+			return Message(message, WSOpcod.Pong, WSFin.Last);
+		}
+		/// <summary>
 		/// Отправляет текстовый фрейм текущему подключению
 		/// </summary>
 		/// <param name="message">строка данных для отправки</param>
@@ -296,7 +316,7 @@ static	private event PHandlerEvent __EventConnect;
 		{
 			byte[] _buffer = Encoding.UTF8.GetBytes(
 											    message);
-			return Message(_buffer, WSOpcod.Text, WSFin.Last);
+			return Message (_buffer, WSOpcod.Text, WSFin.Last);
 		}
 		/// <summary>
 		/// Отправляет текстовый фрейм текущему подключению
@@ -315,6 +335,7 @@ static	private event PHandlerEvent __EventConnect;
 		{
 			try
 			{
+				Data();
 				/*==================================================================
 					Запускает функцию обработки пользоватлеьских данных,в случае
 					если статус не был изменен выполняет переход к следующему
@@ -341,12 +362,10 @@ static	private event PHandlerEvent __EventConnect;
 						else
 						{
 							state = 5;
-							close = new WSClose(Address(), 
-												     WSCloseNum.Abnormal);
+							close = new Close(Address(), WSClose.Abnormal);
 							return TaskResult;
 						}
 					}
-					Data();
 				/*==================================================================
 					Проверяет возможность отправки данных. Если данные можно 
 					отправить запускает функцию для отправки данных, в случае 
@@ -357,19 +376,18 @@ static	private event PHandlerEvent __EventConnect;
 						return TaskResult;
 					if (Tcp.Poll(0, SelectMode.SelectWrite))
 					{
-						lock (Sync)
-							Write();
+						lock(Writer)
+							 Write();
 					}
 						else if (!Tcp.Connected)
 						{
-							state = 5;
-							close = new WSClose(Address(),
-												     WSCloseNum.Abnormal);
+							close = new Close(Address(), WSClose.Abnormal);
+							return TaskResult;
 						}
 					if (Interlocked.CompareExchange(ref state, 0, 2) == 2)
 						return TaskResult;
 				}						
-
+				
 						if (state == 5)
 						{	
 							Close(close);
@@ -396,7 +414,7 @@ static	private event PHandlerEvent __EventConnect;
                 state = 4;
 				Error(  exc  );
 				state = 5;
-				close = new WSClose("Server", exc.Closes);
+				close = new Close("Server", exc.Closes);
 			}
 			catch (ExecutionEngineException exc)
 			{
@@ -420,26 +438,12 @@ static	private event PHandlerEvent __EventConnect;
         {
         	return "WS";
         }
-
-
-		/// <summary>
-		/// Отправляет фрейм пинг текущему подключению
-		/// </summary>
-		/// <param name="message">массив данных для отправки</param>
-		/// <returns>true в случае ечсли данные можно отправить</returns>
-		public abstract bool Ping(byte[] message);
-		/// <summary>
-		/// Отправляет фрейм понг текущему подключению
-		/// </summary>
-		/// <param name="message">массив данных для отправки</param>
-		/// <returns>true в случае ечсли данные можно отправить</returns>
-		public abstract bool Pong(byte[] message);
 		/// <summary>
 		/// Отправляет закрывающий фрейм с кодом 1000.
 		/// </summary>
 		/// <param name="message">строка данных для отправки</param>
 		/// <returns>true в случае ечсли данные можно отправить</returns>
-		public abstract bool Close(string message);
+		public abstract bool Close(WSClose close);
 		/// <summary>
 		/// Отправляет текстовый фрейм текущему подключению
 		/// </summary>
@@ -455,30 +459,30 @@ static	private event PHandlerEvent __EventConnect;
 		{
 			SocketError error;
 
+			int read =
+				(int)Reader.PointW;
 			var length = 
-				Tcp.Available;
+					 Tcp.Available;
 			if (length > 4000)
 				length = 4000;
 			byte[] buffer = 
-				   Reader.Buffers;
+				   Reader.Buffer;
 			if (Reader.Clear == 0)
 			{
-				error = SocketError.NoBufferSpaceAvailable;
-				throw new WSException("Ошибка при чтении данных из Socketа...", error,
-															   WSCloseNum.ServerError);
+				error  =  SocketError.NoBufferSpaceAvailable;
+				throw new WSException("Ошибка при чтении данных из Socket", error,
+															  WSClose.ServerError);
 			}
-			int recive =
-				   (int)Reader.PointW;
-			if (Reader.Counts - recive < length)
+			
+			if (Reader.Count - read < length)
 				length = 
-				   (int)(Reader.Counts - recive);
-
-			recive = Tcp.Receive(buffer, recive, length, SocketFlags.None, out error);
-															  Reader.SetLength(recive);
-			if (error  !=  SocketError.Success  &&  error  !=  SocketError.WouldBlock)
+				   (int)(Reader.Count - read);
+			read = Tcp.Receive (buffer, read, length, SocketFlags.None, out error);
+															Reader.SetLength(read);
+			if (error != SocketError.Success  &&  error != SocketError.WouldBlock)
 			{
-				throw new WSException("Ошибка при чтении данных из Socketа...", error,
-															   WSCloseNum.ServerError);
+				throw new WSException("Ошибка при чтении данных из Socket", error,
+															  WSClose.ServerError);
 			}
 			
 		}
@@ -486,55 +490,33 @@ static	private event PHandlerEvent __EventConnect;
 		/// Отправляет сообщение
 		/// </summary>
 		/// <param name="data">Данные</param>
-		private void Write(byte[] buffer)
+		private void Write()
 		{
-			SocketError error;
-
-			int recive = 0;
-			int length = buffer.Length;
-
-			if (Writer.isWrite)
+			SocketError error;			
+			if ( Writer.Empty )
 			{
-				if (Writer.Clear > length)
+				int write = 
+					(int)Writer.PointR;
+				int length = 
+					(int)Writer.Length;
+				byte[] buffer = 
+						 Writer.Buffer;
+				if (length > 16000)
+					length = 16000;
+				if (Writer.Count - write < length)
+					length =
+					   (int)(Writer.Count - write);
+				write  =  Tcp.Send(buffer, write, length, SocketFlags.None, out error);
+											        Writer.Seek(write, SeekOrigin.End);
+				if (error != SocketError.Success)
 				{
-					Writer.Write(buffer, 0, length);
-					return;
-				}
-				else
-				{
-					error = SocketError.NoBufferSpaceAvailable;
-						throw new WSException("Ошибка записи данных в Socket.", error,
-															   WSCloseNum.ServerError);
-				}
-				
-			}
-
-			
-			recive   =   Tcp.Send(buffer, recive, length, SocketFlags.None, out error);
-			if ( error != SocketError.Success )
-			{
-				if (error != SocketError.WouldBlock
-					&& error != SocketError.NoBufferSpaceAvailable)
+					if (error != SocketError.WouldBlock
+						&& error != SocketError.NoBufferSpaceAvailable)
 					{
 						throw new WSException("Ошибка записи данных в Socket.", error,
-										       				   WSCloseNum.ServerError);
+															      WSClose.ServerError);
 					}
-			}
-			if (recive < length)
-			{
-				length = length  - recive;
-				if (Writer.Clear > length)
-				{
-					Writer.Write(buffer, recive, length);
-					return;
-				}
-				else
-				{
-					error = SocketError.NoBufferSpaceAvailable;
-						throw new WSException("Ошибка записи данных в Socket.", error,
-										       				   WSCloseNum.ServerError);
-				}
-				
+				}					
 			}
 		}
 		protected void OnEventWork()
@@ -572,7 +554,7 @@ static	private event PHandlerEvent __EventConnect;
 			if (e != null)
 				e(this, new PEventArgs(S_PONG, m, frame));
 		}
-		protected void OnEventClose(WSClose _close)
+		protected void OnEventClose(Close _close)
 		{
 			string m = _close.ToString();
 
@@ -621,11 +603,7 @@ static	private event PHandlerEvent __EventConnect;
 		/// <summary>
 		/// 
 		/// </summary>
-		protected abstract void Write();
-		/// <summary>
-		/// 
-		/// </summary>
-		protected abstract void Close(WSClose close);
+		protected abstract void Close(Close close);
 		/// <summary>
 		/// 
 		/// </summary>

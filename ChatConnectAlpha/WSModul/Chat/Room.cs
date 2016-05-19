@@ -120,9 +120,9 @@ namespace ChatConnect.WebModul.Chat
 		}
 		public void TestM(byte[] message)
 		{
-			int pcod = WSFrame7.BINNARY;
-			WSFrame7 wsframe = new WSFrame7();
-			wsframe.BitFind = 1;
+			int pcod = WSFrameN13.BINNARY;
+			WSFrameN13 wsframe = new WSFrameN13();
+			wsframe.BitFin = 1;
 			wsframe.BitPcod = pcod;
 			wsframe.DataBody = message;
 			wsframe.LengBody = message.Length;
@@ -136,9 +136,9 @@ namespace ChatConnect.WebModul.Chat
 		}
 		public void Message(byte[] message)
 		{
-			int pcod = WSFrame7.TEXT;
-			WSFrame7 wsframe = new WSFrame7();
-					 wsframe.BitFind = 1;
+			int pcod = WSFrameN13.TEXT;
+			WSFrameN13 wsframe = new WSFrameN13();
+					 wsframe.BitFin = 1;
 					 wsframe.BitPcod = pcod;
 					 wsframe.DataBody = message;
 					 wsframe.LengBody = message.Length;
@@ -252,7 +252,7 @@ namespace ChatConnect.WebModul.Chat
         	{
 				Count--;
                 int index = -1;
-                if ( (index = Unregister.IndexOf(module) ) == -1)
+                if ( (index = Unregister.IndexOf(module) ) > -1)
         		{
         			result = true;
         			Unregister.RemoveAt( index );

@@ -16,7 +16,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 			get;
 			private set;
 		}
-		public WSCloseNum Closes
+		public WSClose Closes
 		{
 			get;
 			private set;
@@ -36,14 +36,14 @@ namespace ChatConnect.Tcp.Protocol.WS
 			{
 				Number = num;
 			}
-		public WSException(string message, WsError num, WSCloseNum close) :
+		public WSException(string message, WsError num, WSClose close) :
 			base( message )
 			{
 				Closes = close;
 				Number = (int)num;
 				Errors = WSErrorMsg.Error(num);
 			}
-		public WSException(string message, SocketError num, WSCloseNum close) :
+		public WSException(string message, SocketError num, WSClose close) :
 			base( message )
 			{
 				Closes = close;

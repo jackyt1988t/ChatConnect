@@ -21,30 +21,6 @@ namespace ChatConnect.Tcp.Protocol
 		{
 			get;
 		}
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="message"></param>
-        /// <returns></returns>
-		bool Ping(byte[] message);
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="message"></param>
-        /// <returns></returns>
-		bool Close(string message);
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="data"></param>
-		/// <returns></returns>
-		bool Message(byte[] message);
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="message"></param>
-		/// <returns></returns>
-		bool Message(string message);
 		/// <summary>
 		/// 
 		/// </summary>

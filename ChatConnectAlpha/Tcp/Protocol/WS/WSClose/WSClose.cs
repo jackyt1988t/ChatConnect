@@ -1,40 +1,19 @@
-﻿using System;
-
-namespace ChatConnect.Tcp.Protocol.WS
+﻿namespace ChatConnect.Tcp.Protocol.WS
 {
-	class WSClose
+	enum WSClose
 	{
-		public string Host
-		{
-			get;
-			private set;
-		}
-		public string CloseMsg
-		{
-			get;
-			private set;
-		}
-		public DateTime CloseTime
-		{
-			get;
-			private set;
-		}
-		public WSCloseNum CloseCode
-		{
-			get;
-			private set;
-		}
-
-		public WSClose(string host, WSCloseNum code)
-		{
-			Host	  = host;
-			CloseMsg  = WSCloseMsg.Message(code);
-			CloseCode = code;
-		}
-
-		public override string ToString()
-		{
-			return "Инициатор " + Host + ". " + CloseCode.ToString() + ": " + CloseMsg;
-		}
+		Normal			  =	1000,
+		GoingAway		  =	1001,
+		ProtocolError     =	1002,
+		UnsupportedData   = 1003,
+		Reserved		  = 1004,
+		NoStatusRcvd	  = 1005,
+		Abnormal		  =	1006,
+		InvalidFrame	  = 1007,
+		PolicyViolation	  = 1008,
+		BigMessage		  = 1009,
+		Mandatory		  = 1010,
+		ServerError		  = 1011,
+		TLSHandshake	  = 1012
 	}
 }

@@ -56,29 +56,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 			TaskResult = new TaskResult();
 			TaskResult.Protocol   =   TaskProtocol.WSRFC76;
 		}
-		public override bool Ping(byte[] message)
-		{
-			int Opcod = WSFrameSample.PING;
-			WSFrameSample frame = new WSFrameSample();
-						  frame.BitFind = 0;
-						  frame.BitPcod = Opcod;
-						  frame.BitLeng = message.Length;
-						  frame.DataBody = message;
-
-			return Send(frame.GetDataFrame());
-		}
-		public override bool Pong(byte[] message)
-		{
-			int Opcod = WSFrameSample.PONG;
-			WSFrameSample frame = new WSFrameSample();
-						  frame.BitFind = 0;
-						  frame.BitPcod = Opcod;
-						  frame.BitLeng = message.Length;
-						  frame.DataBody = message;
-
-			return Send(frame.GetDataFrame());
-		}
-		public override bool Close(string message)
+		public override bool Close(WSClose close)
 		{
 			int Opcod = WSFrameSample.CLOSE;
 			WSFrameSample frame = new WSFrameSample();
@@ -123,17 +101,10 @@ namespace ChatConnect.Tcp.Protocol.WS
 		
 		protected override void Data()
 		{
-			if(!Reader.isRead)
+			if(!Reader.Empty)
 				return;
 		}
-		protected override void Write()
-		{
-			if (!Writer.isWrite)
-			{
-				return;
-			}
-		}
-		protected override void Close(WSClose close)
+		protected override void Close(Close close)
 		{
             OnEventClose(close);
 		}

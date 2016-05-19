@@ -4,11 +4,11 @@ namespace ChatConnect.Tcp.Protocol.WS
 {
     class WStream7 : WStream
     {
-		public WSFrame7 Frame;
+		public WSFrameN13 Frame;
 
         public WStream7(int length)
         {
-			Frame  =  new WSFrame7();
+			Frame  =  new WSFrameN13();
 
 			_len = length;
 			_buffer = new byte[ length ];
@@ -28,7 +28,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 					byte* ps = sourse + PointR;
 					byte* pt = target + Frame.PartBody;
 
-					while (isRead)
+					while (Empty)
 					{
 						if (Frame.MaskPos > 3)
 							Frame.MaskPos = 0;
@@ -61,11 +61,11 @@ namespace ChatConnect.Tcp.Protocol.WS
 					byte* ps = sourse + PointR;
 					byte* pt = target + Frame.PartBody;
 
-					while (isRead)
+					while (Empty)
 					{
 						if (Frame.MaskPos > 3)
 							Frame.MaskPos = 0;
-						if (PointR == Counts)
+						if (PointR == Count)
 							;
 						*pt = (byte)(*ps ^ mask[Frame.MaskPos]);
 						ps++;
@@ -97,7 +97,7 @@ namespace ChatConnect.Tcp.Protocol.WS
                 {
                     case 0:
                         /*        FIN - доставка сообщения      */
-                        Frame.BitFind = (int)((uint) _byte >> 7 );
+                        Frame.BitFin = (int)((uint) _byte >> 7 );
                         /*      RCV1 - устанавливается сервером.      */
                         Frame.BitRsv1 = (int)((uint)_byte << 25 >> 31 );
                         /*      RCV2 - устанавливается сервером.      */
@@ -223,4 +223,5 @@ namespace ChatConnect.Tcp.Protocol.WS
             return _read;
         }
     }
+	
 }

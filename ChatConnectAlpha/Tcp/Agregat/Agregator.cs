@@ -39,10 +39,10 @@ namespace ChatConnect.Tcp
 					else
 					{
 						agregator.TaskLoopHandler();
-						if (loop++ > 500)
+						if (loop++ > 2000)
 						{
 							loop = 0;
-							Thread.Sleep(1);
+							Thread.Sleep(2);
 						}
 					}
 				}
@@ -58,30 +58,24 @@ namespace ChatConnect.Tcp
 		}
 		private void TaskLoopHandler()
 		{
-			if (_nextloop < DateTime.Now.Ticks)
-			{
-				_nextloop = DateTime.Now.Ticks + 10 * 1000 * 20;
 				TaskResult TaskResult = Protocol.TaskLoopHandlerProtocol();
-				switch (TaskResult.Option)
-				{
-					case TaskOption.Loop:
-						Container.Enqueue(this);
+			switch (TaskResult.Option)
+			{
+				case TaskOption.Loop:
+					Container.Enqueue(this);
+					break;
+				case TaskOption.Protocol:
+					if (TaskResult.Protocol == TaskProtocol.WSRFC76)
+						Protocol =
+						   new WSProtocol7(Protocol);
+					Container.Enqueue(this);
+					break;
+				case TaskOption.Threading:
+						Thread thr = new Thread( TaskLoopThreading );
+							   thr.IsBackground = true;
+							   thr.Start();
 						break;
-					case TaskOption.Protocol:
-						if (TaskResult.Protocol == TaskProtocol.WSRFC76)
-							Protocol =
-							   new WSProtocol7(Protocol);
-						Container.Enqueue(this);
-						break;
-					case TaskOption.Threading:
-						Thread thr = new Thread(TaskLoopThreading);
-						thr.IsBackground = true;
-						thr.Start();
-						break;
-				}
 			}
-			else
-				Container.Enqueue(this);
 		}
 		private void TaskLoopThreading()
 		{
