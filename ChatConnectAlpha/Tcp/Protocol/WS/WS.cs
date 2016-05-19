@@ -314,9 +314,9 @@ static	private event PHandlerEvent __EventConnect;
 		/// <returns>true в случае ечсли данные можно отправить</returns>
 		public bool Message(string message)
 		{
-			byte[] _buffer = Encoding.UTF8.GetBytes(
+			byte[] Message = Encoding.UTF8.GetBytes(
 											    message);
-			return Message (_buffer, WSOpcod.Text, WSFin.Last);
+			return Message (Message, WSOpcod.Text, WSFin.Last);
 		}
 		/// <summary>
 		/// Отправляет текстовый фрейм текущему подключению
