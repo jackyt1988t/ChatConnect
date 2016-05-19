@@ -144,42 +144,42 @@ namespace ChatConnect.Tcp.Protocol.WS
                     case 2:
                         /*  Обработчик.  */
                         Frame.Handler += 1;
-                                               Frame.LengBody = (int)((uint)_byte << 56);
+                                         Frame.LengBody = (long)(_byte << 56);
                         break;
                     case 3:
                         /*  Обработчик.  */
                         Frame.Handler += 1;
-                        Frame.LengBody = (int)((uint)Frame.LengBody | (uint)_byte << 48);
+                        Frame.LengBody = Frame.LengBody | (long)(_byte << 48);
                         break;
                     case 4:
                         /*  Обработчик.  */
                         Frame.Handler += 1;
-                        Frame.LengBody = (int)((uint)Frame.LengBody | (uint)_byte << 40);
+                        Frame.LengBody = Frame.LengBody | (long)(_byte << 40);
                         break;
                     case 5:
                         /*  Обработчик.  */
                         Frame.Handler += 1;
-                        Frame.LengBody = (int)((uint)Frame.LengBody | (uint)_byte << 32);
+                        Frame.LengBody = Frame.LengBody | (long)(_byte << 32);
                         break;
                     case 6:
                         /*  Обработчик.  */
                         Frame.Handler += 1;
-                        Frame.LengBody = (int)((uint)Frame.LengBody | (uint)_byte << 24);
+                        Frame.LengBody = Frame.LengBody | (long)(_byte << 24);
                         break;
                     case 7:
                         /*  Обработчик.  */
                         Frame.Handler += 1;
-                        Frame.LengBody = (int)((uint)Frame.LengBody | (uint)_byte << 16);
+                        Frame.LengBody = Frame.LengBody | (long)(_byte << 16);
                         break;
                     case 8:
                         /*  Обработчик.  */
                         Frame.Handler += 1;
-                        Frame.LengBody = (int)((uint)Frame.LengBody | (uint)_byte << 08);
+                        Frame.LengBody = Frame.LengBody | (long)(_byte << 08);
                         break;
                     case 9:
                         /*  Обработчик.  */
                         Frame.Handler += 1;
-                        Frame.LengBody = (int)((uint)Frame.LengBody | (uint)_byte << 00);
+                        Frame.LengBody = Frame.LengBody | (long)(_byte << 00);
                         goto case 10;
                     case 10:
                         /*  Обработчик.  */
@@ -192,20 +192,20 @@ namespace ChatConnect.Tcp.Protocol.WS
                     case 11:
                         /*  Обработчик.  */
                         Frame.Handler += 1;
-                                                  Frame.MaskVal = (int)(uint)_byte << 24;
+                                          	Frame.MaskVal = (_byte << 24);
                         break;
                     case 12:
                         /*  Обработчик.  */
                         Frame.Handler += 1;
-                        Frame.MaskVal  =  (int)((uint)Frame.MaskVal | (uint)_byte << 16);
+                        	Frame.MaskVal = Frame.MaskVal | (_byte << 16);
                         break;
                     case 13:
                         /*  Обработчик.  */
                         Frame.Handler += 1;
-                        Frame.MaskVal  =  (int)((uint)Frame.MaskVal | (uint)_byte << 08);
+                        	Frame.MaskVal = Frame.MaskVal | (_byte << 08);
                         break;
                     case 14:
-                        Frame.MaskVal  =  (int)((uint)Frame.MaskVal | (uint)_byte << 00);
+                        	Frame.MaskVal = Frame.MaskVal | (_byte << 00);
                         break;
                 }
 
