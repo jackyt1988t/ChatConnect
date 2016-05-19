@@ -32,10 +32,10 @@ namespace ChatConnect.Tcp.Protocol.WS
 			}
 			protected set
 			{
-				if (value < _len)
-					_p_r = value;
-				else
+				if (value == _len)
 					_p_r = 0;
+				else
+					_p_r = value;
 			}
 		}
 		long _p_r;
@@ -47,11 +47,11 @@ namespace ChatConnect.Tcp.Protocol.WS
 			}
 			protected set
 			{
-				if (value < _len)
-					_p_w = value;
-				else
+				if (value == _len)
 					_p_w = 0;
-				if (_p_w == _p_r)
+				else
+					_p_w = value;
+				if (_p_w  ==  _p_r)
 					throw new IOException("Переаолнение буффера");
 			}
 		}
@@ -148,7 +148,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 			if (PointW + value < _len)
 				PointW = PointW + value;
 			else
-				PointW = value - (_len - PointW);
+				PointW = value - (Counts - PointW);
 		}
 		public override long Seek(long offset, SeekOrigin origin)
 		{
@@ -156,10 +156,10 @@ namespace ChatConnect.Tcp.Protocol.WS
 			{
 				if (offset > Length)
 					throw new IOException();
-				if (offset + PointR < _len)
+				if (offset + PointR < Counts)
 					PointR = PointR + offset;
 				else
-					PointR = offset - (_len - PointR);
+					PointR = offset - (Counts - PointR);
 				return offset;
 			}
 			else
@@ -169,7 +169,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 				if (PointR - offset > 0)
 					PointR = PointR - offset;
 				else
-					PointR = _len - (offset - PointR);
+					PointR = Counts - (offset - PointR);
 				return offset * -1;
 			}
 		}
@@ -189,7 +189,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 					*ps = *pt;
 					ps++;
 					PointR++;
-					if (_p_r == _p_w)
+					if (!isRead)
 						return i;
 				}
 			}
