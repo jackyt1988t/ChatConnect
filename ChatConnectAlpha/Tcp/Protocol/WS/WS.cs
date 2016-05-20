@@ -39,7 +39,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 			get;
 			protected set;
 		}
-		volatile int state;
+		int state;
 		/// <summary>
 		/// Информации о закрытии соединения
 		/// </summary>
@@ -236,6 +236,7 @@ abstract
 			}
 		}
 
+		private int length = 0;
 		private object SyncEvent = new object();
 		private event PHandlerEvent __EventWork;
 		private event PHandlerEvent __EventPing;
@@ -302,9 +303,9 @@ static	private event PHandlerEvent __EventConnect;
 		/// <returns>true в случае ечсли данные можно отправить</returns>
 		public bool Message(string message)
 		{
-			byte[] Message = Encoding.UTF8.GetBytes(
+			byte[] MeSSage = Encoding.UTF8.GetBytes(
 											    message);
-			return Message (Message, WSOpcod.Text, WSFin.Last);
+			return Message(MeSSage, WSOpcod.Text, WSFin.Last);
 		}
 		/// <summary>
 		/// Отправляет текстовый фрейм текущему подключению
@@ -321,7 +322,7 @@ static	private event PHandlerEvent __EventConnect;
 			{
 				if (Tcp.Poll(0, SelectMode.SelectRead))
 				{
-					if (Tcp.Available < 1)
+					if (Tcp.Available < 0)
 					{
 						state = 5;
 						close = new Close(Address(), WSClose.Abnormal);
@@ -330,11 +331,11 @@ static	private event PHandlerEvent __EventConnect;
 				if (Tcp.Poll(0, SelectMode.SelectError))
 				{
 						state = 5;
-						close = new Close(Address(), WSClose.Abnormal;
+						close = new Close(Address(), WSClose.Abnormal);
 				}
 				if (!Tcp.Poll(0, SelectMode.SelectWrite))
 				{
-					if ( !Tcp.Connected )
+					if (  !Tcp.Connected  )
 					{
 						state = 5;
 						close = new Close(Address(), WSClose.Abnormal);
@@ -370,8 +371,8 @@ static	private event PHandlerEvent __EventConnect;
 					соотвествующий обработчик, если нет утсанавливает обработчик 
 					отправки данных.
 				==================================================================*/
-					if (Interlocked.CompareExchange(ref state, 1, 0) != 0)
-						return TaskResult;					
+					/*if (Interlocked.CompareExchange(ref state, 1, 0) != 0)
+						return TaskResult;*/					
 					if (Tcp.Available > 0)
 					{
 						Read();
@@ -382,14 +383,15 @@ static	private event PHandlerEvent __EventConnect;
 					если статус не был изменен выполняет переход к следующему 
 					обраотчику, обработчику обработки пользовательски данных.
 				==================================================================*/
-					if (Interlocked.CompareExchange(ref state, 2, 1) != 1)
-						return TaskResult;
+					/*if (Interlocked.CompareExchange(ref state, 2, 1) != 1)
+						return TaskResult;*/
 					if (Writer.Length > 0)
 					{
 						lock (Writer)
 							Write();
 					}
-					if (Interlocked.CompareExchange(ref state, 0, 2) == 2)
+					/*if (Interlocked.CompareExchange(ref state, 0, 2) == 2)*/
+					state = 0;
 						return TaskResult;
 				}						
 				
@@ -404,9 +406,10 @@ static	private event PHandlerEvent __EventConnect;
 							Interlocked.CompareExchange (ref state, 0, 6);
 						}
 						if (state == 7)
-						{
+						{					
 							if (Tcp.Connected)
 								Tcp.Close();
+							TaskResult.Option = TaskOption.Delete;
 						}
             }
             catch (WSException exc)
@@ -467,7 +470,7 @@ static	private event PHandlerEvent __EventConnect;
 			}
 			state = 5;
 			close = new Close(Address(), WSClose.Abnormal);
-			false;
+			return false;
 		}
 		/// <summary>
 		/// 
@@ -478,8 +481,8 @@ static	private event PHandlerEvent __EventConnect;
 
 			int read =
 				(int)Reader.PointW;
-			var length = 
-					 Tcp.Available;
+			int length = 
+				     Tcp.Available;
 			if (length > 4000)
 				length = 4000;
 			byte[] buffer = 
@@ -495,7 +498,8 @@ static	private event PHandlerEvent __EventConnect;
 				length = 
 				   (int)(Reader.Count - read);
 			read = Tcp.Receive (buffer, read, length, SocketFlags.None, out error);
-															Reader.SetLength(read);
+			length -= read;
+			Reader.SetLength(read);
 			if (error != SocketError.Success  &&  error != SocketError.WouldBlock)
 			{
 				throw new WSException("Ошибка при чтении данных из Socket", error,
@@ -525,8 +529,8 @@ static	private event PHandlerEvent __EventConnect;
 					write =
 					  (int)(Writer.Count - start);
 				start  =  Tcp.Send(buffer, start, write, SocketFlags.None, out error);
-											       Writer.Seek(start, SeekOrigin.End);
-				if (error != SocketError.Success)
+				Writer.Seek(start, SeekOrigin.End);
+				if ( error != SocketError.Success )
 				{
 					if (error != SocketError.WouldBlock
 						&& error != SocketError.NoBufferSpaceAvailable)

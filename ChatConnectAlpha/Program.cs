@@ -19,6 +19,9 @@ namespace ChatConnect
         {
 			int work = 0;
 			int count = 1;
+			/*Thread Thr = new Thread(Agregator.loop);
+				   Thr.IsBackground = true;
+				   Thr.Start();*/
 			while ( work++ < count )
 			{
 				Thread thr = new Thread(Agregator.Loop);

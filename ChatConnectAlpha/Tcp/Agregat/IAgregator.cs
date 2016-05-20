@@ -2,6 +2,7 @@
 {
 	interface IAgregator
 	{
+		void TaskLoopHandler();
         /// <summary>
         /// 
         /// </summary>
