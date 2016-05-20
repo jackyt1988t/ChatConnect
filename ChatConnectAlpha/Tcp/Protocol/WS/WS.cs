@@ -256,20 +256,8 @@ static	private event PHandlerEvent __EventConnect;
 			if (state == 4 || state == 5 || state == 7)
 				return false;
 
-			int recive = 0;
-			int length = message.Length;
 			lock(Writer)
-			{
-				if (Writer.Clear < length)
-				{
-					state = 5;
-					close = new Close(Address(),
-										WSClose.Abnormal);
-					return false;
-				}
-				Writer.Write(  message, recive, length  );
-				return true;
-			}
+				return send(message);
 		}
 		/// <summary>
 		/// Отправляет фрейм пинг текущему подключению
@@ -451,7 +439,19 @@ static	private event PHandlerEvent __EventConnect;
 		/// <returns>true в случае ечсли данные можно отправить</returns>
 		public abstract bool Message(byte[] message, WSOpcod opcod, WSFin fin);
 
-
+		private bool send(byte[] message)
+		{
+			int recive = 0;
+			int length = message.Length;
+			if (Writer.@Clear >= length)
+			{
+				Writer.Write(message, recive, length);
+				return true;
+			}
+			state = 5;
+			close = new Close(Address(), WSClose.Abnormal);
+			false;
+		}
 		/// <summary>
 		/// 
 		/// </summary>
