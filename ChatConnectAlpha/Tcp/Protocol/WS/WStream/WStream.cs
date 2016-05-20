@@ -19,6 +19,16 @@ namespace ChatConnect.Tcp.Protocol.WS
 				return (_p_r != _p_w);
 			}
 		}
+		public long Clear
+		{
+			get
+			{
+				if (_p_w < _p_r)
+					return (_p_r - _p_w);
+				else
+					return (_len - _p_w) + _p_r;
+			}
+		}		
 		long _p_w;
 		public long PointR
 		{
@@ -48,17 +58,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 				else
 					_p_w = 0;
 				if (_p_w == _p_r)
-					throw new IOException();
-			}
-		}
-		public long @Clear
-		{
-			get
-			{
-				if (_p_w < _p_r)
-					return (_p_r - _p_w);
-				else
-					return (_len - _p_w) + _p_r;
+					throw new IOException("Переаолнение буффера");
 			}
 		}
 		public byte[] Buffer
@@ -103,7 +103,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		{
 			get
 			{
-				return _p_w;
+				return 0;
 			}
 
 			set
