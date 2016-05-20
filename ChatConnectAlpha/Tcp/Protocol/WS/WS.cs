@@ -315,30 +315,6 @@ static	private event PHandlerEvent __EventConnect;
 		{
 			return Message(message, WSOpcod.Binnary, WSFin.Last);
 		}
-		public void TaskLoopHandler()
-		{
-			if (Tcp.Poll(0, SelectMode.SelectRead))
-			{
-				if (Tcp.Available < 1)
-				{
-					state = 5;
-					close = new Close(Address(), WSClose.Abnormal);
-				}
-			}
-			if (!Tcp.Poll(0, SelectMode.SelectError))
-			{
-					state = 5;
-					close = new Close(Address(), WSClose.Abnormal;
-			}
-			if (!Tcp.Poll(0, SelectMode.SelectWrite))
-			{
-				if (!Tcp.Connected)
-				{
-					state = 5;
-					close = new Close(Address(), WSClose.Abnormal);
-				}
-			}
-		}
 		/// <summary>
 		/// Функция 1 прохода обработки ws протокола соединения
 		/// </summary>
@@ -365,9 +341,18 @@ static	private event PHandlerEvent __EventConnect;
 				==================================================================*/
 					if (Interlocked.CompareExchange(ref state, 1, 0) != 0)
 						return TaskResult;					
-					if (Tcp.Available > 0)
+					if (Tcp.Poll(0, SelectMode.SelectRead))
 					{
-						Read();
+						if (Tcp.Available > 0)
+						{
+							Read();
+						}
+						else
+						{
+							state = 5;
+							close = new Close(Address(), WSClose.Abnormal);
+							return TaskResult;
+						}
 					}
 				/*==================================================================
 					Проверяет возможность отправки данных. Если данные можно 
@@ -377,11 +362,16 @@ static	private event PHandlerEvent __EventConnect;
 				==================================================================*/
 					if (Interlocked.CompareExchange(ref state, 2, 1) != 1)
 						return TaskResult;
-					if (Writer.Length > 0)
+					if (Tcp.Poll(0, SelectMode.SelectWrite))
 					{
-						lock (Writer)
-							Write();
+						lock(Writer)
+							 Write();
 					}
+						else if (!Tcp.Connected)
+						{
+							close = new Close(Address(), WSClose.Abnormal);
+							return TaskResult;
+						}
 					if (Interlocked.CompareExchange(ref state, 0, 2) == 2)
 						return TaskResult;
 				}						
