@@ -26,33 +26,6 @@ namespace ChatConnect.Tcp
 			Protocol = new HTTPProtocol( tcp, Connect );
 			Container.Enqueue(this);
 		}
- static public void loop()
-		{
-			short loop = 0;
-			while (true)
-			{
-				try
-				{
-					Agregator agregator = null;
-					if (!Container.TryDequeue(out agregator))
-						Thread.Sleep(1);
-					else
-					{
-						agregator.Protocol.TaskLoopHandler();
-						if (loop++ > 500)
-						{
-							loop = 0;
-							Thread.Sleep(2);
-						}
-						Container.Enqueue(agregator);
-					}
-				}
-				catch (FieldAccessException exc)
-				{
-					Console.WriteLine("Обработчик: " + exc.Message);
-				}
-			}
-		}
  static public void Loop()
 		{
 			short loop = 0;
@@ -66,10 +39,10 @@ namespace ChatConnect.Tcp
 					else
 					{
 						agregator.TaskLoopHandler();
-						if (loop++ > 200)
+						if (loop++ > 2000)
 						{
 							loop = 0;
-							Thread.Sleep(1);
+							Thread.Sleep(2);
 						}
 					}
 				}

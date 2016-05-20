@@ -192,12 +192,7 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 				Response.End();
 			}
 		}
-		public void TaskLoopHandler()
-		{
-
-		}
-
-		public TaskResult TaskLoopHandlerProtocol(    )
+        public TaskResult TaskLoopHandlerProtocol(    )
         {
 			try
 			{
