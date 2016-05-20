@@ -317,33 +317,26 @@ static	private event PHandlerEvent __EventConnect;
 		}
 		public void TaskLoopHandler()
 		{
-			try
+			if (Tcp.Poll(0, SelectMode.SelectRead))
 			{
-				if (Tcp.Poll(0, SelectMode.SelectRead))
+				if (Tcp.Available < 1)
 				{
-					if (Tcp.Available < 1)
-					{
-						state = 5;
-						close = new Close(Address(), WSClose.Abnormal);
-					}
-				}
-				if (Tcp.Poll(0, SelectMode.SelectError))
-				{
-						state = 5;
-						close = new Close(Address(), WSClose.Abnormal;
-				}
-				if (!Tcp.Poll(0, SelectMode.SelectWrite))
-				{
-					if ( !Tcp.Connected )
-					{
-						state = 5;
-						close = new Close(Address(), WSClose.Abnormal);
-					}
+					state = 5;
+					close = new Close(Address(), WSClose.Abnormal);
 				}
 			}
-			catch (SocketException exc)
+			if (!Tcp.Poll(0, SelectMode.SelectError))
 			{
-				Log.Logout.AddMessage(exc.Message, "Log/log.log", Log.Log.Debug);
+					state = 5;
+					close = new Close(Address(), WSClose.Abnormal;
+			}
+			if (!Tcp.Poll(0, SelectMode.SelectWrite))
+			{
+				if (!Tcp.Connected)
+				{
+					state = 5;
+					close = new Close(Address(), WSClose.Abnormal);
+				}
 			}
 		}
 		/// <summary>
