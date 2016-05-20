@@ -39,10 +39,10 @@ namespace ChatConnect.Tcp
 					else
 					{
 						agregator.TaskLoopHandler();
-						if (loop++ > 2000)
+						if (loop++ > 500)
 						{
 							loop = 0;
-							Thread.Sleep(2);
+							Thread.Sleep(1);
 						}
 					}
 				}

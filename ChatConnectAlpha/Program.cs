@@ -18,7 +18,7 @@ namespace ChatConnect
         static void Main(string[] args)
         {
 			int work = 0;
-			int count = 1;
+			int count = 6;
 			while ( work++ < count )
 			{
 				Thread thr = new Thread(Agregator.Loop);
