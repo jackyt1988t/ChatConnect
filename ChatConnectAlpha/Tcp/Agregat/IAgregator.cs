@@ -2,10 +2,13 @@
 {
 	interface IAgregator
 	{
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
-        TaskResult TaskLoopHandlerProtocol();
+		TaskResult LoopWork();
+		TaskResult LoopRead();
+		TaskResult LoopWrite();
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <returns></returns>
+		TaskResult TaskLoopHandlerProtocol();
 	}
 }
