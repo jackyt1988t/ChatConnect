@@ -18,27 +18,14 @@ namespace ChatConnect
         static void Main(string[] args)
         {
 			int work = 0;
-			int count = 2;
-			Thread thr = null;
-			while (work++ < count)
+			int count = 6;
+			while ( work++ < count )
 			{
-				thr = new Thread(Agregator.Loop);
-				thr.IsBackground = true;
-				thr.Start();
-				Thread.Sleep(100);
+				Thread thr = new Thread(Agregator.Loop);
+					   thr.IsBackground = true;
+					   thr.Start();
+				Thread.Sleep (100);
 			}
-			thr = new Thread(Agregator.WorkLoop);
-			thr.IsBackground = true;
-			thr.Start();
-			Thread.Sleep(100);
-			thr = new Thread(Agregator.ReadLoop);
-			thr.IsBackground = true;
-			thr.Start();
-			Thread.Sleep(100);
-			thr = new Thread(Agregator.WriteLoop);
-			thr.IsBackground = true;
-			thr.Start();
-			Thread.Sleep(100);
 			IPEndPoint point = new IPEndPoint(IPAddress.Parse("0.0.0.0"), 8081);
 			Socket listener = new Socket(point.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 			listener.Bind(point);

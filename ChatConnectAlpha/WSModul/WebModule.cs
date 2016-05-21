@@ -298,6 +298,7 @@ namespace ChatConnect.WebModul
                 if (handlermodule != null)
                     handlermodule.HandlerError(this, exc);
 
+                WS.Close(WSClose.Abnormal);
                 Logout.AddMessage("Пользовательскся ошибка: " + exc.Message, 
                     @"Log/user.log", Log.Log.Info);
             }

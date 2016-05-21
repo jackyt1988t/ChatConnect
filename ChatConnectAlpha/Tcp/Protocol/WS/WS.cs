@@ -23,21 +23,13 @@ namespace ChatConnect.Tcp.Protocol.WS
 		private static readonly string S_CONNECT = "connect";
 
 		static public bool Deb;
-		/// <summary>
+ 		/// <summary>
 		/// tcp/ip соединение
 		/// </summary>
-		Socket tcp;
         public Socket Tcp
         {
-            get
-			{
-				return tcp;
-			}
-            protected set
-			{
-				tcp = value;
-				Adress = ((IPEndPoint)Tcp.RemoteEndPoint).Address.ToString();
-			}
+            get;
+            protected set;
         }
 		/// <summary>
 		/// Объект синхронизации
@@ -70,11 +62,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 				state = ( int )value;
 			}
         }
-		public string Adress
-		{
-			get;
-			protected set;
-		}
+		
 		/// <summary>
 		/// 
 		/// </summary>
@@ -275,7 +263,7 @@ static	private event PHandlerEvent __EventConnect;
 				if (Writer.Clear < length)
 				{
 					state = 5;
-					close = new Close(Adress,
+					close = new Close(Address(),
 										WSClose.Abnormal);
 					return false;
 				}
@@ -339,65 +327,6 @@ static	private event PHandlerEvent __EventConnect;
 		{
 			return Message(message, WSOpcod.Binnary, WSFin.Last);
 		}
-		public TaskResult LoopWork()
-		{
-			if (state == 4 || state == 5 || state == 7)
-				TaskResult.Option = TaskOption.Delete;
-			else
-			{
-				Work();
-				if (TaskResult.Option == TaskOption.Work)
-					state = 1;
-			}
-			return TaskResult;
-		}
-		public TaskResult LoopRead()
-		{
-			if (state == 1)
-			{
-				
-				if (Tcp.Poll(0, SelectMode.SelectRead))
-				{
-					Data();
-					int length =
-						Tcp.Available;
-					if (  length > 0  )
-					{
-						Read(length);
-					}
-					else
-					{
-						state = 5;						
-						close = new Close(Adress, WSClose.Abnormal);
-						return TaskResult;
-					}
-				}
-				if (Interlocked.CompareExchange(ref state, 2, 1) == 1)
-					TaskResult.Option = TaskOption.Write;
-			}
-			return TaskResult;
-		}
-		public TaskResult LoopWrite()
-		{
-			if (state == 2)
-			{
-				TaskResult.Option = TaskOption.Loop;
-				if (Tcp.Poll(0, SelectMode.SelectWrite))
-				{
-					lock (Writer)
-						Write();
-				}
-				else if (!Tcp.Connected)
-				{
-					state = 5;
-					
-					close = new Close(Adress, WSClose.Abnormal);
-				}
-				if (Interlocked.CompareExchange(ref state, 1, 2) == 2)
-					TaskResult.Option = TaskOption.Read;
-			}
-			return TaskResult;
-		}
 		/// <summary>
 		/// Функция 1 прохода обработки ws протокола соединения
 		/// </summary>
@@ -426,16 +355,14 @@ static	private event PHandlerEvent __EventConnect;
 						return TaskResult;					
 					if (Tcp.Poll(0, SelectMode.SelectRead))
 					{
-						int length = 
-							Tcp.Available;
-						if (length  >  0)
+						if (Tcp.Available > 0)
 						{
-							Read( length );
+							Read();
 						}
 						else
 						{
 							state = 5;
-							close = new Close(Adress, WSClose.Abnormal);
+							close = new Close(Address(), WSClose.Abnormal);
 							return TaskResult;
 						}
 					}
@@ -454,7 +381,7 @@ static	private event PHandlerEvent __EventConnect;
 					}
 						else if (!Tcp.Connected)
 						{
-							close = new Close(Adress, WSClose.Abnormal);
+							close = new Close(Address(), WSClose.Abnormal);
 							return TaskResult;
 						}
 					if (Interlocked.CompareExchange(ref state, 0, 2) == 2)
@@ -462,15 +389,13 @@ static	private event PHandlerEvent __EventConnect;
 				}						
 				
 						if (state == 5)
-						{
-							Console.WriteLine(close.ToString());	
+						{	
 							Close(close);
 							state = 7;
 						}
 						if (state == 6)
 						{
 							Connection(Request, Response);
-							TaskResult.Option = TaskOption.Work;
 							Interlocked.CompareExchange (ref state, 0, 6);
 						}
 						if (state == 7)
@@ -498,6 +423,14 @@ static	private event PHandlerEvent __EventConnect;
 			return TaskResult;
         }
 		/// <summary>
+		/// Возвращает адрес удаленной стороны текущего соденинения
+		/// </summary>
+		/// <returns>строковое представдение ip адреса</returns>
+		public virtual string Address()
+		{
+			return ((IPEndPoint)Tcp.RemoteEndPoint).Address.ToString();
+		}
+		/// <summary>
 		/// Возвращает протокол установленного соединения поверх tcp/ip
 		/// </summary>
 		/// <returns>строковое представление текущего протокола</returns>
@@ -522,12 +455,14 @@ static	private event PHandlerEvent __EventConnect;
 		/// <summary>
 		/// 
 		/// </summary>
-		private void Read(int length)
+		private void Read()
 		{
 			SocketError error;
 
 			int read =
 				(int)Reader.PointW;
+			var length = 
+					 Tcp.Available;
 			if (length > 4000)
 				length = 4000;
 			byte[] buffer = 
