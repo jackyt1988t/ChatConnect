@@ -201,10 +201,10 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 						Work();
 						Interlocked.CompareExchange(ref state, 1, 0);
 					}
-					if (state == 3)
+					if (state == 6)
 					{
 						Work();
-						Interlocked.CompareExchange(ref state, 2, 3);
+						Interlocked.CompareExchange(ref state, 2, 6);
 					}
 				if (state == 1)
 				{
@@ -223,10 +223,10 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 					else
 						state = 0;
 				}
-						if (state == 6)
+						if (state == 3)
 						{
 							Connection();
-							Interlocked.CompareExchange(ref state, 2, 6);
+							Interlocked.CompareExchange(ref state, 2, 3);
 						}
 					if (state == 2)
 					{

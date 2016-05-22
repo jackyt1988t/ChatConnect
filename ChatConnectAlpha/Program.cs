@@ -18,7 +18,11 @@ namespace ChatConnect
         static void Main(string[] args)
         {
 			int work = 0;
-			int count = 6;
+			int count = 2;
+			Thread Thr = new Thread(Agregator.loop);
+				   Thr.IsBackground = true;
+				   Thr.Start();
+			Thread.Sleep(100);
 			while ( work++ < count )
 			{
 				Thread thr = new Thread(Agregator.Loop);
@@ -33,14 +37,11 @@ namespace ChatConnect
 
 			LingerOption LOption = new LingerOption(true, 0);
 			
-			WS.EventConnect +=
-				new PHandlerEvent((object sender, PEventArgs e) =>
+			WS.EventConnect += (object sender, PEventArgs e) =>
 			{
-				WS ws = 
-					(WS)sender;
-				WebModule wm = 
-					new WebModule(ws);
-			});
+				WS ws = (WS)sender;
+				WebModule wm = new WebModule(ws);
+			};
 			while ( true )
 			{
 				Socket socket = null;
@@ -48,10 +49,10 @@ namespace ChatConnect
 				{
 
 					socket = listener.Accept();
-					socket.Blocking = false;
-					socket.LingerState = LOption;
+					socket.NoDelay = false;
+					socket.Blocking = false;					
 					socket.SendBufferSize = 1000 * 64;
-					socket.ReceiveBufferSize = 1000 * 32;
+					socket.ReceiveBufferSize = 1000 * 16;
 					Agregator ObjectProtocol = new Agregator(socket);
 
 				}

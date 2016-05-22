@@ -1,24 +1,26 @@
 ﻿using System;
 using System.Net.Sockets;
 	using System.Threading;
-	using System.Collections.Concurrent;
+		using System.Collections.Concurrent;
 
 using ChatConnect.Tcp.Protocol;
 using ChatConnect.Tcp.Protocol.WS;
 using ChatConnect.Tcp.Protocol.HTTP;
+using System.Collections;
 
 namespace ChatConnect.Tcp
 {
 	class Agregator
 	{
 		public IProtocol Protocol;
+		public static ConcurrentQueue<WS> Read;
 
-		private long _nextloop = 0;
-		private static PHandlerEvent Connect;
+		private static PHandlerEvent Connect;		
 		private static ConcurrentQueue<Agregator> Container;
 
 		static Agregator()
 		{
+			Read = new ConcurrentQueue<WS>();
 			Container = new ConcurrentQueue<Agregator>();
 		}
 		public Agregator(Socket tcp)
@@ -26,20 +28,47 @@ namespace ChatConnect.Tcp
 			Protocol = new HTTPProtocol( tcp, Connect );
 			Container.Enqueue(this);
 		}
- static public void Loop()
+		static public void loop()
+		{
+			short loop = 0;
+			while (true)
+			{
+				try
+				{
+					WS ws = null;
+					if (!Read.TryDequeue(out ws))
+						Thread.Sleep(1);
+					else
+					{
+						ws.Read();
+						if (loop++ > 1000)
+						{
+							loop = 0;
+							Thread.Sleep(1);
+						}
+					}
+				}
+				catch (FieldAccessException exc)
+				{
+					Console.WriteLine("Обработчик: " + exc.Message);
+				}
+			}
+		}
+		static public void Loop()
 		{
 			short loop = 0;
 			while ( true )
 			{
+				Agregator agregator = null;
 				try
 				{
-					Agregator agregator = null;
+					
 					if (!Container.TryDequeue(out agregator))
 						Thread.Sleep(1);
 					else
 					{
 						agregator.TaskLoopHandler();
-						if (loop++ > 500)
+						if (loop++ > 1000)
 						{
 							loop = 0;
 							Thread.Sleep(1);
@@ -58,7 +87,7 @@ namespace ChatConnect.Tcp
 		}
 		private void TaskLoopHandler()
 		{
-				TaskResult TaskResult = Protocol.TaskLoopHandlerProtocol();
+			TaskResult TaskResult = Protocol.TaskLoopHandlerProtocol();
 			switch (TaskResult.Option)
 			{
 				case TaskOption.Loop:
@@ -66,8 +95,8 @@ namespace ChatConnect.Tcp
 					break;
 				case TaskOption.Protocol:
 					if (TaskResult.Protocol == TaskProtocol.WSRFC76)
-						Protocol =
-						   new WSProtocol7(Protocol);
+						Protocol = new WSProtocol7(Protocol);
+					Read.Enqueue((WS)Protocol);
 					Container.Enqueue(this);
 					break;
 				case TaskOption.Threading:
