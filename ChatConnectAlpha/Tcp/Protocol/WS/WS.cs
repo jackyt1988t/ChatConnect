@@ -2,16 +2,16 @@
 using System.IO;
 using System.Text;
 
-	using System.Net;
-	using System.Net.Sockets;
+using System.Net;
+using System.Net.Sockets;
 
-	using System.Threading;
-	using System.Threading.Tasks;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ChatConnect.Tcp.Protocol.WS
 {
-    abstract class WS : IProtocol
-    {
+	abstract class WS : IProtocol
+	{
 		private static readonly string S_WORK = "work";
 		private static readonly string S_SEND = "send";
 		private static readonly string S_DATA = "data";
@@ -23,14 +23,14 @@ namespace ChatConnect.Tcp.Protocol.WS
 		private static readonly string S_CONNECT = "connect";
 
 		static public bool Deb;
- 		/// <summary>
+		/// <summary>
 		/// tcp/ip соединение
 		/// </summary>
-        public Socket Tcp
-        {
-            get;
-            protected set;
-        }
+		public Socket Tcp
+		{
+			get;
+			protected set;
+		}
 		/// <summary>
 		/// Объект синхронизации
 		/// </summary>
@@ -52,30 +52,30 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// Текщий статус протокола
 		/// </summary>
 		public States State
-        {
-            get
+		{
+			get
 			{
 				return (States)state;
 			}
-            protected set
+			protected set
 			{
-				state = ( int )value;
+				state = (int)value;
 			}
-        }
-		
+		}
+
 		/// <summary>
 		/// 
 		/// </summary>
-abstract
-		public WStream Reader
+		abstract
+				public WStream Reader
 		{
 			get;
 		}
 		/// <summary>
 		/// 
 		/// </summary>
-abstract
-		public WStream Writer
+		abstract
+				public WStream Writer
 		{
 			get;
 		}
@@ -95,10 +95,10 @@ abstract
 			get;
 			protected set;
 		}
-        public TaskResult TaskResult
-        {
-        	get;
-            protected set;
+		public TaskResult TaskResult
+		{
+			get;
+			protected set;
 		}
 		/// <summary>
 		/// Событие которое наступает при проходе по циклу
@@ -222,8 +222,8 @@ abstract
 		/// <summary>
 		/// Событие которое наступает при открвтии соединения когда получены заголвоки
 		/// </summary>
-  static 
-		public event PHandlerEvent EventConnect
+		static
+			  public event PHandlerEvent EventConnect
 		{
 			add
 			{
@@ -243,8 +243,8 @@ abstract
 		private event PHandlerEvent __EventError;
 		private event PHandlerEvent __EventClose;
 		private event PHandlerEvent __EventChunk;
-static	private event PHandlerEvent __EventConnect;
-		
+		static private event PHandlerEvent __EventConnect;
+
 		/// <summary>
 		/// Отправляет данные текущему подключению
 		/// </summary>
@@ -257,11 +257,11 @@ static	private event PHandlerEvent __EventConnect;
 
 			int recive = 0;
 			int length = message.Length;
-			lock(Writer)
+			lock (Writer)
 			{
 				if (Writer.Clear < length)
 				{
-					
+
 					close = new Close(Address(),
 								WSClose.Abnormal);
 					state = 5;
@@ -315,8 +315,8 @@ static	private event PHandlerEvent __EventConnect;
 		public bool Message(string message)
 		{
 			byte[] _buffer = Encoding.UTF8.GetBytes(
-											    message);
-			return Message (_buffer, WSOpcod.Text, WSFin.Last);
+												message);
+			return Message(_buffer, WSOpcod.Text, WSFin.Last);
 		}
 		/// <summary>
 		/// Отправляет текстовый фрейм текущему подключению
@@ -343,65 +343,65 @@ static	private event PHandlerEvent __EventConnect;
 				if (state == 0)
 				{
 					Work();
-				/*==================================================================
-					Проверяет сокет были получены данные или нет. Если 
-					данные были получены Запускает функцию для получения данных.
-					В случае если соединеие было закрыто назначается 
-					соотвествующий обработчик, если нет утсанавливает обработчик 
-					отправки данных.
-				==================================================================*/
+					/*==================================================================
+						Проверяет сокет были получены данные или нет. Если 
+						данные были получены Запускает функцию для получения данных.
+						В случае если соединеие было закрыто назначается 
+						соотвествующий обработчик, если нет утсанавливает обработчик 
+						отправки данных.
+					==================================================================*/
 					if (Interlocked.CompareExchange(ref state, 1, 0) != 0)
-						return TaskResult;					
+						return TaskResult;
 					//Read();
 					Data();
-				/*==================================================================
-					Проверяет возможность отправки данных. Если данные можно 
-					отправить запускает функцию для отправки данных, в случае 
-					если статус не был изменен выполняет переход к следующему 
-					обраотчику, обработчику обработки пользовательски данных.
-				==================================================================*/
+					/*==================================================================
+						Проверяет возможность отправки данных. Если данные можно 
+						отправить запускает функцию для отправки данных, в случае 
+						если статус не был изменен выполняет переход к следующему 
+						обраотчику, обработчику обработки пользовательски данных.
+					==================================================================*/
 					if (Interlocked.CompareExchange(ref state, 2, 1) != 1)
 						return TaskResult;
 					lock (Writer)
 						Write();
-					
+
 					if (Interlocked.CompareExchange(ref state, 0, 2) == 2)
 						return TaskResult;
-				}						
-				
-						if (state == 5)
-						{	
-							Close(close);
-							Tcp.Close();
-							state = 7;
-						}
-						if (state == 3)
-						{
-							Connection(Request, Response);
-							Interlocked.CompareExchange (ref state, 0, 3);
-						}
-						if (state == 7)
-						{
-							TaskResult.Option = TaskOption.Delete;							
-							if (Tcp != null)
-								Tcp.Dispose();
-							
-						}
-            }
-            catch (WSException exc)
-            {
+				}
+
+				if (state == 5)
+				{
+					Close(close);
+					Tcp.Close();
+					state = 7;
+				}
+				if (state == 3)
+				{
+					Connection(Request, Response);
+					Interlocked.CompareExchange(ref state, 0, 3);
+				}
+				if (state == 7)
+				{
+					TaskResult.Option = TaskOption.Delete;
+					if (Tcp != null)
+						Tcp.Dispose();
+
+				}
+			}
+			catch (WSException exc)
+			{
 				/*if (exc.Closes == WSCloseNum.ServerError)
 					Response.SegmentsBuffer.Clear();					
 				else
 					Close( WSCloseMsg.Message(exc.Closes ), (int)exc.Closes);*/
 
-                state = 4;
+				state = 4;
 				Error(exc);
 				state = 5;
 				close = new Close("Server", exc.Closes);
 			}
 			return TaskResult;
-        }
+		}
 		/// <summary>
 		/// Возвращает адрес удаленной стороны текущего соденинения
 		/// </summary>
@@ -414,10 +414,10 @@ static	private event PHandlerEvent __EventConnect;
 		/// Возвращает протокол установленного соединения поверх tcp/ip
 		/// </summary>
 		/// <returns>строковое представление текущего протокола</returns>
-        public override string ToString()
-        {
-        	return "WS";
-        }
+		public override string ToString()
+		{
+			return "WS";
+		}
 		/// <summary>
 		/// Отправляет закрывающий фрейм с кодом 1000.
 		/// </summary>
@@ -438,28 +438,28 @@ static	private event PHandlerEvent __EventConnect;
 		{
 			SocketError error;
 			int count = 1000;
-				int start =
-				   (int)Reader.PointW;
-				byte[] buffer = 
-					    Reader.Buffer;
-				if (Reader.Clear == 0)
-				{
-					error  =  SocketError.NoBufferSpaceAvailable;
-					throw new WSException("Ошибка при чтении данных из Socket.", error,
-																   WSClose.ServerError);
-				}
-				
-				if (Reader.Count - start < count)
-					count = 
-					   (int)(Reader.Count - start);
-				start = Tcp.Receive (buffer, start, count, SocketFlags.None, out error);
-				if (start > 0)
-					Reader.SetLength(start);
-				if (error  !=  SocketError.Success && error  !=  SocketError.WouldBlock)
-				{
-					throw new WSException("Ошибка при чтении данных из Socket.", error,
-																   WSClose.ServerError);
-				}
+			int start =
+			   (int)Reader.PointW;
+			byte[] buffer =
+					Reader.Buffer;
+			if (Reader.Clear == 0)
+			{
+				error = SocketError.NoBufferSpaceAvailable;
+				throw new WSException("Ошибка при чтении данных из Socket.", error,
+															   WSClose.ServerError);
+			}
+
+			if (Reader.Count - start < count)
+				count =
+				   (int)(Reader.Count - start);
+			start = Tcp.Receive(buffer, start, count, SocketFlags.None, out error);
+			if (start > 0)
+				Reader.SetLength(start);
+			if (error != SocketError.Success && error != SocketError.WouldBlock)
+			{
+				throw new WSException("Ошибка при чтении данных из Socket.", error,
+															   WSClose.ServerError);
+			}
 		}
 		/// <summary>
 		/// Отправляет сообщение
@@ -467,22 +467,22 @@ static	private event PHandlerEvent __EventConnect;
 		/// <param name="data">Данные</param>
 		private void Write()
 		{
-			SocketError error;			
-			if ( Writer.Empty )
+			SocketError error;
+			if (Writer.Empty)
 			{
-				int start = 
+				int start =
 					(int)Writer.PointR;
-				int write = 
+				int write =
 					(int)Writer.Length;
 				if (write > 8000)
 					write = 8000;
-				byte[] buffer = 
+				byte[] buffer =
 						 Writer.Buffer;
-				
+
 				if (Writer.Count - start < write)
 					write =
 					  (int)(Writer.Count - start);
-				start  =  Tcp.Send(buffer, start, write, SocketFlags.None, out error);
+				start = Tcp.Send(buffer, start, write, SocketFlags.None, out error);
 				if (start > 0)
 					Writer.Position = start;
 				if (error != SocketError.Success)
@@ -491,9 +491,9 @@ static	private event PHandlerEvent __EventConnect;
 						&& error != SocketError.NoBufferSpaceAvailable)
 					{
 						throw new WSException("Ошибка записи данных в Socket", error,
-															     WSClose.ServerError);
+																 WSClose.ServerError);
 					}
-				}					
+				}
 			}
 		}
 		protected void OnEventWork()
@@ -586,10 +586,10 @@ static	private event PHandlerEvent __EventConnect;
 		/// </summary>
 		/// <param name="error"></param>
 		protected abstract void Error(WSException error);
-		
+
 		/// <summary>
 		/// 
 		/// </summary>
 		protected abstract void Connection(IHeader reauest, IHeader response);
-    }
+	}
 }
