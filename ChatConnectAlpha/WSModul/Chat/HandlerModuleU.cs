@@ -5,6 +5,7 @@ using ChatConnect.Log;
 using ChatConnect.Chats;
 using System.Text.RegularExpressions;
 using ChatConnect.WebModul.Chat.JsonObject;
+using System.Text;
 
 namespace ChatConnect.WebModul.Chat
 {
@@ -99,8 +100,9 @@ namespace ChatConnect.WebModul.Chat
                     writer.WriteValue(module.User.Name); // Логин пользователя
                 writer.WriteEndObject();
 
+				module.Message(sw.ToString());
                 /*         Рассылка сообщения всем пользователям комнаты         */
-                WsChats.Message(module.User, new WsJson("Message", sw.ToString()));
+                //WsChats.Message(module.User, new WsJson("Message", sw.ToString()));
             }
         }
         public virtual bool HandlerExpr(IWebModule module, WebModuleCommand cmd)

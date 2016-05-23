@@ -250,24 +250,43 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// </summary>
 		/// <param name="message">массив байт для отправки</param>
 		/// <returns>true в случае ечсли данные можно отправить</returns>
-		public bool Send(byte[] message)
+		public bool Send(byte[] buffer)
 		{
+			
 			if (state >= 4)
 				return false;
-
-			int recive = 0;
-			int length = message.Length;
-			lock (Writer)
+			SocketError error;
+			
+			lock (Sync)
 			{
-				if (Writer.Clear < length)
+				int start = 0;
+				int write = buffer.Length;
+				start = Tcp.Send(buffer, start, write, 
+									       SocketFlags.None, out error);
+				if (error != SocketError.Success)
 				{
-
-					close = new Close(Address(),
-								WSClose.Abnormal);
-					state = 5;
-					return false;
+					if (error != SocketError.WouldBlock
+						&& error != SocketError.NoBufferSpaceAvailable)
+					{
+						close = new Close (Address(), WSClose.Abnormal);
+						state = 5;
+						return false;
+					}
 				}
-				Writer.Write(message, recive, length);
+				if (start < write)
+				{
+					write = write - start;
+					if (Writer.Clear < write)
+					{
+
+						close = new Close (Address(), WSClose.Abnormal);
+						state = 5;
+						return false;
+					}
+					Writer.Write(buffer, start, write);
+					if (start > 0)
+						Writer.Position = start;
+				}
 				return true;
 			}
 		}
@@ -362,9 +381,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 					==================================================================*/
 					if (Interlocked.CompareExchange(ref state, 2, 1) != 1)
 						return TaskResult;
-					lock (Writer)
-						Write();
-
+					Write();
 					if (Interlocked.CompareExchange(ref state, 0, 2) == 2)
 						return TaskResult;
 				}

@@ -90,7 +90,7 @@ namespace ChatConnect.WebModul
                 return __ConnectionSetting;
             } 
         }
-
+		static int w = 0;
 		protected WS __WS;
 		
         protected Work __Work;
@@ -137,7 +137,11 @@ namespace ChatConnect.WebModul
             
 			
 			__WS.EventData += EventText;
-			__WS.EventWork += EventWork;
+			if (w == 0)
+			{
+				w++;
+				__WS.EventWork += EventWork;
+			}
 			__WS.EventError += EventError;
 			__WS.EventClose += EventClose;
 

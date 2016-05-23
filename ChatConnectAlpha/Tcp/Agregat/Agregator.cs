@@ -1,15 +1,35 @@
 ﻿using System;
-using System.Net.Sockets;
-	using System.Threading;
+		using System.Net.Sockets;
+			using System.Threading;
+	using System.Runtime.InteropServices;
 		using System.Collections.Concurrent;
 
 using ChatConnect.Tcp.Protocol;
 using ChatConnect.Tcp.Protocol.WS;
 using ChatConnect.Tcp.Protocol.HTTP;
-using System.Collections;
+
 
 namespace ChatConnect.Tcp
 {
+	[System.Security.SuppressUnmanagedCodeSecurityAttribute()]
+	class Import
+	{
+
+		[StructLayout(LayoutKind.Sequential)]
+		public struct WSAPOLLFD
+		{
+			public IntPtr fd;
+			public short events;
+			public short revents;
+		}
+		#if !PLATFORM_UNIX
+		[DllImport("Ws2_32.dll", SetLastError = true)]
+		public static extern int WSAPoll(
+			[In, Out] WSAPOLLFD[] fdarray,
+			[In] ulong nfds,
+			[In] int wait);
+		#endif
+	}
 	class Agregator
 	{
 		public IProtocol Protocol;
@@ -46,7 +66,14 @@ namespace ChatConnect.Tcp
 							loop = 0;
 							Thread.Sleep(1);
 						}
-					}
+						Read.Enqueue(ws);
+						Import.WSAPOLLFD d = new Import.WSAPOLLFD();
+						d.fd = ws.Tcp.Handle;
+						d.events = 256;
+						Import.WSAPOLLFD[] arr = new Import.WSAPOLLFD[] { d };
+						int i = Import.WSAPoll(arr, 1, 0);
+						object h = ws.Tcp.GetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Error);
+	}
 				}
 				catch (FieldAccessException exc)
 				{
