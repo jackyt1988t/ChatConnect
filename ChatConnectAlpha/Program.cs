@@ -16,15 +16,15 @@ namespace ChatConnect
         static void Main(string[] args)
         {
 			int work = 0;
-			int count = 4;
-			Thread Thr = new Thread(Agregator.loop);
+			int count = 6;
+			/*Thread Thr = new Thread(Agregator.loop);
 				   Thr.IsBackground = true;
 				   Thr.Start();
 			Thread.Sleep(100);
 			Thr = new Thread(Agregator.loop);
 			Thr.IsBackground = true;
 			Thr.Start();
-			Thread.Sleep(100);
+			Thread.Sleep(100);*/
 			while ( work++ < count )
 			{
 				Thread thr = new Thread(Agregator.Loop);
