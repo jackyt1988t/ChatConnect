@@ -16,7 +16,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		{
 			get
 			{
-				return (_p_r != _p_w);
+				return (_p_r == _p_w);
 			}
 		}
 		public long Clear
@@ -129,7 +129,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		}
 		public override int ReadByte()
 		{
-			if (!Empty)
+			if (Empty)
 				return -1;
 			return _buffer[_p_r++];
 		}				
@@ -168,7 +168,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		unsafe public override int Read(byte[] buffer, int pos, int len)
 		{
 			int i;
-			if (!Empty)
+			if (Empty)
 				return -1;
 			fixed(byte* source = buffer, target = _buffer)
 			{
@@ -181,7 +181,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 					*ps = *pt;
 					ps++;
 					PointR++;
-					if (!Empty)
+					if (Empty)
 						return i;
 				}
 			}

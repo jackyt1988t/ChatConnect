@@ -28,7 +28,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 					byte* ps = sourse + PointR;
 					byte* pt = target + Frame.PartBody;
 
-					while (Empty)
+					while (!Empty)
 					{
 						if (Frame.MaskPos > 3)
 							Frame.MaskPos = 0;
@@ -61,7 +61,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 					byte* ps = sourse + PointR;
 					byte* pt = target + Frame.PartBody;
 
-					while (Empty)
+					while (!Empty)
 					{
 						if (Frame.MaskPos > 3)
 							Frame.MaskPos = 0;

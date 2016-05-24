@@ -9,8 +9,6 @@ using ChatConnect.Tcp.Protocol;
 using ChatConnect.Tcp.Protocol.WS;
 using ChatConnect.Tcp.Protocol.HTTP;
 
-using ChatConnect.WebModul;
-
 namespace ChatConnect
 {
     class Program
@@ -22,6 +20,10 @@ namespace ChatConnect
 			Thread Thr = new Thread(Agregator.loop);
 				   Thr.IsBackground = true;
 				   Thr.Start();
+			Thread.Sleep(100);
+			Thr = new Thread(Agregator.loop);
+			Thr.IsBackground = true;
+			Thr.Start();
 			Thread.Sleep(100);
 			while ( work++ < count )
 			{
@@ -37,10 +39,19 @@ namespace ChatConnect
 
 			LingerOption LOption = new LingerOption(true, 0);
 			
-			WS.EventConnect += (object sender, PEventArgs e) =>
+			WS.EventConnect += (object obj, PEventArgs ev) =>
 			{
-				WS ws = (WS)sender;
-				WebModule wm = new WebModule(ws);
+				WS WebSock = obj as WS;
+				WebSock.EventData += (object sender, PEventArgs e) =>
+				{
+					WSBinnary binnary = e.sender as WSBinnary;
+					WebSock.Message(binnary.Data);
+
+				};
+				WebSock.EventClose += (object sender, PEventArgs e) =>
+				{
+					Console.WriteLine("Close");
+				};
 			};
 			while ( true )
 			{

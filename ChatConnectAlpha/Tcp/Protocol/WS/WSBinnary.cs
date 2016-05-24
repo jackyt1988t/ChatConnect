@@ -4,47 +4,31 @@ namespace ChatConnect.Tcp.Protocol.WS
 {
     class WSBinnary
     {
-        public int Opcod
-        {
-            get;
-            private set;
-        }
-        public byte[] Buffer
+        
+        public byte[] Data
         {
             get;
             set;
+        }
+		public WSOpcod Opcod
+        {
+            get;
+            private set;
         }
         public DateTime Create
         {
             get;
             private set;
         }
-		public DateTime Mofieid
+		public WSBinnary(byte[] data)
+        {
+			Data = data;            
+		}
+		public WSBinnary(byte[] data, WSOpcod opcod) :
+			this(data)
 		{
-			get;
-			private set;
+			Opcod = opcod;
+			Create = DateTime.Now;
 		}
-		public WSBinnary(int opcod)
-        {
-            Opcod = opcod;
-            Create = DateTime.Now;
-			Mofieid = DateTime.MinValue;
-		}
-        public void AddBinary(byte[] buffer)
-        {
-            if (Buffer == null)
-            {
-                Buffer = buffer;
-                Create = DateTime.Now;
-            }
-            else
-            {
-                byte[] part = new byte[Buffer.Length + buffer.Length];
-                Buffer.CopyTo(   part, 0   );
-                buffer.CopyTo(   part, Buffer.Length   );
-                Buffer = part;
-            }
-				Mofieid = DateTime.Now;
-        }
     }
 }

@@ -120,31 +120,6 @@
     <Compile Include="Tcp\Protocol\WS\WStream\WStream7.cs" />
     <Compile Include="Tcp\Protocol\WS\WStream\WStream.cs" />
     <Compile Include="Tcp\Segment.cs" />
-    <Compile Include="WSModul\Chats.cs" />
-    <Compile Include="WSModul\Chat\HandlerModuleA.cs" />
-    <Compile Include="WSModul\Chat\HandlerModuleB.cs" />
-    <Compile Include="WSModul\Chat\HandlerModuleH.cs" />
-    <Compile Include="WSModul\Chat\HandlerModuleM.cs" />
-    <Compile Include="WSModul\Chat\HandlerModuleN.cs" />
-    <Compile Include="WSModul\Chat\HandlerModuleS.cs" />
-    <Compile Include="WSModul\Chat\HandlerModuleU.cs" />
-    <Compile Include="WSModul\Chat\IHandlerModule.cs" />
-    <Compile Include="WSModul\Chat\Info.cs" />
-    <Compile Include="WSModul\Chat\IUser.cs" />
-    <Compile Include="WSModul\Chat\Json.cs" />
-    <Compile Include="WSModul\Chat\JsonObject\CheckObject.cs" />
-    <Compile Include="WSModul\Chat\JsonObject\JsErr.cs" />
-    <Compile Include="WSModul\Chat\JsonObject\JsFile.cs" />
-    <Compile Include="WSModul\Chat\JsonObject\JsInfo.cs" />
-    <Compile Include="WSModul\Chat\JsonObject\JsInit.cs" />
-    <Compile Include="WSModul\Chat\JsonObject\JsMessage.cs" />
-    <Compile Include="WSModul\Chat\Room.cs" />
-    <Compile Include="WSModul\Chat\User.cs" />
-    <Compile Include="WSModul\Chat\Version.cs" />
-    <Compile Include="WSModul\Chat\Work.cs" />
-    <Compile Include="WSModul\IWebModule.cs" />
-    <Compile Include="WSModul\WebModulClass.cs" />
-    <Compile Include="WSModul\WebModule.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

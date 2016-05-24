@@ -74,10 +74,10 @@ namespace ChatConnect.Tcp
 					else
 					{
 						ws.Read();
-						if (loop++ > 2000)
+						if (loop++ > 1000)
 						{
 							loop = 0;
-							Thread.Sleep(2);
+							Thread.Sleep(1);
 						}
 						if ((int)ws.State < 4)
 							Read.Enqueue(ws);

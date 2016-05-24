@@ -255,34 +255,40 @@ namespace ChatConnect.Tcp.Protocol.WS
 			
 			if (state >= 4)
 				return false;
-			SocketError error;
 			
-				int start = 0;
-				int write = buffer.Length;
+			int start = 0;
+			int write = buffer.Length;
+			SocketError error = SocketError.Success;
 			lock (Sync)
-			{	
-				start = Tcp.Send(buffer, start, write, SocketFlags.None, out error);
-				}
-				int length = write - start;
-				if (length > 0)
+			{
+				if (Writer.Empty)	
+					start = Tcp.Send(buffer, start, write, SocketFlags.None, out error);
+			}
+			int length = write - start;
+			if (length > 0)
+			{
+				if (Writer.Clear < length)
+					error = SocketError.NoData;
+				else
 				{
-					if (Writer.Clear < length)
-						error = SocketError.NoData;
-					else
-					{
-						Writer.Write(buffer, start, length);
-						Writer.SetLength(length);
-					}
+					Writer.Write(buffer, start, length);
+					Writer.SetLength(length);
 				}
+			}
 			if (error != SocketError.Success)
-				{
+			{
 				if (error != SocketError.WouldBlock
 					&& error != SocketError.NoBufferSpaceAvailable)
-					{															 
+				{
 					if (state < 4)
+					{
+						state = 4;
 						Error(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
+						state = 5;
+						close = new Close("Server", WSClose.ServerError);
 					}
 				}
+			}
 			return true;
 			}
 		/// <summary>
@@ -357,23 +363,23 @@ namespace ChatConnect.Tcp.Protocol.WS
 				if (state == 0)
 				{
 					Work();
-					/*==================================================================
-						Проверяет сокет были получены данные или нет. Если 
-						данные были получены Запускает функцию для получения данных.
-						В случае если соединеие было закрыто назначается 
-						соотвествующий обработчик, если нет утсанавливает обработчик 
-						отправки данных.
-					==================================================================*/
+				/*==================================================================
+					Проверяет сокет были получены данные или нет. Если 
+					данные были получены Запускает функцию для получения данных.
+					В случае если соединеие было закрыто назначается 
+					соотвествующий обработчик, если нет утсанавливает обработчик 
+					отправки данных.
+				==================================================================*/
 					if (Interlocked.CompareExchange(ref state, 1, 0) != 0)
 						return TaskResult;
 					//Read();
 					Data();
-					/*==================================================================
-						Проверяет возможность отправки данных. Если данные можно 
-						отправить запускает функцию для отправки данных, в случае 
-						если статус не был изменен выполняет переход к следующему 
-						обраотчику, обработчику обработки пользовательски данных.
-					==================================================================*/
+				/*==================================================================
+					Проверяет возможность отправки данных. Если данные можно 
+					отправить запускает функцию для отправки данных, в случае 
+					если статус не был изменен выполняет переход к следующему 
+					обраотчику, обработчику обработки пользовательски данных.
+				==================================================================*/
 					if (Interlocked.CompareExchange(ref state, 2, 1) != 1)
 						return TaskResult;
 					Write();
@@ -443,12 +449,14 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// </summary>
 		public void Read()
 		{
-			SocketError error;
-			int count = 1000;
+			if (state > 4)
+				return;
+			int count = 4000;
 			int start =
 			   (int)Reader.PointW;
 			byte[] buffer =
 					Reader.Buffer;
+			SocketError error = SocketError.Success;
 			if (Reader.Clear == 0)
 			{
 				error = SocketError.NoData;
@@ -468,7 +476,12 @@ namespace ChatConnect.Tcp.Protocol.WS
 					&& error != SocketError.NoBufferSpaceAvailable)
 				{
 					if (state < 4)
+					{
+						state = 4;
 						Error(new WSException("Ошибка при чтении данных.", error, WSClose.ServerError));
+						state = 5;
+						close = new Close("Server", WSClose.ServerError);
+					}
 				}
 			}
 		}
@@ -477,9 +490,8 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// </summary>
 		/// <param name="data">Данные</param>
 		private void Write()
-		{
-			SocketError error;
-			if (Writer.Empty)
+		{			
+			if (!Writer.Empty)
 			{
 				int start =
 					(int)Writer.PointR;
@@ -489,7 +501,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 					write = 8000;
 				byte[] buffer =
 						 Writer.Buffer;
-
+				SocketError error = SocketError.Success;
 				if (Writer.Count - start < write)
 					write =
 					  (int)(Writer.Count - start);
@@ -502,7 +514,12 @@ namespace ChatConnect.Tcp.Protocol.WS
 						&& error != SocketError.NoBufferSpaceAvailable)
 					{
 						if (state < 4)
+						{
+							state = 4;
 							Error(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
+							state = 5;
+							close = new Close("Server", WSClose.ServerError);
+						}
 					}
 				}
 			}
@@ -517,50 +534,48 @@ namespace ChatConnect.Tcp.Protocol.WS
 		}
 		protected void OnEventData(WSBinnary frame)
 		{
-			string m = "Получен фрейм Data";
+			//string m = "Получен фрейм Data";
 			PHandlerEvent e;
 			lock (SyncEvent)
 				e = __EventData;
 			if (e != null)
-				e(this, new PEventArgs(S_DATA, m, frame));
+				e(this, new PEventArgs(S_DATA, string.Empty, frame));
 		}
 		protected void OnEventPing(WSBinnary frame)
 		{
-			string m = "Получен фрейм Ping";
+			//string m = "Получен фрейм Ping";
 			PHandlerEvent e;
 			lock (SyncEvent)
 				e = __EventPing;
 			if (e != null)
-				e(this, new PEventArgs(S_PING, m, frame));
+				e(this, new PEventArgs(S_PING, string.Empty, frame));
 		}
 		protected void OnEventPong(WSBinnary frame)
 		{
-			string m = "Получен фрейм Pong";
+			//string m = "Получен фрейм Pong";
 			PHandlerEvent e;
 			lock (SyncEvent)
 				e = __EventPong;
 			if (e != null)
-				e(this, new PEventArgs(S_PONG, m, frame));
+				e(this, new PEventArgs(S_PONG, string.Empty, frame));
 		}
 		protected void OnEventClose(Close _close)
 		{
-			string m = _close.ToString();
-
+			//string m = _close.ToString();
 			PHandlerEvent e;
 			lock (SyncEvent)
 				e = __EventClose;
 			if (e != null)
-				e(this, new PEventArgs(S_CLOSE, m, _close));
+				e(this, new PEventArgs(S_CLOSE, string.Empty, _close));
 		}
 		protected void OnEventChunk(WSBinnary frame)
 		{
-			string m = "Получена часть данных";
-
+			//string m = "Получена часть данных";
 			PHandlerEvent e;
 			lock (SyncEvent)
 				e = __EventChunk;
 			if (e != null)
-				e(this, new PEventArgs(S_CHUNK, m, frame));
+				e(this, new PEventArgs(S_CHUNK, string.Empty, frame));
 		}
 		protected void OnEventError(WSException _error)
 		{
@@ -569,16 +584,16 @@ namespace ChatConnect.Tcp.Protocol.WS
 			lock (SyncEvent)
 				e = __EventError;
 			if (e != null)
-				e(this, new PEventArgs(S_ERROR, m, _error));
+				e(this, new PEventArgs(S_ERROR, string.Empty, _error));
 		}
 		protected void OnEventConnect(IHeader request, IHeader response)
 		{
-			string m = "Подключение было установлено";
+			//string m = "Подключение было установлено";
 			PHandlerEvent e;
 			lock (SyncEvent)
 				e = __EventConnect;
 			if (e != null)
-				e(this, new PEventArgs(S_CONNECT, m, null));
+				e(this, new PEventArgs(S_CONNECT, string.Empty, null));
 		}
 		/// <summary>
 		/// 
