@@ -167,6 +167,14 @@ namespace ChatConnect.Tcp.Protocol.WS
 			set;
 		}
 		/// <summary>
+		/// длинна тела
+		/// </summary>
+		public long LengData
+		{
+			get;
+			set;
+		}
+		/// <summary>
 		/// Буффер заголвоков
 		/// </summary>
 		public byte[] DataHead
@@ -219,16 +227,18 @@ namespace ChatConnect.Tcp.Protocol.WS
 
 			this.LengHead = 2;
 			this.SetsHead = true;
-			if ((this.LengBody + this.LengExtn) <= 125)
+			this.LengData = this.LengExtn 
+				      + this.LengBody;
+			if ((this.LengData) <= 125)
 			{
 				this.BitLeng = (int)this.LengBody;
 			}
-			else if ((this.LengBody + this.LengExtn) <= 65556)
+			else if ((this.LengData) <= 65556)
 			{
 				this.BitLeng = 126;
 				this.LengHead += 2;
 			}
-			else if ((this.LengBody + this.LengExtn) >= 65557)
+			else if ((this.LengData) >= 65557)
 			{
 				this.BitLeng = 127;
 				this.LengHead += 8;
@@ -255,45 +265,38 @@ namespace ChatConnect.Tcp.Protocol.WS
 
 			if (this.BitLeng == 127)
 			{
-				this.DataHead[length] = (byte)(this.LengBody >> 56);
+				this.DataHead[length] = (byte)(this.LengData >> 56);
 				length++;
-				this.DataHead[length] = (byte)(this.LengBody >> 48);
+				this.DataHead[length] = (byte)(this.LengData >> 48);
 				length++;
-				this.DataHead[length] = (byte)(this.LengBody >> 40);
+				this.DataHead[length] = (byte)(this.LengData >> 40);
 				length++;
-				this.DataHead[length] = (byte)(this.LengBody >> 32);
+				this.DataHead[length] = (byte)(this.LengData >> 32);
 				length++;
-				this.DataHead[length] = (byte)(this.LengBody >> 24);
+				this.DataHead[length] = (byte)(this.LengData >> 24);
 				length++;
-				this.DataHead[length] = (byte)(this.LengBody >> 16);
+				this.DataHead[length] = (byte)(this.LengData >> 16);
 				length++;
 			}
 			if (this.BitLeng >= 126)
 			{
-				this.DataHead[length] = (byte)(this.LengBody >> 08);
+				this.DataHead[length] = (byte)(this.LengData >> 08);
 				length++;
-				this.DataHead[length] = (byte)(this.LengBody >> 00);
+				this.DataHead[length] = (byte)(this.LengData >> 00);
 				length++;
 			}
-
-				this.DataHead[length] = (byte)(this.BitExtn >> 08);
-				length++;
-				this.DataHead[length] = (byte)(this.BitExtn << 00);
-				length++;
 		}
 		public byte[] GetDataFrame()
 		{
 			SetHeader();
 
-			byte[] buffer = new byte[ this.LengHead
-					        + this.LengBody
-					        + this.LengExtn ];
+			byte[] buffer = new byte[ this.LengHea + this.LengData ];
 
-			this.DataHead.CopyTo(buffer, 0);
-			if (this.LengExtn > 0)
-				this.DataExtn.CopyTo(buffer, this.LengHead);
-			if (this.LengBody > 0)
-			this.DataBody.CopyTo(buffer, this.LengExtn);
+				this.DataHead.CopyTo(buffer, 0);
+				if (this.LengExtn > 0)
+					this.DataExtn.CopyTo(buffer, this.LengHead);
+				if (this.LengBody > 0)
+					this.DataBody.CopyTo(buffer, this.LengExtn);
 
 			return buffer;
 		}
