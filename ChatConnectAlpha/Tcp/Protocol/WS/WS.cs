@@ -261,18 +261,20 @@ namespace ChatConnect.Tcp.Protocol.WS
 			int write = buffer.Length;
 			lock (Sync)
 			{
-				start = Tcp.Send(buffer, start, write, 
-									       SocketFlags.None, out error);
-				if (start < write)
+				if (Writer.Clear)
 				{
-					write = write - start;
-					if (Writer.Clear < write)
+					start = Tcp.Send(buffer, start, write, 
+									       SocketFlags.None, out error);
+				}
+				int length = write - start;
+				if (length > 0)
+				{
+					if (Writer.Clear < length)
 						error = SocketErrror.WouldBlock;
 					else
 					{
-						Writer.Write(buffer, start, write);
-						if (start > 0)
-							Writer.SetLength(start);
+						Writer.Write(buffer, start, length);
+						Writer.SetLength(length);
 					}
 				}
 			}
@@ -465,9 +467,9 @@ namespace ChatConnect.Tcp.Protocol.WS
 				if (Reader.Count - start < count)
 					count =
 				   	(int)(Reader.Count - start);
-				start = Tcp.Receive(buffer, start, count, SocketFlags.None, out error);
-				if (start > 0)
-					Reader.SetLength(start);
+				int length = Tcp.Receive(buffer, start, count, SocketFlags.None, out error);
+				if (length > 0)
+					Reader.SetLength(length);
 			}
 			if (error != SocketError.Success && error != SocketError.WouldBlock)
 			{
@@ -497,9 +499,9 @@ namespace ChatConnect.Tcp.Protocol.WS
 				if (Writer.Count - start < write)
 					write =
 					  (int)(Writer.Count - start);
-				start = Tcp.Send(buffer, start, write, SocketFlags.None, out error);
-				if (start > 0)
-					Writer.Position = start;
+				int length = Tcp.Send(buffer, start, write, SocketFlags.None, out error);
+				if (length > 0)
+					Writer.Position = length;
 				if (error != SocketError.Success)
 				{
 					if (error != SocketError.WouldBlock
