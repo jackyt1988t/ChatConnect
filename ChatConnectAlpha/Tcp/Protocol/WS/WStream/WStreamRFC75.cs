@@ -27,13 +27,13 @@ namespace ChatConnect.Tcp.Protocol.WS
 				{
 					case 0:
 						/*     FIN */
-						Frame.BitFin = _byte & 0x40;
+						Frame.BitFin = _byte & 0x80;
 						/*   RCV1*/
-						Frame.BitRsv1 = _byte & 0x20;
+						Frame.BitRsv1 = _byte & 0x40;
 						/* RCV2 */
-						Frame.BitRsv2 = _byte & 0x10;
+						Frame.BitRsv2 = _byte & 0x20;
 						/* RCV3  */
-						Frame.BitRsv3 = _byte & 0x08;
+						Frame.BitRsv3 = _byte & 0x10;
 						/*      Опкод-хранит информацию о данных     */
 						Frame.BitPcod = (int)((uint)_byte << 28 >> 28);
 
