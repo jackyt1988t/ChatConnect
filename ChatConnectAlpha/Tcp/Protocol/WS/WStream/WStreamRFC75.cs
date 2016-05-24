@@ -26,14 +26,14 @@ namespace ChatConnect.Tcp.Protocol.WS
 				switch (Frame.Handler)
 				{
 					case 0:
-						/*       FIN - доставка сообщения     */
-						Frame.BitFin = (int)((uint)_byte >> 7);
-						/*      RCV1 - устанавливается сервером.     */
-						Frame.BitRsv1 = (int)((uint)_byte << 25 >> 31);
-						/*      RCV2 - устанавливается сервером.     */
-						Frame.BitRsv2 = (int)((uint)_byte << 26 >> 31);
-						/*      RCV3 - устанавливается сервером.     */
-						Frame.BitRsv3 = (int)((uint)_byte << 27 >> 31);
+						/*     FIN */
+						Frame.BitFin = _byte & 0x40;
+						/*   RCV1*/
+						Frame.BitRsv1 = _byte & 0x20;
+						/* RCV2 */
+						Frame.BitRsv2 = _byte & 0x10;
+						/* RCV3  */
+						Frame.BitRsv3 = _byte & 0x08;
 						/*      Опкод-хранит информацию о данных     */
 						Frame.BitPcod = (int)((uint)_byte << 28 >> 28);
 
@@ -48,10 +48,10 @@ namespace ChatConnect.Tcp.Protocol.WS
 
 						break;
 					case 1:
-						/*      Бит маски тела сообщения      */
-						Frame.BitRsv4 = (int)((uint)_byte >> 7);
-						/*     Длинна полученного тела сообщения     */
-						Frame.BitLeng = (int)((uint)_byte << 25 >> 25);
+						/* Бит маски тела сообщения */
+						Frame.BitRsv4 = _byte & 0x40;
+						/*     Длинна тела полученного сообщения     */
+						Frame.BitLeng = (int)(uint)(_byte << 25 >> 25);
 
 						if (Frame.BitLeng == 127)
 						{
@@ -73,50 +73,42 @@ namespace ChatConnect.Tcp.Protocol.WS
 					case 2:
 						/*  Обработчик.  */
 						Frame.Handler += 1;
-						Frame.LengBody = (int)((uint)_byte << 56);
+						Frame.LengBody = (long)_byte << 56);
 						break;
 					case 3:
 						/*  Обработчик.  */
 						Frame.Handler += 1;
-						Frame.LengBody = (int)((uint)Frame.LengBody | (uint)_byte << 48);
+						Frame.LengBody = Frame.LengBody | (long)_byte << 48);
 						break;
 					case 4:
 						/*  Обработчик.  */
 						Frame.Handler += 1;
-						Frame.LengBody = (int)((uint)Frame.LengBody | (uint)_byte << 40);
+						Frame.LengBody = Frame.LengBody | (long)_byte << 40);
 						break;
 					case 5:
 						/*  Обработчик.  */
 						Frame.Handler += 1;
-						Frame.LengBody = (int)((uint)Frame.LengBody | (uint)_byte << 32);
+						Frame.LengBody = Frame.LengBody | (long)_byte << 32);
 						break;
 					case 6:
 						/*  Обработчик.  */
 						Frame.Handler += 1;
-						Frame.LengBody = (int)((uint)Frame.LengBody | (uint)_byte << 24);
+						Frame.LengBody = Frame.LengBody | (long)_byte << 24);
 						break;
 					case 7:
 						/*  Обработчик.  */
 						Frame.Handler += 1;
-						Frame.LengBody = (int)((uint)Frame.LengBody | (uint)_byte << 16);
+						Frame.LengBody = Frame.LengBody | (long)_byte << 16);
 						break;
 					case 8:
 						/*  Обработчик.  */
 						Frame.Handler += 1;
-						Frame.LengBody = (int)((uint)Frame.LengBody | (uint)_byte << 08);
+						Frame.LengBody = Frame.LengBody | (long)_byte << 08);
 						break;
 					case 9:
 						/*  Обработчик.  */
 						Frame.Handler += 1;
-						Frame.LengBody = (int)((uint)Frame.LengBody | (uint)_byte << 00);
-						break;
-					case 10:
-						/*  Обработчик.  */
-						Frame.Handler += 1;
-						Frame.LengExtn = (int)((uint)Frame.LengExtn | (uint)_byte << 08);
-						break;
-					case 11:
-						Frame.LengExtn = (int)((uint)Frame.LengExtn | (uint)_byte << 00);
+						Frame.LengBody = Frame.LengBody | (long)_byte << 00);
 						break;
 				}
 
