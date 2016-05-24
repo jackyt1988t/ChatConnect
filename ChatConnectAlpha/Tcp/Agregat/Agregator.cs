@@ -11,25 +11,38 @@ using ChatConnect.Tcp.Protocol.HTTP;
 
 namespace ChatConnect.Tcp
 {
-	[System.Security.SuppressUnmanagedCodeSecurityAttribute()]
+	/*[System.Security.SuppressUnmanagedCodeSecurityAttribute()]
 	class Import
 	{
+		const short WSPOLLPRI = 0x0400;
 
+		const short WSPOLLERR = 0x0001;
+		const short WSPOLLHUP = 0x0002;		
+		const short WSPOLLNVAL = 0x0004;
+		const short WSPOLLWRNORM = 0x0010;
+		const short WSPOLLWRBAND = 0x0020;
+		const short WSPOLLRDNORM = 0x0100;
+		const short WSPOLLRDBAND = 0x0200;
+		
 		[StructLayout(LayoutKind.Sequential)]
 		public struct WSAPOLLFD
 		{
 			public IntPtr fd;
-			public short events;
-			public short revents;
+				public short events;
+				public short revents;
 		}
-		#if !PLATFORM_UNIX
+		#if PLATFORM_UNIX
+
+		#else
 		[DllImport("Ws2_32.dll", SetLastError = true)]
 		public static extern int WSAPoll(
 			[In, Out] WSAPOLLFD[] fdarray,
 			[In] ulong nfds,
 			[In] int wait);
+		[DllImport("Ws2_32.dll", SetLastError = true)]
+		public static extern int WSAGetLastError();
 		#endif
-	}
+	}*/
 	class Agregator
 	{
 		public IProtocol Protocol;
@@ -61,18 +74,13 @@ namespace ChatConnect.Tcp
 					else
 					{
 						ws.Read();
-						if (loop++ > 1000)
+						if (loop++ > 2000)
 						{
 							loop = 0;
-							Thread.Sleep(1);
+							Thread.Sleep(2);
 						}
-						Read.Enqueue(ws);
-						Import.WSAPOLLFD d = new Import.WSAPOLLFD();
-						d.fd = ws.Tcp.Handle;
-						d.events = 256;
-						Import.WSAPOLLFD[] arr = new Import.WSAPOLLFD[] { d };
-						int i = Import.WSAPoll(arr, 1, 0);
-						object h = ws.Tcp.GetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Error);
+						if ((int)ws.State < 4)
+							Read.Enqueue(ws);
 	}
 				}
 				catch (FieldAccessException exc)
@@ -95,7 +103,7 @@ namespace ChatConnect.Tcp
 					else
 					{
 						agregator.TaskLoopHandler();
-						if (loop++ > 1000)
+						if (loop++ > 500)
 						{
 							loop = 0;
 							Thread.Sleep(1);

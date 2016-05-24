@@ -23,10 +23,6 @@ namespace ChatConnect
 				   Thr.IsBackground = true;
 				   Thr.Start();
 			Thread.Sleep(100);
-			Thr = new Thread(Agregator.loop);
-			Thr.IsBackground = true;
-			Thr.Start();
-			Thread.Sleep(100);
 			while ( work++ < count )
 			{
 				Thread thr = new Thread(Agregator.Loop);

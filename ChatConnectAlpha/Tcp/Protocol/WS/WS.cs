@@ -256,39 +256,39 @@ namespace ChatConnect.Tcp.Protocol.WS
 			if (state >= 4)
 				return false;
 			SocketError error;
-			
+			int start = 0;
+			int write = buffer.Length;
 			lock (Sync)
-			{
-				int start = 0;
-				int write = buffer.Length;
+			{	
 				start = Tcp.Send(buffer, start, write, 
-									       SocketFlags.None, out error);
-				if (error != SocketError.Success)
-				{
-					if (error != SocketError.WouldBlock
-						&& error != SocketError.NoBufferSpaceAvailable)
-					{
-						close = new Close (Address(), WSClose.Abnormal);
-						state = 5;
-						return false;
-					}
-				}
-				if (start < write)
-				{
-					write = write - start;
-					if (Writer.Clear < write)
-					{
-
-						close = new Close (Address(), WSClose.Abnormal);
-						state = 5;
-						return false;
-					}
-					Writer.Write(buffer, start, write);
-					if (start > 0)
-						Writer.Position = start;
-				}
-				return true;
+									  SocketFlags.None, out error);
+				
 			}
+			if (start < write)
+			{
+				write = write - start;
+				if (Writer.Clear < write)
+				{
+					close = new Close(Address(), WSClose.Abnormal);
+					state = 5;
+					return false;
+				}
+				Writer.Write(buffer, start, write);
+						if (start > 0)
+							Writer.Position = start;
+			}
+			if (error != SocketError.Success)
+			{
+				if (error != SocketError.WouldBlock
+					&& error != SocketError.NoBufferSpaceAvailable)
+				{
+					close = new Close (Address(), WSClose.Abnormal);
+					state = 5;
+					return false;
+				}
+			}
+			
+			return true;
 		}
 		/// <summary>
 		/// Отправляет фрейм пинг текущему подключению
