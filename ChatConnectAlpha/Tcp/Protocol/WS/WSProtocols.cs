@@ -60,7 +60,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		{
 			int Opcod = WSFrameSample.CLOSE;
 			WSFrameSample frame = new WSFrameSample();
-						  frame.BitFind = 0;
+						  frame.BitFin = 0;
 						  frame.BitPcod = Opcod;
 
 			return Send(frame.GetDataFrame());
@@ -78,7 +78,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 			else if (opcod == WSOpcod.Binnary)
 				Opcod = WSFrameSample.BINNARY;
 			WSFrameSample frame = new WSFrameSample();
-						  frame.BitFind  = Fin;
+						  frame.BitFin  = Fin;
 						  frame.BitPcod  = Opcod;
 						  frame.BitLeng  = message.Length;
 						  frame.DataBody = message;

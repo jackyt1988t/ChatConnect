@@ -27,7 +27,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 				{
 					case 0:
 						/*       FIN - доставка сообщения     */
-						Frame.BitFind = (int)((uint)_byte >> 7);
+						Frame.BitFin = (int)((uint)_byte >> 7);
 						/*      RCV1 - устанавливается сервером.     */
 						Frame.BitRsv1 = (int)((uint)_byte << 25 >> 31);
 						/*      RCV2 - устанавливается сервером.     */
