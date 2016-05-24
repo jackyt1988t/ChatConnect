@@ -257,38 +257,35 @@ namespace ChatConnect.Tcp.Protocol.WS
 				return false;
 			SocketError error;
 			
+			int start = 0;
+			int write = buffer.Length;
 			lock (Sync)
 			{
-				int start = 0;
-				int write = buffer.Length;
 				start = Tcp.Send(buffer, start, write, 
 									       SocketFlags.None, out error);
-				if (error != SocketError.Success)
-				{
-					if (error != SocketError.WouldBlock
-						&& error != SocketError.NoBufferSpaceAvailable)
-					{
-						close = new Close (Address(), WSClose.Abnormal);
-						state = 5;
-						return false;
-					}
-				}
 				if (start < write)
 				{
 					write = write - start;
 					if (Writer.Clear < write)
+						error = SocketErrror.WouldBlock;
+					else
 					{
-
-						close = new Close (Address(), WSClose.Abnormal);
-						state = 5;
-						return false;
+						Writer.Write(buffer, start, write);
+						if (start > 0)
+							Writer.SetLength(start);
 					}
-					Writer.Write(buffer, start, write);
-					if (start > 0)
-						Writer.Position = start;
 				}
-				return true;
 			}
+			if (error != SocketError.Success)
+			{
+				if (error != SocketError.WouldBlock
+					&& error != SocketError.NoBufferSpaceAvailable)
+				{
+					if (state < 4)
+						Error(new WsException("Ошибка записи данных.", error));
+				}
+			}
+			return true
 		}
 		/// <summary>
 		/// Отправляет фрейм пинг текущему подключению
@@ -462,20 +459,21 @@ namespace ChatConnect.Tcp.Protocol.WS
 			if (Reader.Clear == 0)
 			{
 				error = SocketError.NoBufferSpaceAvailable;
-				throw new WSException("Ошибка при чтении данных из Socket.", error,
-															   WSClose.ServerError);
 			}
-
-			if (Reader.Count - start < count)
-				count =
-				   (int)(Reader.Count - start);
-			start = Tcp.Receive(buffer, start, count, SocketFlags.None, out error);
-			if (start > 0)
-				Reader.SetLength(start);
+			else
+			{
+				if (Reader.Count - start < count)
+					count =
+				   	(int)(Reader.Count - start);
+				start = Tcp.Receive(buffer, start, count, SocketFlags.None, out error);
+				if (start > 0)
+					Reader.SetLength(start);
+			}
 			if (error != SocketError.Success && error != SocketError.WouldBlock)
 			{
-				throw new WSException("Ошибка при чтении данных из Socket.", error,
-															   WSClose.ServerError);
+				if (state < 4)
+					Error(new WSException("Ошибка при чтении данных из Socket.", error,
+															   WSClose.ServerError));
 			}
 		}
 		/// <summary>
@@ -507,8 +505,9 @@ namespace ChatConnect.Tcp.Protocol.WS
 					if (error != SocketError.WouldBlock
 						&& error != SocketError.NoBufferSpaceAvailable)
 					{
-						throw new WSException("Ошибка записи данных в Socket", error,
-																 WSClose.ServerError);
+						if (state < 4)
+							Error(new WSException("Ошибка записи данных.", error,
+																 WSClose.ServerError));
 					}
 				}
 			}
