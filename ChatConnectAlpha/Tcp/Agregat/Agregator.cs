@@ -1,13 +1,14 @@
 ﻿using System;
-		using System.Net.Sockets;
-			using System.Threading;
-	using System.Runtime.InteropServices;
-		using System.Collections.Concurrent;
+using System.Net.Sockets;
+using System.Threading;
+using System.Runtime.InteropServices;
+using System.Collections.Concurrent;
 
 using ChatConnect.Tcp.Protocol;
 using ChatConnect.Tcp.Protocol.WS;
 using ChatConnect.Tcp.Protocol.HTTP;
-
+using System.Collections;
+using System.Text;
 
 namespace ChatConnect.Tcp
 {
@@ -46,14 +47,13 @@ namespace ChatConnect.Tcp
 	class Agregator
 	{
 		public IProtocol Protocol;
-		public static ConcurrentQueue<WS> Read;
+		public static  ArrayList s = new ArrayList() ;
 
 		private static PHandlerEvent Connect;		
 		private static ConcurrentQueue<Agregator> Container;
 
 		static Agregator()
 		{
-			Read = new ConcurrentQueue<WS>();
 			Container = new ConcurrentQueue<Agregator>();
 		}
 		public Agregator(Socket tcp)
@@ -68,25 +68,34 @@ namespace ChatConnect.Tcp
 			{
 				try
 				{
-					WS ws = null;
-					if (!Read.TryDequeue(out ws))
-						Thread.Sleep(1);
-					else
-					{
-						ws.Read();
-						if (loop++ > 1000)
-						{
-							loop = 0;
-							Thread.Sleep(1);
-						}
-						if ((int)ws.State < 4)
-							Read.Enqueue(ws);
-	}
+					FFFF();
 				}
 				catch (FieldAccessException exc)
 				{
 					Console.WriteLine("Обработчик: " + exc.Message);
 				}
+			}
+		}
+		static void FFFF()
+		{
+			if (s.Count == 0)
+				return;
+			ArrayList f = new ArrayList(s.ToArray());
+			Socket.Select(f, null, null, 0);
+			for (int i = 0; i < f.Count; i++)
+			{
+				byte[] b = new byte[1000];
+				Socket d = (Socket)f[i];
+				if (d == null)
+					continue;
+				SocketError error;
+				int k = d.Receive(b, 0, 1000, SocketFlags.None, out error);
+				if (k == 0)
+				{
+					s.Remove(d);
+				}
+				//else
+				//Console.WriteLine(Encoding.UTF8.GetString(b, 0, k));
 			}
 		}
 		static public void Loop()
@@ -131,7 +140,7 @@ namespace ChatConnect.Tcp
 				case TaskOption.Protocol:
 					if (TaskResult.Protocol == TaskProtocol.WSRFC76)
 						Protocol = new WSProtocol7(Protocol);
-					Read.Enqueue((WS)Protocol);
+					//s.Add(Protocol.Tcp);
 					Container.Enqueue(this);
 					break;
 				case TaskOption.Threading:

@@ -451,7 +451,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		{
 			if (state > 4)
 				return;
-			int count = 4000;
+			int count = 8000;
 			int start =
 			   (int)Reader.PointW;
 			byte[] buffer =
@@ -497,8 +497,8 @@ namespace ChatConnect.Tcp.Protocol.WS
 					(int)Writer.PointR;
 				int write =
 					(int)Writer.Length;
-				if (write > 8000)
-					write = 8000;
+				if (write > 16000)
+					write = 16000;
 				byte[] buffer =
 						 Writer.Buffer;
 				SocketError error = SocketError.Success;

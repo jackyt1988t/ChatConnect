@@ -153,9 +153,17 @@ namespace ChatConnect.Tcp.Protocol.WS
             set;
         }
 		/// <summary>
+		/// 
+		/// </summary>
+		public byte[] DataMask
+		{
+			get;
+			set;
+		}
+		/// <summary>
 		/// Буффер заголвоков
 		/// </summary>
-        public byte[] DataHead
+		public byte[] DataHead
         {
             get;
             set;

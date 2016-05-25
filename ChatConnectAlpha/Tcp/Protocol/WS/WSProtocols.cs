@@ -19,8 +19,6 @@ namespace ChatConnect.Tcp.Protocol.WS
 		{
 			get;
 		}
-			
-		private WSBinnary __Frame ;
 		
 		/// <summary>
 		/// Ининцилазириует класс протокола WS без подключения
