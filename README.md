@@ -32,9 +32,9 @@ WebSocket Server написанный на языке c#.
 				if (binnary.Opcod == WSOpcod.Text)
 				{
 				  string text = Encoding.UTF.GetString(binnary.Data);
-				  // Отправляем текстовый фрейм
-				  WebSock.Message(text);
 				  Console.WriteLine(text);
+				  // Отправляем текстовый фрейм
+				  WebSocket.Message(text);
 				}
 			};
 			// Событие наступает если произошла ошибка данных
