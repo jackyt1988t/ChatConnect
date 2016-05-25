@@ -21,14 +21,14 @@ WebSocket Server написанный на языке c#.
 
 		LingerOption LOption = new LingerOption(true, 0);
 		// Событие наступает когда подключается новый WebSocket клиент
-		WS.EventConnect += (object obj, PEventArgs ev) =>
+		WS.EventConnect += (object obj, PEventArgs e) =>
 		{
 		  	// Объект WebSocket
-			WS WebSock = obj as WS;
+			WS WebSocket = obj as WS;
 			// Событие наступает когда приходят новые данные
-			WebSock.EventData += (object sender, PEventArgs e) =>
+			WebSocket.EventData += (object sender, PEventArgs ev) =>
 			{
-				WSBinnary binnary = e.sender as WSBinnary;
+				WSBinnary binnary = ev.sender as WSBinnary;
 				if (binnary.Opcod == WSOpcod.Text)
 				{
 				  string text = Encoding.UTF.GetString(binnary.Data);
@@ -38,14 +38,14 @@ WebSocket Server написанный на языке c#.
 				}
 			};
 			// Событие наступает если произошла ошибка данных
-			WebSock.EventError += (object sender, PEventArgs e) =>
+			WebSocket.EventError += (object sender, PEventArgs ev) =>
 			{
-				Console.WriteLine(e.sender.ToString());
+				Console.WriteLine(ev.sender.ToString());
 			};
 			// Событие наступает если соединение было закрыто
-			WebSock.EventClose += (object sender, PEventArgs e) =>
+			WebSock.EventClose += (object sender, PEventArgs ev) =>
 			{
-				Console.WriteLine(e.sender.ToString());
+				Console.WriteLine(ev.sender.ToString());
 			};
 		};
 		while ( true )
@@ -58,7 +58,7 @@ WebSocket Server написанный на языке c#.
 				socket.Blocking = false;					
 				socket.SendBufferSize = 1000 * 64;
 				socket.ReceiveBufferSize = 1000 * 16;
-				// Обработчик соединений
+				// Обработчик входящих соединений
 				Agregator ObjectProtocol = new Agregator(socket);
       			}
 			catch ( Exception exc )
