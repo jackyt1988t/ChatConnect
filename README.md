@@ -43,7 +43,7 @@ WebSocket Server написанный на языке c#.
 				Console.WriteLine(ev.sender.ToString());
 			};
 			// Событие наступает если соединение было закрыто
-			WebSock.EventClose += (object sender, PEventArgs ev) =>
+			WebSocket.EventClose += (object sender, PEventArgs ev) =>
 			{
 				Console.WriteLine(ev.sender.ToString());
 			};
