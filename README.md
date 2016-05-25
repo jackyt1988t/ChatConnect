@@ -1,6 +1,6 @@
 # MyWebChat
 WebSocket Server написанный на языке c#.
-Пример простейшего echo сервера
+Пример простейшего WebSocket echo сервера
 ```C#
   static void Main(string[] args)
   {
@@ -23,7 +23,7 @@ WebSocket Server написанный на языке c#.
 		// Событие наступает когда подключается новый WebSocket клиент
 		WS.EventConnect += (object obj, PEventArgs ev) =>
 		{
-		  // Объект WebSocket
+		  	// Объект WebSocket
 			WS WebSock = obj as WS;
 			// Событие наступает когда приходят новые данные
 			WebSock.EventData += (object sender, PEventArgs e) =>
@@ -32,16 +32,15 @@ WebSocket Server написанный на языке c#.
 				if (binnary.Opcod == WSOpcod.Text)
 				{
 				  string text = Encoding.UTF.GetString(binnary.Data);
-				  Console.WriteLine(text);
 				  // Отправляем текстовый фрейм
 				  WebSock.Message(text);
+				  Console.WriteLine(text);
 				}
 			};
 			// Событие наступает если произошла ошибка данных
-			WebSock.EventClose += (object sender, PEventArgs e) =>
+			WebSock.EventError += (object sender, PEventArgs e) =>
 			{
-			  WSException err = e.sender as WSException;
-				Console.WriteLine("Err." + err.Errors);
+				Console.WriteLine(e.sender.ToString());
 			};
 			// Событие наступает если соединение было закрыто
 			WebSock.EventClose += (object sender, PEventArgs e) =>
@@ -59,13 +58,14 @@ WebSocket Server написанный на языке c#.
 				socket.Blocking = false;					
 				socket.SendBufferSize = 1000 * 64;
 				socket.ReceiveBufferSize = 1000 * 16;
+				// Обработчик соединений
 				Agregator ObjectProtocol = new Agregator(socket);
-      }
+      			}
 			catch ( Exception exc )
 			{
 				if ( socket != null )
 					socket.Dispose();
-        Console.WriteLine ( exc.Message );
+        			Console.WriteLine ( exc.Message );
 			}
 		}
   }
