@@ -1,4 +1,4 @@
-# MyWebChat
+# MyWebSocket
 WebSocket Server написанный на языке c#.
 Пример простейшего WebSocket echo сервера
 ```C#
