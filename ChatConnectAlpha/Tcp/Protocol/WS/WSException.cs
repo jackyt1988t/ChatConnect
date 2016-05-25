@@ -32,7 +32,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 
 			}
         public WSException(string message, int num) :
-            base( message )
+            base(message)
 			{
 				Number = num;
 			}
@@ -50,5 +50,10 @@ namespace ChatConnect.Tcp.Protocol.WS
 				Number = (int)num;				
 				Errors = WSErrorMsg.Error(num);
 			}
+			
+		public override string ToString()
+		{
+			return "Код ошибки: " + Number + "("+ Closes.ToString() +"). Сообщение об ошибке: " + Errors;	
+		}
     }
 }
