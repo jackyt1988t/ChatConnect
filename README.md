@@ -31,7 +31,7 @@ WebSocket Server написанный на языке c#.
 				WSBinnary binnary = ev.sender as WSBinnary;
 				if (binnary.Opcod == WSOpcod.Text)
 				{
-				  string text = Encoding.UTF.GetString(binnary.Data);
+				  string text = Encoding.UTF8.GetString(binnary.Data);
 				  Console.WriteLine(text);
 				  // Отправляем текстовый фрейм
 				  WebSocket.Message(text);
