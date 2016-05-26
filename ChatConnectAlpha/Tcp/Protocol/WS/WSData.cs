@@ -5,11 +5,11 @@ namespace ChatConnect.Tcp.Protocol.WS
 {
     class WSBinnary
     {
-		public string Text
+		public string _Text
 		{
 			get;
 		}
-        public byte[] Data
+        public byte[] _Data
         {
 			get;
         }
@@ -25,7 +25,7 @@ namespace ChatConnect.Tcp.Protocol.WS
         }
 		public WSBinnary(byte[] data)
         {
-			Data = data;            
+			_Data = data;            
 		}
 		public WSBinnary(byte[] data, WSOpcod opcod) :
 			this(data)
@@ -33,7 +33,23 @@ namespace ChatConnect.Tcp.Protocol.WS
 			Opcod = opcod;
 			Create = DateTime.Now;
 			if (opcod == WSOpcod.Text)
-				Text = Encoding.UTF8.GetString(data);		
+				_Text = Encoding.UTF8.GetString(data);		
 		}
-    }
+		/// <summary>
+		/// Возвращает сырые данные
+		/// </summary>
+		/// <returns></returns>
+		public byte[] ToByte()
+		{
+			return _Data;
+		}
+		/// <summary>
+		/// Возвращает текстовые данные если Opcod = Text
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString()
+		{
+			return _Text;
+		}
+	}
 }
