@@ -28,18 +28,17 @@ namespace ChatConnect
 				// Событие наступает когда приходят новые данные
 				WebSocket.EventData += (object sender, PEventArgs e) =>
 				{
-					
-					if (binnary.Opcod == WSOpcod.Text)
+					WSData data = e.sender as WSData;
+					if (data.Opcod != WSOpcod.Text)
 					{
-						Console.WriteLine(e.sender.ToString());
-						// Отправляем текстовый фрейм
-						WebSocket.Message(e.sender.ToString());
 						
+						byte[] raw = data.ToByte(); 
 					}
 					else
 					{
-						WSBinnary data = e.sender as WSBinnary;
-						byte[] buffer = data.ToByte(); 	
+						Console.WriteLine(data.ToString());
+						// Отправляем текстовый фрейм
+						WebSocket.Message(data.ToString());
 					}
 				};
 				// Событие наступает если произошла ошибка данных
