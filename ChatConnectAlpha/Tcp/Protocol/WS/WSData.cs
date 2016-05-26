@@ -3,7 +3,7 @@ using System.Text;
 
 namespace ChatConnect.Tcp.Protocol.WS
 {
-    class WSBinnary
+    class WSData
     {
 		public string _Text
 		{
@@ -23,11 +23,11 @@ namespace ChatConnect.Tcp.Protocol.WS
             get;
             private set;
         }
-		public WSBinnary(byte[] data)
+		public WSData(byte[] data)
         {
 			_Data = data;            
 		}
-		public WSBinnary(byte[] data, WSOpcod opcod) :
+		public WSData(byte[] data, WSOpcod opcod) :
 			this(data)
 		{
 			Opcod = opcod;

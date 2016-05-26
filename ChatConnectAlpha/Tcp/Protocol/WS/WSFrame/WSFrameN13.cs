@@ -4,11 +4,11 @@ namespace ChatConnect.Tcp.Protocol.WS
 {
     class WSFrameN13
     {
-        public const int TEXT   = 0x01;
-		public const int PING   = 0x09;
-		public const int PONG   = 0x0A;
-		public const int CLOSE  = 0x08;
-		public const int BINNARY = 0x02;
+        public const int TEXT     = 0x01;
+		public const int PING     = 0x09;
+		public const int PONG     = 0x0A;
+		public const int CLOSE    = 0x08;
+		public const int BINNARY  = 0x02;
 		public const int CONTINUE = 0x00;
 		/// <summary>
 		/// Номер обработчика

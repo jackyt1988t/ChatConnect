@@ -557,7 +557,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 			if (e != null)
 				e(null, PEventArgs.EmptyArgs);
 		}
-		protected void OnEventData(WSBinnary frame)
+		protected void OnEventData(WSData frame)
 		{
 			//string m = "Получен фрейм Data";
 			PHandlerEvent e;
@@ -566,7 +566,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 			if (e != null)
 				e(this, new PEventArgs(S_DATA, string.Empty, frame));
 		}
-		protected void OnEventPing(WSBinnary frame)
+		protected void OnEventPing(WSData frame)
 		{
 			//string m = "Получен фрейм Ping";
 			PHandlerEvent e;
@@ -575,7 +575,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 			if (e != null)
 				e(this, new PEventArgs(S_PING, string.Empty, frame));
 		}
-		protected void OnEventPong(WSBinnary frame)
+		protected void OnEventPong(WSData frame)
 		{
 			//string m = "Получен фрейм Pong";
 			PHandlerEvent e;
@@ -593,7 +593,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 			if (e != null)
 				e(this, new PEventArgs(S_CLOSE, string.Empty, _close));
 		}
-		protected void OnEventChunk(WSBinnary frame)
+		protected void OnEventChunk(WSData frame)
 		{
 			//string m = "Получена часть данных";
 			PHandlerEvent e;

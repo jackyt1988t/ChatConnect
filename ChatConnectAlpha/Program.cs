@@ -12,7 +12,7 @@ namespace ChatConnect
     {
         static void Main(string[] args)
         {
-			WS.Debug = true;
+			//WS.Debug = true;
 			WS.EventConnect += (object obj, PEventArgs e) =>
 			{
 				// Объект WebSocket
@@ -20,7 +20,7 @@ namespace ChatConnect
 				// Событие наступает когда приходят новые данные
 				WebSocket.EventData += (object sender, PEventArgs ev) =>
 				{
-					WSBinnary binnary = ev.sender as WSBinnary;
+					WSData binnary = ev.sender as WSData;
 					if (binnary.Opcod != WSOpcod.Text)
 					{
 						byte[] _buffer = binnary.ToByte(); 

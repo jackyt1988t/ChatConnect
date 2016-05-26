@@ -154,17 +154,17 @@ namespace ChatConnect.Tcp.Protocol.WS
 					case WSFrameN13.TEXT:
 						if (reader.Frame.BitFin == 0)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
-						OnEventData(new WSBinnary(reader.Frame.DataBody, WSOpcod.Text));
+						OnEventData(new WSData(reader.Frame.DataBody, WSOpcod.Text));
 						break;
 					case WSFrameN13.PING:
 						if (reader.Frame.BitFin == 0)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
-						OnEventPing(new WSBinnary(reader.Frame.DataBody, WSOpcod.Ping));
+						OnEventPing(new WSData(reader.Frame.DataBody, WSOpcod.Ping));
 						break;
 					case WSFrameN13.PONG:
 						if (reader.Frame.BitFin == 0)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
-						OnEventPong(new WSBinnary(reader.Frame.DataBody, WSOpcod.Pong));
+						OnEventPong(new WSData(reader.Frame.DataBody, WSOpcod.Pong));
 						break;
 					case WSFrameN13.CLOSE:
 						if (reader.Frame.BitFin == 0)
@@ -189,12 +189,12 @@ namespace ChatConnect.Tcp.Protocol.WS
 					case WSFrameN13.BINNARY:
 						if (reader.Frame.BitFin == 0)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
-						OnEventData(new WSBinnary(reader.Frame.DataBody, WSOpcod.Binnary));
+						OnEventData(new WSData(reader.Frame.DataBody, WSOpcod.Binnary));
 						break;
 					case WSFrameN13.CONTINUE:
 						if (reader.Frame.BitFin == 0)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
-						OnEventChunk(new WSBinnary(reader.Frame.DataBody, WSOpcod.Continue));
+						OnEventChunk(new WSData(reader.Frame.DataBody, WSOpcod.Continue));
 						break;
 					default:
 						throw new WSException("Опкод: " + reader.Frame.BitPcod, WsError.PcodNotSuported, WSClose.UnsupportedData);
