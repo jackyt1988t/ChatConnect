@@ -35,8 +35,8 @@ namespace ChatConnect.Tcp.Protocol.WS
 			Sync = new object();
 			State = 
 				States.Connection;
-			reader     = new WStreamN13(1024 * 24);
-			writer     = new WStreamN13(1204 * 128);
+			reader     = new WStreamN13(SizeRead);
+			writer     = new WStreamN13(SizeWrite);
 			Response   = new Header();
 			TaskResult = new TaskResult();
 			TaskResult.Protocol = TaskProtocol.WSRFC76;
@@ -87,26 +87,30 @@ namespace ChatConnect.Tcp.Protocol.WS
 					Opcod = WSFrameN13.CONTINUE;
 					break;
 			}
-			WSFrameN13 frame = new WSFrameN13()
-			{
-				BitFin   = Fin,
-				BitPcod  = Opcod,
-				PartBody = recive,
-				LengBody = length,
-				DataBody = message
-			};
-			frame.InitializationHeaders();
+			
 			lock (Writer)
 			{
-				if (Writer.Clear > ( frame.DataHead.Length
-								   + frame.DataBody.Length ))
+				writer.Frame.BitFin = Fin;
+				writer.Frame.BitPcod = Opcod;
+				writer.Frame.PartBody = recive;
+				writer.Frame.LengBody = length;
+				writer.Frame.DataBody = message;
+				writer.Frame.InitializationHeader();
+				if (Debug)
+					WSDebug.DebugN13(writer.Frame);
+				if (Writer.Clear > ( writer.Frame.DataHead.Length
+								   + writer.Frame.DataBody.Length ))
 				{
-					Writer.Write(frame.DataHead, 0, (int)frame.LengHead);
-					Writer.Write(frame.DataBody, (int)frame.PartBody, 
-												    (int)frame.LengBody);
+					Writer.Write(writer.Frame.DataHead, 0, (int)writer.Frame.LengHead);
+					Writer.Write(writer.Frame.DataBody, (int)writer.Frame.PartBody, 
+														   (int)writer.Frame.LengBody);
+					
+					/*      Очитстить.      */
+					writer.Frame.ClearFrame();
 					return true;
 				}
 			}
+			
 			return false;
 		}
 		protected override void Work()
@@ -142,8 +146,11 @@ namespace ChatConnect.Tcp.Protocol.WS
 				if (reader.ReadBody() == -1)
 					return;
 
+				if (Debug)
+					WSDebug.DebugN13(reader.Frame);
 				switch (reader.Frame.BitPcod)
 				{
+					
 					case WSFrameN13.TEXT:
 						if (reader.Frame.BitFin == 0)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
@@ -192,8 +199,6 @@ namespace ChatConnect.Tcp.Protocol.WS
 					default:
 						throw new WSException("Опкод: " + reader.Frame.BitPcod, WsError.PcodNotSuported, WSClose.UnsupportedData);
 				}
-				if (Debug)
-					WSDebug.DebugN13(reader.Frame);
 				/*      Очитстить.      */
 				reader.Frame.ClearFrame();				
 			}

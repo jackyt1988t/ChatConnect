@@ -18,8 +18,16 @@ namespace ChatConnect.Tcp.Protocol.WS
 		private static readonly string S_ERROR = "error";
 		private static readonly string S_CLOSE = "close";
 		private static readonly string S_CONNECT = "connect";
+		/// <summary>
+		/// Размер приемного буффера
+		/// </summary>
+		public static int SizeRead = 1000 * 128;
+		/// <summary>
+		/// Размер отсылочного буффера
+		/// </summary>
+		public static int SizeWrite = 1000 * 32;
 
-		static public bool Debug;
+		public static bool Debug;
 		/// <summary>
 		/// tcp/ip соединение
 		/// </summary>

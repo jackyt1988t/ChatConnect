@@ -193,7 +193,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 			GetsBody = false;
 			SetsHead = false;
 		}
-		public void InitializationHeaders()
+		public void InitializationHeader()
 		{
 			if (SetsHead)
 				return;
