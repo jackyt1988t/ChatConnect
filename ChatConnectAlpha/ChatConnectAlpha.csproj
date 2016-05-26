@@ -102,7 +102,9 @@
     <Compile Include="Tcp\Protocol\HTTP\HTTPStream.cs\HTTPStream.cs" />
     <Compile Include="Tcp\Protocol\HTTP\HTTPExcept.cs" />
     <Compile Include="Tcp\Protocol\IProtocol.cs" />
-    <Compile Include="Tcp\Protocol\WS\Debug\WSDebug.cs" />
+    <Compile Include="Tcp\Protocol\WS\Debug\WSDebug.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Compile>
     <Compile Include="Tcp\Protocol\WS\Headers\WSHeaders.cs" />
     <Compile Include="Tcp\Protocol\WS\WSClose\CloseWS.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
