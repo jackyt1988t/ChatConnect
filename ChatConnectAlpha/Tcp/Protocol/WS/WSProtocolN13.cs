@@ -51,7 +51,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		{
 			Tcp = http.Tcp;
 			Request = http.Request;
-			Session = new WSession(((IPEndPoint)Tcp.RemoteEndPoint).Address);
+			Session = new WSEssion(((IPEndPoint)Tcp.RemoteEndPoint).Address);
 		}
 		public override bool Message(byte[] message, int recive, int length, WSOpcod opcod, WSFin fin)
 		{

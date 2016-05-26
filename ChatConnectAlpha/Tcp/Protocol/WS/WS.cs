@@ -92,7 +92,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 			get;
 			protected set;
 		}
-		public WSession Session
+		public WSEssion Session
 		{
 			get;
 			protected set;

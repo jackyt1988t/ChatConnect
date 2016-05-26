@@ -119,9 +119,11 @@
     <Compile Include="Tcp\Protocol\WS\WSData.cs" />
     <Compile Include="Tcp\Protocol\Buffer\IBuffer.cs" />
     <Compile Include="Tcp\Protocol\WS\WSClose\WSClose.cs" />
-    <Compile Include="Tcp\Protocol\WS\WSEnum.cs" />
+    <Compile Include="Tcp\Protocol\WS\WSEnum.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Compile>
     <Compile Include="Tcp\Protocol\WS\WSErrors.cs" />
-    <Compile Include="Tcp\Protocol\WS\WSession.cs">
+    <Compile Include="Tcp\Protocol\WS\WSEssion.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
     <Compile Include="Tcp\Protocol\WS\WSException.cs" />

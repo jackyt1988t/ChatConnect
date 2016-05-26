@@ -3,7 +3,7 @@ using System.Net;
 
 namespace ChatConnect.Tcp.Protocol.WS
 {
-	class WSession
+	class WSEssion
 	{
 		/// <summary>
 		/// Продолжительность текущей сессии
@@ -30,7 +30,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 			get;
 		}
 
-		public WSession(IPAddress address)
+		public WSEssion(IPAddress address)
 		{
 			Start =
 				DateTime.Now;
