@@ -253,7 +253,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		public bool Send(byte[] buffer)
 		{
 			
-			if (state >= 4)
+			if (state > 3)
 				return false;
 			
 			int start = 0;
@@ -334,12 +334,12 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// <returns></returns>
 		public bool Close(WSClose numcode)
 		{
-			string buffer = Protocol.WS.Close.Message[numcode];
-			byte[] wsbody = Encoding.UTF8.GetBytes(buffer);
-			byte[] wsdata = new byte[2  +  wsbody.Length];
-				   wsdata[0] = (byte)((int)numcode >> 08);
-				   wsdata[1] = (byte)((int)numcode >> 16);
-				   wsbody.CopyTo(wsdata, 2);
+			string buffer  =  Close.Message[numcode];
+			byte[] wsbody  =  Encoding.UTF8.GetBytes(buffer);
+			byte[] wsdata  =  new byte [2  +  wsbody.Length];
+				   wsdata[0]  =  (byte) ((int)numcode >> 08);
+				   wsdata[1]  =  (byte) ((int)numcode >> 16);
+				   wsbody.CopyTo(  wsdata, 2  );
 
 			return Message(wsbody, WSOpcod.Close, WSFin.Last);
 		}
