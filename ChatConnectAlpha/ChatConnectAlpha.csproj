@@ -115,7 +115,9 @@
     <Compile Include="Tcp\Protocol\WS\WSFrame\WSFrame.cs" />
     <Compile Include="Tcp\Protocol\WS\WSProtocols.cs" />
     <Compile Include="Tcp\Protocol\WStateEnum.cs" />
-    <Compile Include="Tcp\Protocol\WS\WSProtocols7.cs" />
+    <Compile Include="Tcp\Protocol\WS\WSProtocols7.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Compile>
     <Compile Include="Tcp\Protocol\WS\WStream\WStreamRFC75.cs" />
     <Compile Include="Tcp\Protocol\WS\WStream\WStream7.cs" />
     <Compile Include="Tcp\Protocol\WS\WStream\WStream.cs" />
