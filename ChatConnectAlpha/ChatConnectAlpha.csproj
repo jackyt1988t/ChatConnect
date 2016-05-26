@@ -80,11 +80,21 @@
     <Compile Include="Log\Log.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Tcp\Agregat\Agregator.cs" />
-    <Compile Include="Tcp\Agregat\IAgregator.cs" />
-    <Compile Include="Tcp\Agregat\TaskOption.cs" />
-    <Compile Include="Tcp\Agregat\TaskProtocol.cs" />
-    <Compile Include="Tcp\Agregat\TaskResultInfo.cs" />
+    <Compile Include="Tcp\Agregat\Agregator.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Compile>
+    <Compile Include="Tcp\Agregat\IAgregator.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Compile>
+    <Compile Include="Tcp\Agregat\TaskOption.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Compile>
+    <Compile Include="Tcp\Agregat\TaskProtocol.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Compile>
+    <Compile Include="Tcp\Agregat\TaskResultInfo.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Compile>
     <Compile Include="Tcp\Headers\Except.cs" />
     <Compile Include="Tcp\Headers\Headers.cs" />
     <Compile Include="Tcp\Headers\IHeaders.cs" />
@@ -94,13 +104,17 @@
     <Compile Include="Tcp\Protocol\EventArg.cs" />
     <Compile Include="Tcp\Protocol\HTTP\HTTP.cs" />
     <Compile Include="Tcp\Protocol\HTTP\HTTPFrame\HTTPFrame.cs" />
-    <Compile Include="Tcp\Protocol\HTTP\HTTPProtocol.cs" />
+    <Compile Include="Tcp\Protocol\HTTP\HTTPProtocol.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Compile>
     <Compile Include="Tcp\Protocol\HTTP\HTTPStream.cs\HTTPStream.cs" />
     <Compile Include="Tcp\Protocol\HTTP\HTTPExcept.cs" />
     <Compile Include="Tcp\Protocol\IProtocol.cs" />
     <Compile Include="Tcp\Protocol\WS\Debug\WSDebug.cs" />
     <Compile Include="Tcp\Protocol\WS\Headers\WSHeaders.cs" />
-    <Compile Include="Tcp\Protocol\WS\WSClose\Close.cs" />
+    <Compile Include="Tcp\Protocol\WS\WSClose\CloseWS.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Compile>
     <Compile Include="Tcp\Protocol\WS\WS.cs" />
     <Compile Include="Tcp\Protocol\WS\WSBinnary.cs" />
     <Compile Include="Tcp\Protocol\Buffer\IBuffer.cs" />
@@ -110,18 +124,30 @@
     <Compile Include="Tcp\Protocol\WS\WSErrors.cs" />
     <Compile Include="Tcp\Protocol\WS\WSException.cs" />
     <Compile Include="Tcp\Protocol\WS\WSFrame\WSFin.cs" />
-    <Compile Include="Tcp\Protocol\WS\WSFrame\WSFrameRFC75.cs" />
-    <Compile Include="Tcp\Protocol\WS\WSFrame\WSFrameRFC76.cs" />
+    <Compile Include="Tcp\Protocol\WS\WSFrame\WSFrameRFC75.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Compile>
+    <Compile Include="Tcp\Protocol\WS\WSFrame\WSFrameRFC76.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Compile>
     <Compile Include="Tcp\Protocol\WS\WSFrame\WSFrame.cs" />
     <Compile Include="Tcp\Protocol\WS\WSProtocols.cs" />
     <Compile Include="Tcp\Protocol\WStateEnum.cs" />
     <Compile Include="Tcp\Protocol\WS\WSProtocols7.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
-    <Compile Include="Tcp\Protocol\WS\WStream\WStreamRFC75.cs" />
-    <Compile Include="Tcp\Protocol\WS\WStream\WStream7.cs" />
-    <Compile Include="Tcp\Protocol\WS\WStream\WStream.cs" />
-    <Compile Include="Tcp\Segment.cs" />
+    <Compile Include="Tcp\Protocol\WS\WStream\WStreamRFC75.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Compile>
+    <Compile Include="Tcp\Protocol\WS\WStream\WStream7.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Compile>
+    <Compile Include="Tcp\Protocol\WS\WStream\WStream.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Compile>
+    <Compile Include="Tcp\WServer.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

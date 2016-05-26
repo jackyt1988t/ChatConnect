@@ -24,7 +24,7 @@ namespace ChatConnect.Tcp
 			Protocol = new HTTPProtocol( tcp, Connect );
 			Container.Enqueue(this);
 		}
-		static public void Loop()
+ static public void Loop()
 		{
 			short loop = 0;
 			while ( true )
@@ -51,10 +51,6 @@ namespace ChatConnect.Tcp
 				}
 			}
 		}
- static public void Connection(PHandlerEvent connect)
-		{
-			Connect = connect;
-		}
 		private void TaskLoopHandler()
 		{
 			TaskResult TaskResult = Protocol.TaskLoopHandlerProtocol();
@@ -65,8 +61,10 @@ namespace ChatConnect.Tcp
 					break;
 				case TaskOption.Protocol:
 					if (TaskResult.Protocol == TaskProtocol.WSRFC76)
+					{
 						Protocol = new WSProtocol7(Protocol);
-					Container.Enqueue(this);
+						Container.Enqueue(this);
+					}
 					break;
 				case TaskOption.Threading:
 						Thread thr = new Thread( TaskLoopThreading );

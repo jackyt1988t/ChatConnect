@@ -43,7 +43,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// <summary>
 		/// Информации о закрытии соединения
 		/// </summary>
-		public Close close
+		public CloseWS close
 		{
 			get;
 			protected set;
@@ -253,7 +253,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		public bool Send(byte[] buffer)
 		{
 			
-			if (state > 3)
+			if (state >= 4)
 				return false;
 			
 			int start = 0;
@@ -285,7 +285,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 						state = 4;
 						Error(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
 						state = 5;
-						close = new Close("Server", WSClose.ServerError);
+						close = new CloseWS("Server", WSClose.ServerError);
 					}
 				}
 			}
@@ -334,12 +334,12 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// <returns></returns>
 		public bool Close(WSClose numcode)
 		{
-			string buffer  =  Close.Message[numcode];
-			byte[] wsbody  =  Encoding.UTF8.GetBytes(buffer);
-			byte[] wsdata  =  new byte [2  +  wsbody.Length];
-				   wsdata[0]  =  (byte) ((int)numcode >> 08);
-				   wsdata[1]  =  (byte) ((int)numcode >> 16);
-				   wsbody.CopyTo(  wsdata, 2  );
+			string buffer = CloseWS.Message[numcode];
+			byte[] wsbody = Encoding.UTF8.GetBytes(buffer);
+			byte[] wsdata = new byte [2  +  wsbody.Length];
+				   wsdata[0] = (byte) ((int)numcode >> 08);
+				   wsdata[1] = (byte) ((int)numcode >> 16);
+				   wsbody.CopyTo(wsdata, 2);
 
 			return Message(wsbody, WSOpcod.Close, WSFin.Last);
 		}
@@ -436,7 +436,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 				state = 4;
 				Error(exc);
 				state = 5;
-				close = new Close("Server", exc.Closes);
+				close = new CloseWS("Server", exc.Closes);
 			}
 			return TaskResult;
 		}
@@ -503,7 +503,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 						state = 4;
 						Error(new WSException("Ошибка при чтении данных.", error, WSClose.ServerError));
 						state = 5;
-						close = new Close("Server", WSClose.ServerError);
+						close = new CloseWS("Server", WSClose.ServerError);
 					}
 				}
 			}
@@ -541,7 +541,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 							state = 4;
 							Error(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
 							state = 5;
-							close = new Close("Server", WSClose.ServerError);
+							close = new CloseWS("Server", WSClose.ServerError);
 						}
 					}
 				}
@@ -582,7 +582,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 			if (e != null)
 				e(this, new PEventArgs(S_PONG, string.Empty, frame));
 		}
-		protected void OnEventClose(Close _close)
+		protected void OnEventClose(CloseWS _close)
 		{
 			//string m = _close.ToString();
 			PHandlerEvent e;
@@ -629,7 +629,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// <summary>
 		/// 
 		/// </summary>
-		protected abstract void Close(Close close);
+		protected abstract void Close(CloseWS close);
 		/// <summary>
 		/// 
 		/// </summary>

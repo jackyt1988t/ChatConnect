@@ -123,7 +123,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 			if(!Reader.Empty)
 				return;
 		}
-		protected override void Close(Close close)
+		protected override void Close(CloseWS close)
 		{
             OnEventClose(close);
 		}
