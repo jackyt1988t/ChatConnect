@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace ChatConnect.Tcp.Protocol.WS
 {
-	class Close
+	class CloseWS
 	{
 		public string Host
 		{
@@ -27,13 +27,13 @@ namespace ChatConnect.Tcp.Protocol.WS
 		}
 		public static Dictionary<WSClose, string> Message;
 		
-		public Close(string host, WSClose code)
+		public CloseWS(string host, WSClose code)
 		{
 			Host	  = host;
 			CloseMsg  = Message[code];
 			CloseCode = code;
 		}
-		static Close()
+		static CloseWS()
 		{
 			Message = new Dictionary<WSClose, string>();
 
