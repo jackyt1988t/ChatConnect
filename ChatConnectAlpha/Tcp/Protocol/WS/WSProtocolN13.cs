@@ -103,7 +103,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 				{
 					Writer.Write(writer.Frame.DataHead, 0, (int)writer.Frame.LengHead);
 					Writer.Write(writer.Frame.DataBody, (int)writer.Frame.PartBody, 
-														   (int)writer.Frame.LengBody);
+									       (int)writer.Frame.LengBody);
 					
 					/*      Очитстить.      */
 					writer.Frame.ClearFrame();
