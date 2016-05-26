@@ -23,7 +23,7 @@ namespace ChatConnect
 					WSBinnary binnary = ev.sender as WSBinnary;
 					if (binnary.Opcod == WSOpcod.Text)
 					{
-						string text = Encoding.UTF8.GetString(binnary.Data);
+						string text = Encoding.UTF8.GetString(binnary._Data);
 						Console.WriteLine(text);
 						// Отправляем текстовый фрейм
 						WebSocket.Message(text);
