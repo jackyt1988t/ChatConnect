@@ -1,6 +1,7 @@
 # MyWebSocket
 WebSocket Server написанный на языке c#.
 Пример простейшего WebSocket echo сервера
+[example site]http://jackyt1988t.github.io/MyWebSocket/
 ```C#
 using System;
 using System.Text;
