@@ -10,11 +10,6 @@ namespace ChatConnect.Tcp.Protocol.WS
 	{
 		const string CHECKKEY = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
-		public WSChecks WSChecks
-		{
-			get;
-			set;
-		}
 		WStreamN13 reader;
 		public override WStream Reader
 		{
@@ -43,7 +38,6 @@ namespace ChatConnect.Tcp.Protocol.WS
 			reader     = new WStreamN13(1024 * 24);
 			writer     = new WStreamN13(1204 * 128);
 			Response   = new Header();
-			WSChecks   = new WSChecks();
 			TaskResult = new TaskResult();
 			TaskResult.Protocol = TaskProtocol.WSRFC76;
 		}
@@ -57,6 +51,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		{
 			Tcp = http.Tcp;
 			Request = http.Request;
+			Session = new WSession(((IPEndPoint)Tcp.RemoteEndPoint).Address);
 		}
 		public override bool Message(byte[] message, int recive, int length, WSOpcod opcod, WSFin fin)
 		{
@@ -175,13 +170,13 @@ namespace ChatConnect.Tcp.Protocol.WS
 							number = reader.Frame.DataBody[1] | number;
 
 							if (number  >=  1000  &&  number  <=  1012)
-								close = new CloseWS(Address(),(WSClose)number);
+								close = new CloseWS(Session.Address.ToString(),(WSClose)number);
 							else
-								close = new CloseWS(Address(), WSClose.Abnormal);
+								close = new CloseWS(Session.Address.ToString(), WSClose.Abnormal);
 						}
 							else
 							{
-								close = new CloseWS(Address(), WSClose.Abnormal);
+								close = new CloseWS(Session.Address.ToString(), WSClose.Abnormal);
 							}
 						return;
 					case WSFrameN13.BINNARY:

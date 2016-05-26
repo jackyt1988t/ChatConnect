@@ -92,6 +92,11 @@ namespace ChatConnect.Tcp.Protocol.WS
 			get;
 			protected set;
 		}
+		public WSession Session
+		{
+			get;
+			protected set;
+		}
 		public TaskResult TaskResult
 		{
 			get;
@@ -370,6 +375,16 @@ namespace ChatConnect.Tcp.Protocol.WS
 			return Message(message, 0, message.Length, opcod, fin);
 		}
 		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="message">массив данных для отправки</param>
+		/// <param name="recive">начальная позиция в массиве данных</param>
+		/// <param name="length">количество которое необходимо отправить</param>
+		/// <param name="opcod">опкод который необходимо отправить</param>
+		/// <param name="fin">указывает окончательный фрагмент сообщения</param>
+		/// <returns></returns>
+		public abstract bool Message(byte[] message, int recive, int length, WSOpcod opcod, WSFin fin);
+		/// <summary>
 		/// Функция 1 прохода обработки ws протокола соединения
 		/// </summary>
 		/// <returns>информация о дальнейшей обработки соединения</returns>
@@ -438,14 +453,6 @@ namespace ChatConnect.Tcp.Protocol.WS
 			return TaskResult;
 		}
 		/// <summary>
-		/// Возвращает адрес удаленной стороны текущего соденинения
-		/// </summary>
-		/// <returns>строковое представдение ip адреса</returns>
-		public virtual string Address()
-		{
-			return ((IPEndPoint)Tcp.RemoteEndPoint).Address.ToString();
-		}
-		/// <summary>
 		/// Возвращает протокол установленного соединения поверх tcp/ip
 		/// </summary>
 		/// <returns>строковое представление текущего протокола</returns>
@@ -453,21 +460,11 @@ namespace ChatConnect.Tcp.Protocol.WS
 		{
 			return "WS";
 		}
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="message"></param>
-		/// <param name="recive"></param>
-		/// <param name="length"></param>
-		/// <param name="opcod"></param>
-		/// <param name="fin"></param>
-		/// <returns></returns>
-		public abstract bool Message(byte[] message, int recive, int length, WSOpcod opcod, WSFin fin);
 
 		/// <summary>
 		/// 
 		/// </summary>
-		public void Read()
+		private void Read()
 		{
 			if (state > 4)
 				return;
@@ -632,7 +629,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// </summary>
 		/// <param name="error"></param>
 		protected abstract void Error(WSException error);
-
+		
 		/// <summary>
 		/// 
 		/// </summary>

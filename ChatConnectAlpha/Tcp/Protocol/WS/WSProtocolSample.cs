@@ -6,11 +6,6 @@ namespace ChatConnect.Tcp.Protocol.WS
 {
     class WSProtocol : WS
     {
-		public WSChecks WSChecks
-		{
-			get;
-			set;
-		}
 		public override WStream Reader
 		{
 			get;
@@ -31,7 +26,6 @@ namespace ChatConnect.Tcp.Protocol.WS
 			Reader	   = new WStreamSample(1204 * 512);
 			Writer	   = new WStreamSample(1204 * 512);
 			Response   = new Header();
-			WSChecks   = new WSChecks();
 			TaskResult = new TaskResult();
 			TaskResult.Protocol   =   TaskProtocol.WSRFC76;
 		}
@@ -50,7 +44,6 @@ namespace ChatConnect.Tcp.Protocol.WS
 			Writer     = new WStreamSample(1204 * 512);
 			Request    = http.Request;
 			Response   = new Header();
-			WSChecks   = new WSChecks();
 			TaskResult = new TaskResult();
 			TaskResult.Protocol   =   TaskProtocol.WSRFC76;
 		}

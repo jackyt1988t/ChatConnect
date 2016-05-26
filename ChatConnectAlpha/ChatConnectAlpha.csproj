@@ -116,12 +116,14 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
     <Compile Include="Tcp\Protocol\WS\WS.cs" />
-    <Compile Include="Tcp\Protocol\WS\WSBinnary.cs" />
+    <Compile Include="Tcp\Protocol\WS\WSData.cs" />
     <Compile Include="Tcp\Protocol\Buffer\IBuffer.cs" />
-    <Compile Include="Tcp\Protocol\WS\WSChecks.cs" />
     <Compile Include="Tcp\Protocol\WS\WSClose\WSClose.cs" />
     <Compile Include="Tcp\Protocol\WS\WsEnum.cs" />
     <Compile Include="Tcp\Protocol\WS\WSErrors.cs" />
+    <Compile Include="Tcp\Protocol\WS\WSession.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Compile>
     <Compile Include="Tcp\Protocol\WS\WSException.cs" />
     <Compile Include="Tcp\Protocol\WS\WSFrame\WSFin.cs" />
     <Compile Include="Tcp\Protocol\WS\WSFrame\WSFrameRFC75.cs">
