@@ -54,16 +54,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 			TaskResult = new TaskResult();
 			TaskResult.Protocol   =   TaskProtocol.WSRFC76;
 		}
-		public override bool Close(WSClose close)
-		{
-			int Opcod = WSFrameSample.CLOSE;
-			WSFrameSample frame = new WSFrameSample();
-						  frame.BitFin = 0;
-						  frame.BitPcod = Opcod;
-
-			return Send(frame.GetDataFrame());
-		}
-		public override bool Message(byte[] message, WSOpcod opcod, WSFin fin)
+		public override bool Message(byte[] message, int recive, int length, WSOpcod opcod, WSFin fin)
 		{
 			int Fin = 0;
 			int Opcod = 0;
@@ -71,17 +62,47 @@ namespace ChatConnect.Tcp.Protocol.WS
 				Fin = 0;
 			else if (fin == WSFin.Next)
 				Fin = 1;
-			if (opcod == WSOpcod.Text)
-				Opcod = WSFrameSample.TEXT;
-			else if (opcod == WSOpcod.Binnary)
-				Opcod = WSFrameSample.BINNARY;
-			WSFrameSample frame = new WSFrameSample();
-						  frame.BitFin  = Fin;
-						  frame.BitPcod  = Opcod;
-						  frame.BitLeng  = message.Length;
-						  frame.DataBody = message;
-			
-			return Send(frame.GetDataFrame());
+			switch (opcod)
+			{
+				case WSOpcod.Text:
+					Opcod = WSFrameN13.TEXT;
+					break;
+				case WSOpcod.Ping:
+					Opcod = WSFrameN13.PING;
+					break;
+				case WSOpcod.Pong:
+					Opcod = WSFrameN13.PONG;
+					break;
+				case WSOpcod.Close:
+					Opcod = WSFrameN13.CLOSE;
+					break;
+				case WSOpcod.Binnary:
+					Opcod = WSFrameN13.BINNARY;
+					break;
+				case WSOpcod.Continue:
+					Opcod = WSFrameN13.CONTINUE;
+					break;
+			}
+			WSFrameSample frame = new WSFrameSample()
+			{
+				BitFin   = Fin,
+				BitPcod  = Opcod,
+				PartBody = recive,
+				LengBody = length,
+				DataBody = message
+			};
+			lock (Writer)
+			{
+				if (Writer.Clear > (frame.DataHead.Length
+								   + frame.DataBody.Length))
+				{
+					Writer.Write(frame.DataHead, 0, (int)frame.LengHead);
+					Writer.Write(frame.DataBody, (int)frame.PartBody,
+													(int)frame.LengBody);
+					return true;
+				}
+			}
+			return false;
 		}
 		private void Ping()
 		{

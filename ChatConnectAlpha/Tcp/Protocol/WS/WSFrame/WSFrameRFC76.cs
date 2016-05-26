@@ -2,12 +2,6 @@
 
 namespace ChatConnect.Tcp.Protocol.WS
 {
-	enum Bit : int
-	{
-		Set = 0,
-		All = 2,
-		Unset = 1,
-	}
     class WSFrameN13
     {
         public const int TEXT   = 0x01;
@@ -176,126 +170,113 @@ namespace ChatConnect.Tcp.Protocol.WS
             get;
             set;
         }
-		/// <summary>
-		/// Сбрасывает все перменный в стандартные значения
-		/// </summary>
-        public void Clear()
-        {
-            Handler = 0;
-            MaskPos = 0;
-            BitFin = 0;
-            BitRsv1 = 0;
-            BitRsv2 = 0;
-            BitRsv3 = 0;
-            BitPcod = 0;
-            BitMask = 0;
-            BitLeng = 0;
-            MaskVal = 0;
-            PartBody = 0;
-            PartHead = 0;
-            LengHead = 0;
-            LengBody = 0;
-            DataHead = null;
-            DataBody = null;
-			SetsHead = false;
-            GetsHead = false;
-            GetsBody = false;
-        }
-		public void SetHeader()
+
+		public void ClearFrame()
 		{
-			if (this.SetsHead)
+			BitFin = 0;
+			Handler = 0;
+			BitRsv1 = 0;
+			BitRsv2 = 0;
+			BitRsv3 = 0;
+			BitPcod = 0;
+			BitMask = 0;
+			BitLeng = 0;
+			MaskVal = 0;
+			PartBody = 0;
+			PartHead = 0;
+			LengHead = 0;
+			LengBody = 0;
+			DataHead = null;
+			DataBody = null;
+			DataMask = null;
+			GetsHead = false;
+			GetsBody = false;
+			SetsHead = false;
+		}
+		public void InitializationHeaders()
+		{
+			if (SetsHead)
 				return;
 						
-            this.LengHead = 2;
-			this.SetsHead = true;
-			if (this.BitMask == 1)
+            LengHead = 2;
+			SetsHead = true;
+			if (BitMask == 1)
             {
-				this.MaskVal = new Random().Next();
-                this.LengHead += 4;
+				MaskVal = new Random().Next();
+                LengHead += 4;
             }
-            if (this.LengBody <= 125)
+            if (LengBody <= 125)
             {
-                 this.BitLeng = (int)this.LengBody;
+                 BitLeng = (int)LengBody;
 			}
-            else if (this.LengBody <= 65556)
+            else if (LengBody <= 65556)
             {
-                this.BitLeng = 126;
-                this.LengHead += 2;
+                BitLeng = 126;
+                LengHead += 2;
             }
-            else if (this.LengBody >= 65557)
+            else if (LengBody >= 65557)
             {
-                this.BitLeng = 127;
-                this.LengHead += 8;
+                BitLeng = 127;
+                LengHead += 8;
             }
 			
             int length = 0;
-            this.DataHead = new byte[this.LengHead];
+            DataHead = new byte[LengHead];
 
-            this.DataHead[length] = (byte)(this.BitFin << 7);
-            this.DataHead[length] = (byte)(this.DataHead[length] | 
-											  (this.BitRsv1 << 6));
-            this.DataHead[length] = (byte)(this.DataHead[length] | 
-											  (this.BitRsv2 << 5));
-            this.DataHead[length] = (byte)(this.DataHead[length] | 
-											  (this.BitRsv3 << 4));
-            this.DataHead[length] = (byte)(this.DataHead[length] | 
-											  (this.BitPcod << 0));
+            DataHead[length] = (byte)(BitFin << 7);
+            DataHead[length] = (byte)(DataHead[length] | 
+										(BitRsv1 << 6));
+            DataHead[length] = (byte)(DataHead[length] | 
+										(BitRsv2 << 5));
+            DataHead[length] = (byte)(DataHead[length] | 
+										(BitRsv3 << 4));
+            DataHead[length] = (byte)(DataHead[length] | 
+										(BitPcod << 0));
 				length++;
 
-            this.DataHead[length] = (byte)(this.BitMask << 7);
-            this.DataHead[length] = (byte)(this.DataHead[length] | 
-											  (this.BitLeng << 0));
+            DataHead[length] = (byte)(BitMask << 7);
+            DataHead[length] = (byte)(DataHead[length] | 
+										(BitLeng << 0));
 				length++;
 
-			if (this.BitLeng == 127)
+			if (BitLeng == 127)
 			{
-				this.DataHead[length] = (byte)(this.LengBody >> 56);
+				DataHead[length] = (byte)(LengBody >> 56);
 				length++;
-				this.DataHead[length] = (byte)(this.LengBody >> 48);
+				DataHead[length] = (byte)(LengBody >> 48);
 				length++;
-				this.DataHead[length] = (byte)(this.LengBody >> 40);
+				DataHead[length] = (byte)(LengBody >> 40);
 				length++;
-				this.DataHead[length] = (byte)(this.LengBody >> 32);
+				DataHead[length] = (byte)(LengBody >> 32);
 				length++;
-				this.DataHead[length] = (byte)(this.LengBody >> 24);
+				DataHead[length] = (byte)(LengBody >> 24);
 				length++;
-				this.DataHead[length] = (byte)(this.LengBody >> 16);
+				DataHead[length] = (byte)(LengBody >> 16);
 				length++;
 			}
-			if (this.BitLeng >= 126)
+			if (BitLeng >= 126)
 			{
-				this.DataHead[length] = (byte)(this.LengBody >> 08);
+				DataHead[length] = (byte)(LengBody >> 08);
 				length++;
-				this.DataHead[length] = (byte)(this.LengBody >> 00);
+				DataHead[length] = (byte)(LengBody >> 00);
 				length++;
 			}
 
-			if (this.BitMask == 1)
+			if (BitMask == 1)
 			{
-				this.DataHead[length] = (byte)(this.MaskVal >> 24);
+				DataHead[length] = (byte)(MaskVal >> 24);
 				length++;
-				this.DataHead[length] = (byte)(this.MaskVal >> 16);
+				DataHead[length] = (byte)(MaskVal >> 16);
 				length++;
-				this.DataHead[length] = (byte)(this.MaskVal >> 08);
+				DataHead[length] = (byte)(MaskVal >> 08);
 				length++;
-				this.DataHead[length] = (byte)(this.MaskVal >> 00);
+				DataHead[length] = (byte)(MaskVal >> 00);
 				length++;
 			}
-		}
-		public byte[] GetDataFrame()
-		{
-			SetHeader();
-
-			byte[] buffer = new byte[ this.LengHead + this.LengBody ];
-
-			this.DataHead.CopyTo(buffer, 0);
-			this.DataBody.CopyTo(buffer, this.LengHead );
-
-			return buffer;
 		}
 		public override string ToString()
 		{
-			return "RFC76";
+			return "WebSocket protocol version release N13";
 		}
 	}
 }

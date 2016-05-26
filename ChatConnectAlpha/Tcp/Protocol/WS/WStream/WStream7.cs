@@ -2,11 +2,11 @@
 
 namespace ChatConnect.Tcp.Protocol.WS
 {
-    class WStream7 : WStream
+    class WStreamN13 : WStream
     {
 		public WSFrameN13 Frame;
 
-        public WStream7(int length)
+        public WStreamN13(int length)
         {
 			Frame  =  new WSFrameN13();
 
@@ -80,8 +80,6 @@ namespace ChatConnect.Tcp.Protocol.WS
                 switch (Frame.Handler)
                 {
                     case 0:
-						Frame.DataHead = new byte[2];
-						Frame.DataHead[0] = Buffer[PointR];
 
 						Frame.BitFin = (Buffer[PointR] & 0x80) >> 7;
                         Frame.BitRsv1 = (Buffer[PointR] & 0x40) >> 6;
@@ -97,11 +95,8 @@ namespace ChatConnect.Tcp.Protocol.WS
                         Frame.PartBody = 0;
                         /*  Обработчик.  */
                         Frame.Handler += 1;
-
-                        break;
+						break;
                     case 1:
-						Frame.DataHead[1] = Buffer[PointR];
-
 						Frame.BitMask = (Buffer[PointR] & 0x80) >> 7;
                         Frame.BitLeng = (Buffer[PointR] & 0x7F);
 			
@@ -122,69 +117,86 @@ namespace ChatConnect.Tcp.Protocol.WS
                             Frame.Handler += 9;
                             Frame.LengBody = Frame.BitLeng;
                         }
+						Frame.DataHead = new byte[Frame.LengHead];
+						Frame.DataHead[Frame.PartHead] = Buffer[PointR];
+						Frame.DataHead[Frame.PartHead - 1] = Buffer[PointR - 1];
 						break;
                     case 2:
                         /*  Обработчик.  */
                         Frame.Handler += 1;
-                                        Frame.LengBody = (long)(Buffer[PointR] << 56);
+						Frame.DataHead[Frame.PartHead] = Buffer[PointR];
+                                         Frame.LengBody = (long)(Buffer[PointR] << 56);
                         break;
                     case 3:
                         /*  Обработчик.  */
                         Frame.Handler += 1;
-                        Frame.LengBody = Frame.LengBody | (long)(Buffer[PointR] << 48);
+						Frame.DataHead[Frame.PartHead] = Buffer[PointR];
+						Frame.LengBody = Frame.LengBody | (long)(Buffer[PointR] << 48);
                         break;
                     case 4:
                         /*  Обработчик.  */
                         Frame.Handler += 1;
-                        Frame.LengBody = Frame.LengBody | (long)(Buffer[PointR] << 40);
+						Frame.DataHead[Frame.PartHead] = Buffer[PointR];
+						Frame.LengBody = Frame.LengBody | (long)(Buffer[PointR] << 40);
                         break;
                     case 5:
                         /*  Обработчик.  */
                         Frame.Handler += 1;
-                        Frame.LengBody = Frame.LengBody | (long)(Buffer[PointR] << 32);
+						Frame.DataHead[Frame.PartHead] = Buffer[PointR];
+						Frame.LengBody = Frame.LengBody | (long)(Buffer[PointR] << 32);
                         break;
                     case 6:
                         /*  Обработчик.  */
                         Frame.Handler += 1;
-                        Frame.LengBody = Frame.LengBody | (long)(Buffer[PointR] << 24);
+						Frame.DataHead[Frame.PartHead] = Buffer[PointR];
+						Frame.LengBody = Frame.LengBody | (long)(Buffer[PointR] << 24);
                         break;
                     case 7:
                         /*  Обработчик.  */
                         Frame.Handler += 1;
-                        Frame.LengBody = Frame.LengBody | (long)(Buffer[PointR] << 16);
+						Frame.DataHead[Frame.PartHead] = Buffer[PointR];
+						Frame.LengBody = Frame.LengBody | (long)(Buffer[PointR] << 16);
                         break;
                     case 8:
                         /*  Обработчик.  */
                         Frame.Handler += 1;
-                        Frame.LengBody = Frame.LengBody | (long)(Buffer[PointR] << 08);
+						Frame.DataHead[Frame.PartHead] = Buffer[PointR];
+						Frame.LengBody = Frame.LengBody | (long)(Buffer[PointR] << 08);
                         break;
                     case 9:
                         /*  Обработчик.  */
                         Frame.Handler += 1;
-                        Frame.LengBody = Frame.LengBody | (long)(Buffer[PointR] << 00);
+						Frame.DataHead[Frame.PartHead] = Buffer[PointR];
+						Frame.LengBody = Frame.LengBody | (long)(Buffer[PointR] << 00);
                         break;
                     case 10:
                         /*  Обработчик.  */
                         Frame.Handler += 1;
 						Frame.DataMask = new byte[4];
 						Frame.DataMask[0] = Buffer[PointR];
+						Frame.DataHead[Frame.PartHead] = Buffer[PointR];
+						
                                           		Frame.MaskVal = (Buffer[PointR] << 24);
                         break;
                     case 11:
                         /*  Обработчик.  */
                         Frame.Handler += 1;
 						Frame.DataMask[1] = Buffer[PointR];
+						Frame.DataHead[Frame.PartHead] = Buffer[PointR];
+						
                         		Frame.MaskVal = Frame.MaskVal | (Buffer[PointR] << 16);
                         break;
                     case 12:
                         /*  Обработчик.  */
                         Frame.Handler += 1;
 						Frame.DataMask[2] = Buffer[PointR];
-
+						Frame.DataHead[Frame.PartHead] = Buffer[PointR];
+						
 								Frame.MaskVal = Frame.MaskVal | (Buffer[PointR] << 08);
                         break;
                     case 13:
 						Frame.DataMask[3] = Buffer[PointR];
+						Frame.DataHead[Frame.PartHead] = Buffer[PointR];
 								Frame.MaskVal = Frame.MaskVal | (Buffer[PointR] << 00);
                         break;
                 }

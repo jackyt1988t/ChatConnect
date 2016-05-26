@@ -5,8 +5,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 {
 	class WStreamSample : WStream
 	{
-		public WSFrameSample Frame = 
-				  new WSFrameSample();
+		public WSFrameSample Frame = new WSFrameSample();
 		public WStreamSample(int length)
 		{
 			_len = length;

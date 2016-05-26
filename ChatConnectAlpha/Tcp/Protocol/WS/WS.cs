@@ -259,7 +259,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 			int start = 0;
 			int write = buffer.Length;
 			SocketError error = SocketError.Success;
-			lock (Sync)
+			lock (Writer)
 			{
 				if (Writer.Empty)	
 					start = Tcp.Send(buffer, start, write, SocketFlags.None, out error);
@@ -328,6 +328,22 @@ namespace ChatConnect.Tcp.Protocol.WS
 			return Message(message, WSOpcod.Pong, WSFin.Last);
 		}
 		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="numcode"></param>
+		/// <returns></returns>
+		public bool Close(WSClose numcode)
+		{
+			string buffer = Protocol.WS.Close.Message[numcode];
+			byte[] wsbody = Encoding.UTF8.GetBytes(buffer);
+			byte[] wsdata = new byte[2  +  wsbody.Length];
+				   wsdata[0] = (byte)((int)numcode >> 08);
+				   wsdata[1] = (byte)((int)numcode >> 16);
+				   wsbody.CopyTo(wsdata, 2);
+
+			return Message(wsbody, WSOpcod.Close, WSFin.Last);
+		}
+		/// <summary>
 		/// Отправляет текстовый фрейм текущему подключению
 		/// </summary>
 		/// <param name="message">строка данных для отправки</param>
@@ -346,6 +362,15 @@ namespace ChatConnect.Tcp.Protocol.WS
 		public bool Message(byte[] message)
 		{
 			return Message(message, WSOpcod.Binnary, WSFin.Last);
+		}
+		/// <summary>
+		/// Отправляет текстовый фрейм текущему подключению
+		/// </summary>
+		/// <param name="message">массив байт для отправки</param>
+		/// <returns>true в случае ечсли данные можно отправить</returns>
+		public bool Message(byte[] message, WSOpcod opcod, WSFin fin)
+		{
+			return Message(message, 0, message.Length, opcod, fin);
 		}
 		/// <summary>
 		/// Функция 1 прохода обработки ws протокола соединения
@@ -432,17 +457,15 @@ namespace ChatConnect.Tcp.Protocol.WS
 			return "WS";
 		}
 		/// <summary>
-		/// Отправляет закрывающий фрейм с кодом 1000.
+		/// 
 		/// </summary>
-		/// <param name="message">строка данных для отправки</param>
-		/// <returns>true в случае ечсли данные можно отправить</returns>
-		public abstract bool Close(WSClose close);
-		/// <summary>
-		/// Отправляет текстовый фрейм текущему подключению
-		/// </summary>
-		/// <param name="message">массив байт для отправки</param>
-		/// <returns>true в случае ечсли данные можно отправить</returns>
-		public abstract bool Message(byte[] message, WSOpcod opcod, WSFin fin);
+		/// <param name="message"></param>
+		/// <param name="recive"></param>
+		/// <param name="length"></param>
+		/// <param name="opcod"></param>
+		/// <param name="fin"></param>
+		/// <returns></returns>
+		public abstract bool Message(byte[] message, int recive, int length, WSOpcod opcod, WSFin fin);
 
 		/// <summary>
 		/// 
