@@ -1,6 +1,6 @@
 # MyWebSocket
 ## WebSocket Server написанный на языке c#.
-[ссылка на сайт][http://jackyt1988t.github.io/MyWebSocket]
+<a hrf="http://jackyt1988t.github.io/MyWebSocket">ссылка на сайт</a>
 Поддержка .NET Framework 4.5, Mono 4.2 <br>
 Пример простейшего WebSocket echo сервера
 
