@@ -48,6 +48,7 @@ namespace ChatConnect
 					Console.WriteLine(ev.sender.ToString());
 				};
 			};
+			// Запускаем сервер с указанным адресом и портом, с 2 потоками параллельной обработки соединений
 			WServer Server = new WServer("0.0.0.0", 8081, 2);
 			
         }
