@@ -110,6 +110,7 @@
     <Compile Include="Tcp\Protocol\WS\WSData.cs" />
     <Compile Include="Tcp\Protocol\Buffer\IBuffer.cs" />
     <Compile Include="Tcp\Protocol\WS\WSClose\WSClose.cs" />
+    <Compile Include="Tcp\Protocol\WS\WSDebug\WSDebug.cs" />
     <Compile Include="Tcp\Protocol\WS\WSEnum.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
