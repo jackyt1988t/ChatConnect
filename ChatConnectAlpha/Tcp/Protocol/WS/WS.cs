@@ -1,12 +1,9 @@
-﻿using System;
-using System.IO;
-using System.Text;
+﻿using System.Text;
 
-using System.Net;
-using System.Net.Sockets;
+	using System.Net;
+	using System.Net.Sockets;
 
-using System.Threading;
-using System.Threading.Tasks;
+		using System.Threading;
 
 namespace ChatConnect.Tcp.Protocol.WS
 {
@@ -22,7 +19,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		private static readonly string S_CLOSE = "close";
 		private static readonly string S_CONNECT = "connect";
 
-		static public bool Deb;
+		static public bool Debug;
 		/// <summary>
 		/// tcp/ip соединение
 		/// </summary>

@@ -127,19 +127,19 @@
     <Compile Include="Tcp\Protocol\WS\WSFrame\WSFrameRFC75.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
-    <Compile Include="Tcp\Protocol\WS\WSFrame\WSFrameRFC76.cs">
+    <Compile Include="Tcp\Protocol\WS\WSFrame\WSFrameN13.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
     <Compile Include="Tcp\Protocol\WS\WSFrame\WSFrame.cs" />
-    <Compile Include="Tcp\Protocol\WS\WSProtocols.cs" />
+    <Compile Include="Tcp\Protocol\WS\WSProtocolSample.cs" />
     <Compile Include="Tcp\Protocol\WStateEnum.cs" />
-    <Compile Include="Tcp\Protocol\WS\WSProtocols7.cs">
+    <Compile Include="Tcp\Protocol\WS\WSProtocolN13.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
     <Compile Include="Tcp\Protocol\WS\WStream\WStreamRFC75.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
-    <Compile Include="Tcp\Protocol\WS\WStream\WStream7.cs">
+    <Compile Include="Tcp\Protocol\WS\WStream\WStreamN13.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
     <Compile Include="Tcp\Protocol\WS\WStream\WStream.cs">

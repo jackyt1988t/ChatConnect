@@ -62,7 +62,7 @@ namespace ChatConnect.Tcp
 				case TaskOption.Protocol:
 					if (TaskResult.Protocol == TaskProtocol.WSRFC76)
 					{
-						Protocol = new WSProtocol7(Protocol);
+						Protocol = new WSProtocolN13(Protocol);
 						Container.Enqueue(this);
 					}
 					break;

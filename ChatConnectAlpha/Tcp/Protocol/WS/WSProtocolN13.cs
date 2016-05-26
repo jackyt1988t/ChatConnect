@@ -6,7 +6,7 @@ using System.Text;
 
 namespace ChatConnect.Tcp.Protocol.WS
 {
-	class WSProtocol7 : WS
+	class WSProtocolN13 : WS
 	{
 		const string CHECKKEY = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
@@ -35,7 +35,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// <summary>
 		/// Ининцилазириует класс протокола WS без подключения
 		/// </summary>
-		public WSProtocol7()
+		public WSProtocolN13()
 		{
 			Sync = new object();
 			State = 
@@ -52,7 +52,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// </summary>
 		/// <param name="http">протокол  http</param>
 		/// <param name="connect">обрабтчик собятия подключения</param>
-		public WSProtocol7(IProtocol http) :
+		public WSProtocolN13(IProtocol http) :
 			this()
 		{
 			Tcp = http.Tcp;
@@ -146,7 +146,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 			{
 				if (reader.ReadBody() == -1)
 					return;
-				
+
 				switch (reader.Frame.BitPcod)
 				{
 					case WSFrameN13.TEXT:
@@ -197,6 +197,9 @@ namespace ChatConnect.Tcp.Protocol.WS
 					default:
 						throw new WSException("Опкод: " + reader.Frame.BitPcod, WsError.PcodNotSuported, WSClose.UnsupportedData);
 				}
+				if (Debug)
+					WSDebug.DebugN13(reader.Frame);
+				/*      Очитстить.      */
 				reader.Frame.ClearFrame();				
 			}
 		}
