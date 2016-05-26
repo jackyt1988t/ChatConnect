@@ -12,6 +12,7 @@ namespace ChatConnect
     {
         static void Main(string[] args)
         {
+			WS.Debug = true;
 			WS.EventConnect += (object obj, PEventArgs e) =>
 			{
 				// Объект WebSocket
