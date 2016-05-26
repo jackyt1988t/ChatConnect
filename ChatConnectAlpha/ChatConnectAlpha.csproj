@@ -119,7 +119,7 @@
     <Compile Include="Tcp\Protocol\WS\WSData.cs" />
     <Compile Include="Tcp\Protocol\Buffer\IBuffer.cs" />
     <Compile Include="Tcp\Protocol\WS\WSClose\WSClose.cs" />
-    <Compile Include="Tcp\Protocol\WS\WsEnum.cs" />
+    <Compile Include="Tcp\Protocol\WS\WSEnum.cs" />
     <Compile Include="Tcp\Protocol\WS\WSErrors.cs" />
     <Compile Include="Tcp\Protocol\WS\WSession.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
