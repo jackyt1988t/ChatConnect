@@ -1,8 +1,9 @@
 # MyWebSocket
 ## WebSocket Server написанный на языке c#.
-Поддержка .NET Framework 4.5, MONO 4.2
-##Пример простейшего WebSocket echo сервера
-http://jackyt1988t.github.io/MyWebSocket/
+[ссылка на сайт][http://jackyt1988t.github.io/MyWebSocket]
+Поддержка .NET Framework 4.5, Mono 4.2 <br>
+Пример простейшего WebSocket echo сервера
+
 ```C#
 using System;
 using System.Text;
