@@ -132,9 +132,9 @@ namespace ChatConnect.Tcp.Protocol.WS
 						throw new WSException("Неверный бит rcv2", WsError.HeaderFrameError, WSClose.PolicyViolation);
 					if (reader.Frame.BitRsv3 == 1)
 						throw new WSException("Неверный бит rcv3", WsError.HeaderFrameError, WSClose.PolicyViolation);
-					if ( reader.Frame.BitMask == 0 )
+					if (reader.Frame.BitMask == 0)
 						throw new WSException("Неверный бит mask", WsError.HeaderFrameError, WSClose.PolicyViolation);
-					if ( reader.Frame.LengBody > 32000 )
+					if (reader.Frame.LengBody > 32000 || reader.Frame.LengBody == 0)
 					{
 						string length = reader.Frame.LengBody.ToString("X");
 						throw new WSException("Длинна: " + length, WsError.HeaderFrameError, WSClose.PolicyViolation);
@@ -220,12 +220,12 @@ namespace ChatConnect.Tcp.Protocol.WS
 		{
 			SHA1 sha1 = SHA1.Create();
 
-			Response.StartString =
-							  "HTTP/1.1 101 Switching Protocols";
+			Response.StartString = 
+					  "HTTP/1.1 101 Switching Protocols";
 			string key = Request["sec-websocket-key"] + CHECKKEY;
 			byte[] val = Encoding.UTF8.GetBytes(key);
-				   val = sha1.ComputeHash(val);
-				   key = Convert.ToBase64String(val);
+			       val = sha1.ComputeHash(val);
+			       key = Convert.ToBase64String(val);
 
 			sha1.Clear();
 
