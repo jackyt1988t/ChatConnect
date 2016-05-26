@@ -13,34 +13,35 @@ namespace ChatConnect
         static void Main(string[] args)
         {
 			//WS.Debug = true;
-			WS.EventConnect += (object obj, PEventArgs e) =>
+			WS.EventConnect += (object obj, PEventArgs a) =>
 			{
 				// Объект WebSocket
 				WS WebSocket = obj as WS;
 				// Событие наступает когда приходят новые данные
-				WebSocket.EventData += (object sender, PEventArgs ev) =>
+				WebSocket.EventData += (object sender, PEventArgs e) =>
 				{
-					WSData binnary = ev.sender as WSData;
-					if (binnary.Opcod != WSOpcod.Text)
+					WSData data = e.sender as WSData;
+					if (data.Opcod != WSOpcod.Text)
 					{
-						byte[] _buffer = binnary.ToByte(); 
+						
+						byte[] raw = data.ToByte(); 
 					}
 					else
 					{
-						Console.WriteLine(binnary.ToString());
+						Console.WriteLine(data.ToString());
 						// Отправляем текстовый фрейм
-						WebSocket.Message(binnary.ToString());
+						WebSocket.Message(data.ToString());
 					}
 				};
 				// Событие наступает если произошла ошибка данных
-				WebSocket.EventError += (object sender, PEventArgs ev) =>
+				WebSocket.EventError += (object sender, PEventArgs e) =>
 				{
-					Console.WriteLine(ev.sender.ToString());
+					Console.WriteLine(e.sender.ToString());
 				};
 				// Событие наступает если соединение было закрыто
-				WebSocket.EventClose += (object sender, PEventArgs ev) =>
+				WebSocket.EventClose += (object sender, PEventArgs e) =>
 				{
-					Console.WriteLine(ev.sender.ToString());
+					Console.WriteLine(e.sender.ToString());
 				};
 			};
 			WServer Server = new WServer("0.0.0.0", 8081, 2);

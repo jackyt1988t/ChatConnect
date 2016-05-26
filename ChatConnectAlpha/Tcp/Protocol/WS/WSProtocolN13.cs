@@ -154,21 +154,25 @@ namespace ChatConnect.Tcp.Protocol.WS
 					case WSFrameN13.TEXT:
 						if (reader.Frame.BitFin == 0)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
+
 						OnEventData(new WSData(reader.Frame.DataBody, WSOpcod.Text));
 						break;
 					case WSFrameN13.PING:
 						if (reader.Frame.BitFin == 0)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
+
 						OnEventPing(new WSData(reader.Frame.DataBody, WSOpcod.Ping));
 						break;
 					case WSFrameN13.PONG:
 						if (reader.Frame.BitFin == 0)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
+
 						OnEventPong(new WSData(reader.Frame.DataBody, WSOpcod.Pong));
 						break;
 					case WSFrameN13.CLOSE:
 						if (reader.Frame.BitFin == 0)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
+
 						State = States.Close;
 						if (reader.Frame.DataBody.Length > 1)
 						{
