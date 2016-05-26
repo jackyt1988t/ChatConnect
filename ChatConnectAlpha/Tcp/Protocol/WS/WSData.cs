@@ -1,14 +1,17 @@
 ﻿using System;
+using System.Text;
 
 namespace ChatConnect.Tcp.Protocol.WS
 {
     class WSBinnary
     {
-        
+		public string Text
+		{
+			get;
+		}
         public byte[] Data
         {
-            get;
-            set;
+			get;
         }
 		public WSOpcod Opcod
         {
@@ -29,6 +32,8 @@ namespace ChatConnect.Tcp.Protocol.WS
 		{
 			Opcod = opcod;
 			Create = DateTime.Now;
+			if (opcod == WSOpcod.Text)
+				Text = Encoding.UTF8.GetString(data);		
 		}
     }
 }
