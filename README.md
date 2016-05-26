@@ -21,31 +21,34 @@ namespace ChatConnect
         {
         	// Включить вывод отладочной информации
         	WS.Debug = true; 
-			WS.EventConnect += (object obj, PEventArgs e) =>
+			WS.EventConnect += (object obj, PEventArgs a) =>
 			{
 				// Объект WebSocket
 				WS WebSocket = obj as WS;
 				// Событие наступает когда приходят новые данные
-				WebSocket.EventData += (object sender, PEventArgs ev) =>
+				WebSocket.EventData += (object sender, PEventArgs e) =>
 				{
-					WSBinnary binnary = ev.sender as WSBinnary;
-					if (binnary.Opcod == WSOpcod.Text)
+					WSBinnary binnary = e.sender as WSBinnary;
+					if (binnary.Opcod != WSOpcod.Text)
 					{
-						string text = Encoding.UTF8.GetString(binnary.Data);
-						Console.WriteLine(text);
+						byte[] _buffer = binnary.ToByte(); 
+					}
+					else
+					{
+						Console.WriteLine(binnary.ToString());
 						// Отправляем текстовый фрейм
-						WebSocket.Message(text);
+						WebSocket.Message(binnary.ToString());
 					}
 				};
 				// Событие наступает если произошла ошибка данных
-				WebSocket.EventError += (object sender, PEventArgs ev) =>
+				WebSocket.EventError += (object sender, PEventArgs e) =>
 				{
-					Console.WriteLine(ev.sender.ToString());
+					Console.WriteLine(e.sender.ToString());
 				};
 				// Событие наступает если соединение было закрыто
-				WebSocket.EventClose += (object sender, PEventArgs ev) =>
+				WebSocket.EventClose += (object sender, PEventArgs e) =>
 				{
-					Console.WriteLine(ev.sender.ToString());
+					Console.WriteLine(e.sender.ToString());
 				};
 			};
 			// Запускаем сервер с указанным адресом и портом, с 2 потоками параллельной обработки соединений
