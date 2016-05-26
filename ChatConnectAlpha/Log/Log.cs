@@ -47,12 +47,9 @@ namespace ChatConnect.Log
             }
         }
         /*               функция для записи сообщения в файл                 */
-  async public static void AddMessage(string message, string logpath, Log mode)
+		public static void AddMessage(string message, string logpath, Log mode)
         {
-			await Task.Run(() =>
-			{
-				RecordMessage(mode.ToString() + ": " + message + ". " + DateTime.Now.ToString(), logpath);
-			});
+			RecordMessage(mode.ToString() + ": " + message + ". " + DateTime.Now.ToString(), logpath);
         }
     }
 }
