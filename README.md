@@ -29,7 +29,7 @@ namespace ChatConnect
 				WebSocket.EventData += (object sender, PEventArgs e) =>
 				{
 					
-					if (binnary.Opcod != WSOpcod.Text)
+					if (binnary.Opcod == WSOpcod.Text)
 					{
 						Console.WriteLine(e.sender.ToString());
 						// Отправляем текстовый фрейм
