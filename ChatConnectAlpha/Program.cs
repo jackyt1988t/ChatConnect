@@ -21,12 +21,15 @@ namespace ChatConnect
 				WebSocket.EventData += (object sender, PEventArgs ev) =>
 				{
 					WSBinnary binnary = ev.sender as WSBinnary;
-					if (binnary.Opcod == WSOpcod.Text)
+					if (binnary.Opcod != WSOpcod.Text)
 					{
-						string text = Encoding.UTF8.GetString(binnary._Data);
-						Console.WriteLine(text);
+						byte[] _buffer = binnary.ToByte(); 
+					}
+					else
+					{
+						Console.WriteLine(binnary.ToString());
 						// Отправляем текстовый фрейм
-						WebSocket.Message(text);
+						WebSocket.Message(binnary.ToString());
 					}
 				};
 				// Событие наступает если произошла ошибка данных
