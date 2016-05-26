@@ -1,6 +1,7 @@
 # MyWebSocket
-WebSocket Server написанный на языке c#.
+## WebSocket Server написанный на языке c#.
 Пример простейшего WebSocket echo сервера
+http://jackyt1988t.github.io/MyWebSocket/
 ```C#
 using System;
 using System.Text;
@@ -16,6 +17,8 @@ namespace ChatConnect
     {
         static void Main(string[] args)
         {
+        		// Включить вывод отладочной информации
+        		WS.Debug = true; 
 			WS.EventConnect += (object obj, PEventArgs e) =>
 			{
 				// Объект WebSocket
