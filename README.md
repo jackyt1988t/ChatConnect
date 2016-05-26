@@ -1,8 +1,8 @@
 # MyWebSocket
 ## WebSocket Server написанный на языке c#.
-<a hrf="http://jackyt1988t.github.io/MyWebSocket">ссылка на сайт</a>
 Поддержка .NET Framework 4.5, Mono 4.2 <br>
-Пример простейшего WebSocket echo сервера
+http://jackyt1988t.github.io/MyWebSocket <br>
+Пример простейшего WebSocket echo сервера <br> 
 
 ```C#
 using System;
@@ -19,8 +19,8 @@ namespace ChatConnect
     {
         static void Main(string[] args)
         {
-        		// Включить вывод отладочной информации
-        		WS.Debug = true; 
+        	// Включить вывод отладочной информации
+        	WS.Debug = true; 
 			WS.EventConnect += (object obj, PEventArgs e) =>
 			{
 				// Объект WebSocket
