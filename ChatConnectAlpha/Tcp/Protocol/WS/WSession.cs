@@ -23,7 +23,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 			get;
 		}
 		/// <summary>
-		/// Адресс подключения
+		/// Адресс подключения 
 		/// </summary>
 		public IPAddress Address
 		{
