@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Net;
 using System.Net.Sockets;
-using System.Security.Cryptography;
-using System.Text;
+		using System.Text;
+		using System.Security.Cryptography;
+
 
 namespace ChatConnect.Tcp.Protocol.WS
 {
@@ -55,16 +56,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		}
 		public override bool Message(byte[] message, int recive, int length, WSOpcod opcod, WSFin fin)
 		{
-			int Fin = 0;
-			switch (fin)
-			{
-				case WSFin.Next:
-					Fin = 0;
-					break;
-				case WSFin.Last:
-					Fin = 1;
-					break;
-			}
+			int Fin = 1;
 			int Opcod = 0;
 			switch (opcod)
 			{
@@ -84,6 +76,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 					Opcod = WSFrameN13.BINNARY;
 					break;
 				case WSOpcod.Continue:
+					Fin = 0;
 					Opcod = WSFrameN13.CONTINUE;
 					break;
 			}
@@ -110,8 +103,9 @@ namespace ChatConnect.Tcp.Protocol.WS
 						writer.Frame.ClearFrame();
 						return true;
 					}
-					
 				}
+				else
+					Error(new WSException("Server", SocketError.NoBufferSpaceAvailable, WSClose.ServerError));
 			}			
 			return false;
 		}
@@ -175,22 +169,19 @@ namespace ChatConnect.Tcp.Protocol.WS
 						if (reader.Frame.BitFin == 0)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
 
-						State = States.Close;
 						if (reader.Frame.DataBody.Length > 1)
 						{
 							int number;
 							number = reader.Frame.DataBody[0] << 8;
 							number = reader.Frame.DataBody[1] | number;
 
-							if (number  >=  1000  &&  number  <=  1012)
-								close = new CloseWS(Session.Address.ToString(),(WSClose)number);
+							if ( number  >=  1000  &&  number  <= 1012 )
+								сlose(WSClose.Normal);
 							else
-								close = new CloseWS(Session.Address.ToString(), WSClose.Abnormal);
+								сlose(WSClose.Abnormal);
 						}
 							else
-							{
-								close = new CloseWS(Session.Address.ToString(), WSClose.Abnormal);
-							}
+								сlose(WSClose.Abnormal);
 						return;
 					case WSFrameN13.BINNARY:
 						if (reader.Frame.BitFin == 0)
@@ -221,22 +212,17 @@ namespace ChatConnect.Tcp.Protocol.WS
 		protected override void Connection(IHeader request, IHeader response)
 		{
 			SHA1 sha1 = SHA1.Create();
-
-			Response.StartString = 
-					  "HTTP/1.1 101 Switching Protocols";
-			string key = Request["sec-websocket-key"] + CHECKKEY;
-			byte[] val = Encoding.UTF8.GetBytes(key);
-			       val = sha1.ComputeHash(val);
-			       key = Convert.ToBase64String(val);
-
+			string key = Convert.ToBase64String(sha1.ComputeHash(Encoding.UTF8.GetBytes(Request["sec-websocket-key"] + CHECKKEY)));
 			sha1.Clear();
 
+			Response.StartString = "HTTP/1.1 101 Switching Protocols";
 			Response.Add("Upgrade", "WebSocket");
 			Response.Add("Connection", "Upgrade");
 			Response.Add("Sec-WebSocket-Accept", key);
 
 			OnEventConnect(request, response);
-			Send(response.ToByte());
+			byte[] buffer = response.ToByte();
+			Send(  buffer, 0, buffer.Length  );
 			if (Request.SegmentsBuffer.Count > 0)
 			{
 				byte[] buff = Request.SegmentsBuffer.Dequeue();

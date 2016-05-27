@@ -1,9 +1,10 @@
 ﻿using System.Text;
 
-	using System.Net;
-	using System.Net.Sockets;
+using System.Net;
+using System.Net.Sockets;
 
-		using System.Threading;
+using System.Threading;
+using System;
 
 namespace ChatConnect.Tcp.Protocol.WS
 {
@@ -259,14 +260,12 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// </summary>
 		/// <param name="message">массив байт для отправки</param>
 		/// <returns>true в случае ечсли данные можно отправить</returns>
-		public bool Send(byte[] buffer)
+		public bool Send(byte[] buffer, int start, int write)
 		{
 
-			if (state >= 4)
+			if (state > 3)
 				return false;
-
-			int start = 0;
-			int write = buffer.Length;
+			
 			SocketError error = SocketError.Success;
 			lock (Writer)
 			{
@@ -281,7 +280,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 				else
 				{
 					Writer.Write(buffer, start, length);
-					Writer.SetLength(length);
+							   Writer.SetLength(length);
 				}
 			}
 			if (error != SocketError.Success)
@@ -289,9 +288,16 @@ namespace ChatConnect.Tcp.Protocol.WS
 				if (error != SocketError.WouldBlock
 					&& error != SocketError.NoBufferSpaceAvailable)
 				{
-					if (!IsClose())
-						close = new CloseWS(Session.Address.ToString(), WSClose.Abnormal);
-
+					if (error == SocketError.Disconnecting && error == SocketError.ConnectionReset)
+						Close(WSClose.Abnormal);
+					else
+					{
+						if (!SetError())
+						{
+							Error(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
+							сlose(WSClose.ServerError);
+						}
+					}
 				}
 			}
 			return true;
@@ -339,14 +345,37 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// <returns></returns>
 		public bool Close(WSClose numcode)
 		{
-			if (IsClose())
+			if (!SetClose())
 				return false;
+
+			close  =  new CloseWS("Server", numcode);
 			string buffer = CloseWS.Message[numcode];
 			byte[] wsbody = Encoding.UTF8.GetBytes(buffer);
 			byte[] wsdata = new byte [2  +  wsbody.Length];
 				   wsdata[0] = (byte) ((int)numcode >> 08);
 				   wsdata[1] = (byte) ((int)numcode >> 16);
 				   wsbody.CopyTo(wsdata, 2);
+
+			return Message(wsbody, WSOpcod.Close, WSFin.Last);
+		}
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="numcode"></param>
+		/// <returns></returns>
+		public bool сlose(WSClose numcode)
+		{
+			if (!SetClose())
+				return false;
+			
+			close = new CloseWS(
+				Session.Address.ToString(), numcode);
+			string buffer = CloseWS.Message[numcode];
+			byte[] wsbody = Encoding.UTF8.GetBytes(buffer);
+			byte[] wsdata = new byte[2 + wsbody.Length];
+			wsdata[0] = (byte)((int)numcode >> 08);
+			wsdata[1] = (byte)((int)numcode >> 16);
+			wsbody.CopyTo(wsdata, 2);
 
 			return Message(wsbody, WSOpcod.Close, WSFin.Last);
 		}
@@ -431,9 +460,17 @@ namespace ChatConnect.Tcp.Protocol.WS
 
 				if (state == 5)
 				{
-					Close(close);
-					Tcp.Close();
+					if (close.AwaitTime.Seconds < 1
+						&& close.CloseCode != WSClose.Abnormal
+						&& close.CloseCode != WSClose.ServerError)
+					{
+						if (close.AwaitTime.Seconds < 1)
+							Write();
+						return TaskResult;
+					}
 					state = 7;
+					Tcp.Close();
+					Close(close);
 				}
 				if (state == 3)
 				{
@@ -450,10 +487,8 @@ namespace ChatConnect.Tcp.Protocol.WS
 			}
 			catch (WSException exc)
 			{
-				if (!IsError())
-					Error(exc);
-				state = 5;
-				close = new CloseWS("Server", exc.Closes);
+				Error( exc );
+				сlose(WSClose.ServerError);
 			}
 			return TaskResult;
 		}
@@ -498,13 +533,14 @@ namespace ChatConnect.Tcp.Protocol.WS
 					&& error != SocketError.NoBufferSpaceAvailable)
 				{
 					if (error == SocketError.Disconnecting && error == SocketError.ConnectionReset)
-					{
-						if (!IsClose())
-							close = new CloseWS(Session.Address.ToString(), WSClose.Abnormal);
-					}
+						Close(WSClose.Abnormal);
 					else
 					{
-						throw new WSException("Ошибка записи данных.", error, WSClose.ServerError);
+						if (!SetError())
+						{
+							Error(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
+							сlose(WSClose.ServerError);
+						}
 					}
 				}
 			}
@@ -538,35 +574,27 @@ namespace ChatConnect.Tcp.Protocol.WS
 						&& error != SocketError.NoBufferSpaceAvailable)
 					{
 						if (error == SocketError.Disconnecting && error == SocketError.ConnectionReset)
-						{
-							if (!IsClose())
-								close = new CloseWS(Session.Address.ToString(), WSClose.Abnormal);
-						}
+							Close(WSClose.Abnormal);
 						else
 						{
-							throw new WSException("Ошибка записи данных.", error, WSClose.ServerError);
+							if (!SetError())
+							{
+								Error(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
+								сlose(WSClose.ServerError);
+							}
 						}
 					}
 				}
 			}
 		}
+
 		protected bool IsSend()
 		{
 			if (state < 4)
 				return true;
 			return false;
 		}
-		protected bool IsError()
-		{
-			lock(Sync)
-			{
-				if (state > 3)
-					return true;
-				state = 4;
-				return false;
-			}
-		}
-		protected bool IsClose()
+		protected bool SetClose()
 		{
 			lock(Sync)
 			{
@@ -575,7 +603,18 @@ namespace ChatConnect.Tcp.Protocol.WS
 				state = 5;
 				return false;
 			}
+			
 		}
+		protected bool SetError()
+		{
+			lock(Sync)
+			{
+				if (state > 3)
+					return true;
+				state = 4;
+				return false;
+			}		
+		}		
 		protected void OnEventWork()
 		{
 			PHandlerEvent e;

@@ -15,16 +15,25 @@ namespace ChatConnect.Tcp.Protocol.WS
 			get;
 			private set;
 		}
-		public DateTime CloseTime
-		{
-			get;
-			private set;
-		}
 		public WSClose CloseCode
 		{
 			get;
 			private set;
 		}
+		 
+		public DateTime CloseTime
+		{
+			get;
+			private set;
+		}
+		public TimeSpan AwaitTime
+		{
+			get
+			{
+				return DateTime.Now - CloseTime;
+			}
+		}
+		
 		public static Dictionary<WSClose, string> Message;
 		
 		public CloseWS(string host, WSClose code)

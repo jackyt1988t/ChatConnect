@@ -45,7 +45,7 @@ namespace ChatConnect.Tcp
 						}
 					}
 				}
-				catch ( Exception exc )
+				catch ( FieldAccessException exc )
 				{
 					Console.WriteLine("Обработчик: " + exc.Message);
 				}
