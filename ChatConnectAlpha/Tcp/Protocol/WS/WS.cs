@@ -290,12 +290,24 @@ namespace ChatConnect.Tcp.Protocol.WS
 				if (error != SocketError.WouldBlock
 					&& error != SocketError.NoBufferSpaceAvailable)
 				{
-					if (state < 4)
+					if (error != SocketError.Disconnecting
+						&& error != SocketError.ConnectionReset)
 					{
-						state = 4;
-						Error(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
-						state = 5;
-						close = new CloseWS("Server", WSClose.ServerError);
+						if (state < 4)
+						{
+							state = 4;
+							Error(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
+							state = 5;
+							close = new CloseWS("Server", WSClose.ServerError);
+						}
+					}
+					else
+					{
+						if (state < 4)
+						{
+							state = 4;
+							close = new CloseWS(Session.Address, WSClose.Abnormal);
+						}
 					}
 				}
 			}
@@ -500,12 +512,24 @@ namespace ChatConnect.Tcp.Protocol.WS
 				if (error != SocketError.WouldBlock
 					&& error != SocketError.NoBufferSpaceAvailable)
 				{
-					if (state < 4)
+					if (error != SocketError.Disconnecting
+						&& error != SocketError.ConnectionReset)
 					{
-						state = 4;
-						Error(new WSException("Ошибка при чтении данных.", error, WSClose.ServerError));
-						state = 5;
-						close = new CloseWS("Server", WSClose.ServerError);
+						if (state < 4)
+						{
+							state = 4;
+							Error(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
+							state = 5;
+							close = new CloseWS("Server", WSClose.ServerError);
+						}
+					}
+					else
+					{
+						if (state < 4)
+						{
+							state = 4;
+							close = new CloseWS(Session.Address, WSClose.Abnormal);
+						}
 					}
 				}
 			}
@@ -538,12 +562,24 @@ namespace ChatConnect.Tcp.Protocol.WS
 					if (error != SocketError.WouldBlock
 						&& error != SocketError.NoBufferSpaceAvailable)
 					{
-						if (state < 4)
+						if (error != SocketError.Disconnecting
+							&& error != SocketError.ConnectionReset)
 						{
-							state = 4;
-							Error(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
-							state = 5;
-							close = new CloseWS("Server", WSClose.ServerError);
+							if (state < 4)
+							{
+								state = 4;
+								Error(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
+								state = 5;
+								close = new CloseWS("Server", WSClose.ServerError);
+						}
+						}
+						else
+						{
+							if (state < 4)
+							{
+								state = 4;
+								close = new CloseWS(Session.Address, WSClose.Abnormal);
+							}
 						}
 					}
 				}
