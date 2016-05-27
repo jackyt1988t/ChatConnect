@@ -28,7 +28,7 @@ namespace ChatConnect
 					}
 					else
 					{
-						Console.WriteLine(data.ToString());
+						//Console.WriteLine(data.ToString());
 						// Отправляем текстовый фрейм
 						WebSocket.Message(data.ToString());
 					}
