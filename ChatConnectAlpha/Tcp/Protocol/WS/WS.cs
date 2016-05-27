@@ -304,7 +304,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 						if (state < 4)
 						{
 							state = 4;
-							close = new CloseWS("Server", WSClose.ServerError);
+							close = new CloseWS("WebSocket Server", WSClose.ServerError);
 							Error(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
 							state = 5;
 						}
@@ -526,7 +526,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 						if (state < 4)
 						{
 							state = 4;
-							close = new CloseWS("Server", WSClose.ServerError);
+							close = new CloseWS("WebSocket Server", WSClose.ServerError);
 							Error(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
 							state = 5;
 						}
@@ -576,7 +576,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 							if (state < 4)
 							{
 								state = 4;
-								close = new CloseWS("Server", WSClose.ServerError);
+								close = new CloseWS("WebSocket Server", WSClose.ServerError);
 								Error(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
 								state = 5;
 							}
