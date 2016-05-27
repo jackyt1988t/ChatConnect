@@ -271,16 +271,17 @@ namespace ChatConnect.Tcp.Protocol.WS
 			{
 				if (Writer.Empty)
 					start = Tcp.Send(buffer, start, write, SocketFlags.None, out error);
-			}
-			int length = write - start;
-			if (length > 0)
-			{
-				if (Writer.Clear < length)
-					error = SocketError.NoData;
-				else
+			
+				int length = write - start;
+				if (length > 0)
 				{
-					Writer.Write(buffer, start, length);
+					if (Writer.Clear < length)
+						error = SocketError.NoData;
+					else
+					{
+						Writer.Write(buffer, start, length);
 							   Writer.SetLength(length);
+					}
 				}
 			}
 			if (error != SocketError.Success)
