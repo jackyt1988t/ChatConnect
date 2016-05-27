@@ -298,6 +298,8 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// <returns></returns>
 		public bool Close(WSClose numcode)
 		{
+			if (IsClose)
+				return false;
 			string buffer = CloseWS.Message[numcode];
 			byte[] wsbody = Encoding.UTF8.GetBytes(buffer);
 			byte[] wsdata = new byte [2  +  wsbody.Length];
@@ -407,8 +409,8 @@ namespace ChatConnect.Tcp.Protocol.WS
 			}
 			catch (WSException exc)
 			{
-				state = 4;
-				Error(exc);
+				if (!IsError)
+					Error(exc);
 				state = 5;
 				close = new CloseWS("Server", exc.Closes);
 			}
@@ -461,9 +463,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 					}
 					else
 					{
-						if (!IsError())
-						
-						  	throw new WSException("Ошибка записи данных.", error, WSClose.ServerError);
+						throw new WSException("Ошибка записи данных.", error, WSClose.ServerError);
 					}
 				}
 			}
@@ -503,12 +503,17 @@ namespace ChatConnect.Tcp.Protocol.WS
 						}
 						else
 						{
-							if (!IsError())
-							  	throw new WSException("Ошибка записи данных.", error, WSClose.ServerError);
+							throw new WSException("Ошибка записи данных.", error, WSClose.ServerError);
 						}
 					}
 				}
 			}
+		}
+		protected bool IsSend()
+		{
+			if (state < 4)
+				return true;
+			return false;
 		}
 		protected bool isError()
 		{
@@ -522,7 +527,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		}
 		protected bool IsClose()
 		{
-			ock(Sync)
+			lock(Sync)
 			{
 				if (state > 3)
 					return true;
