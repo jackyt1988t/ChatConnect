@@ -456,12 +456,14 @@ namespace ChatConnect.Tcp.Protocol.WS
 				{
 					if (error == SocketError.Disconnecting && error == SocketError.ConnectionReset)
 					{
-						state = 4;
-						close = new CloseWS(Session.Address, WSClose.Abnormal);
+						if (!IsClose())
+							close = new CloseWS(Session.Address, WSClose.Abnormal);
 					}
 					else
 					{
-						  throw new WSException("Ошибка записи данных.", error, WSClose.ServerError);
+						if (!IsError())
+						
+						  	throw new WSException("Ошибка записи данных.", error, WSClose.ServerError);
 					}
 				}
 			}
@@ -496,15 +498,36 @@ namespace ChatConnect.Tcp.Protocol.WS
 					{
 						if (error == SocketError.Disconnecting && error == SocketError.ConnectionReset)
 						{
-							state = 4;
-							close = new CloseWS(Session.Address, WSClose.Abnormal);
+							if (!IsClose())
+								close = new CloseWS(Session.Address, WSClose.Abnormal);
 						}
 						else
 						{
-							  throw new WSException("Ошибка записи данных.", error, WSClose.ServerError);
+							if (!IsError())
+							  	throw new WSException("Ошибка записи данных.", error, WSClose.ServerError);
 						}
 					}
 				}
+			}
+		}
+		protected bool isError()
+		{
+			lock(Sync)
+			{
+				if (state > 3)
+					return true;
+				state = 4;
+				return false;
+			}
+		}
+		protected bool IsClose()
+		{
+			ock(Sync)
+			{
+				if (state > 3)
+					return true;
+				state = 5;
+				return false;
 			}
 		}
 		protected void OnEventWork()
