@@ -256,63 +256,6 @@ namespace ChatConnect.Tcp.Protocol.WS
 		static private event PHandlerEvent __EventConnect;
 
 		/// <summary>
-		/// Отправляет данные текущему подключению
-		/// </summary>
-		/// <param name="message">массив байт для отправки</param>
-		/// <returns>true в случае ечсли данные можно отправить</returns>
-		public bool Send(byte[] buffer)
-		{
-			
-			if (state >= 4)
-				return false;
-			
-			int start = 0;
-			int write = buffer.Length;
-			SocketError error = SocketError.Success;
-			lock (Writer)
-			{
-				if (Writer.Empty)	
-					start = Tcp.Send(buffer, start, write, SocketFlags.None, out error);
-			}
-			int length = write - start;
-			if (length > 0)
-			{
-				if (Writer.Clear < length)
-					error = SocketError.NoData;
-				else
-				{
-					Writer.Write(buffer, start, length);
-					Writer.SetLength(length);
-				}
-			}
-			if (error != SocketError.Success)
-			{
-				if (error != SocketError.WouldBlock
-					&& error != SocketError.NoBufferSpaceAvailable)
-				{
-					if (error == SocketError.Disconnecting && error == SocketError.ConnectionReset)
-					{
-						if (state < 4)
-						{
-							state = 4;
-							close = new CloseWS(Session.Address, WSClose.Abnormal);
-						}
-					}
-					else
-					{
-						if (state < 4)
-						{
-							state = 4;
-							close = new CloseWS("WebSocket Server", WSClose.ServerError);
-							Error(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
-							state = 5;
-						}
-					}
-				}
-			}
-			return true;
-			}
-		/// <summary>
 		/// Отправляет фрейм пинг текущему подключению
 		/// </summary>
 		/// <param name="message">строка данных для отправки</param>
