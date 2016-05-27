@@ -290,15 +290,13 @@ namespace ChatConnect.Tcp.Protocol.WS
 				if (error != SocketError.WouldBlock
 					&& error != SocketError.NoBufferSpaceAvailable)
 				{
-					if (error != SocketError.Disconnecting
-						&& error != SocketError.ConnectionReset)
+					if (error == SocketError.Disconnecting
+						&& error == SocketError.ConnectionReset)
 					{
 						if (state < 4)
 						{
 							state = 4;
-							Error(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
-							state = 5;
-							close = new CloseWS("Server", WSClose.ServerError);
+							close = new CloseWS(Session.Address, WSClose.Abnormal);
 						}
 					}
 					else
@@ -306,7 +304,9 @@ namespace ChatConnect.Tcp.Protocol.WS
 						if (state < 4)
 						{
 							state = 4;
-							close = new CloseWS(Session.Address, WSClose.Abnormal);
+							close = new CloseWS("Server", WSClose.ServerError);
+							Error(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
+							state = 5;
 						}
 					}
 				}
@@ -512,15 +512,13 @@ namespace ChatConnect.Tcp.Protocol.WS
 				if (error != SocketError.WouldBlock
 					&& error != SocketError.NoBufferSpaceAvailable)
 				{
-					if (error != SocketError.Disconnecting
-						&& error != SocketError.ConnectionReset)
+					if (error == SocketError.Disconnecting
+						&& error == SocketError.ConnectionReset)
 					{
 						if (state < 4)
 						{
 							state = 4;
-							Error(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
-							state = 5;
-							close = new CloseWS("Server", WSClose.ServerError);
+							close = new CloseWS(Session.Address, WSClose.Abnormal);
 						}
 					}
 					else
@@ -528,7 +526,9 @@ namespace ChatConnect.Tcp.Protocol.WS
 						if (state < 4)
 						{
 							state = 4;
-							close = new CloseWS(Session.Address, WSClose.Abnormal);
+							close = new CloseWS("Server", WSClose.ServerError);
+							Error(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
+							state = 5;
 						}
 					}
 				}
@@ -562,23 +562,23 @@ namespace ChatConnect.Tcp.Protocol.WS
 					if (error != SocketError.WouldBlock
 						&& error != SocketError.NoBufferSpaceAvailable)
 					{
-						if (error != SocketError.Disconnecting
-							&& error != SocketError.ConnectionReset)
+						if (error == SocketError.Disconnecting
+							&& error == SocketError.ConnectionReset)
 						{
 							if (state < 4)
 							{
 								state = 4;
-								Error(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
-								state = 5;
-								close = new CloseWS("Server", WSClose.ServerError);
-						}
+								close = new CloseWS(Session.Address, WSClose.Abnormal);
+							}
 						}
 						else
 						{
 							if (state < 4)
 							{
 								state = 4;
-								close = new CloseWS(Session.Address, WSClose.Abnormal);
+								close = new CloseWS("Server", WSClose.ServerError);
+								Error(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
+								state = 5;
 							}
 						}
 					}
