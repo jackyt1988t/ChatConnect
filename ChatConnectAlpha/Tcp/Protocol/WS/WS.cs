@@ -348,7 +348,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 			if (SetClose())
 				return false;
 
-			close  =  new CloseWS("Server", numcode);
+			close = new CloseWS("Server", numcode);
 			string buffer = CloseWS.Message[numcode];
 			byte[] wsbody = Encoding.UTF8.GetBytes(buffer);
 			byte[] wsdata = new byte [2  +  wsbody.Length];
@@ -373,9 +373,9 @@ namespace ChatConnect.Tcp.Protocol.WS
 			string buffer = CloseWS.Message[numcode];
 			byte[] wsbody = Encoding.UTF8.GetBytes(buffer);
 			byte[] wsdata = new byte[2 + wsbody.Length];
-			wsdata[0] = (byte)((int)numcode >> 08);
-			wsdata[1] = (byte)((int)numcode >> 16);
-			wsbody.CopyTo(wsdata, 2);
+				   wsdata[0] = (byte)((int)numcode >> 08);
+				   wsdata[1] = (byte)((int)numcode >> 16);
+				   wsbody.CopyTo(wsdata, 2);
 
 			return Message(wsbody, WSOpcod.Close, WSFin.Last);
 		}
