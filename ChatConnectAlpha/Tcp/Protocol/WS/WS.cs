@@ -513,21 +513,12 @@ namespace ChatConnect.Tcp.Protocol.WS
 				{
 					if (error == SocketError.Disconnecting && error == SocketError.ConnectionReset)
 					{
-						if (state < 4)
-						{
-							state = 4;
-							close = new CloseWS(Session.Address, WSClose.Abnormal);
-						}
+						state = 4;
+						close = new CloseWS(Session.Address, WSClose.Abnormal);
 					}
 					else
 					{
-						if (state < 4)
-						{
-							state = 4;
-							close = new CloseWS("WebSocket Server", WSClose.ServerError);
-							Error(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
-							state = 5;
-						}
+						throw new WSException("Ошибка записи данных.", error, WSClose.ServerError);
 					}
 				}
 			}
@@ -562,20 +553,14 @@ namespace ChatConnect.Tcp.Protocol.WS
 					{
 						if (error == SocketError.Disconnecting && error == SocketError.ConnectionReset)
 						{
-							if (state < 4)
-							{
-								state = 4;
-								close = new CloseWS(Session.Address, WSClose.Abnormal);
-							}
+							state = 4;
+							close = new CloseWS(Session.Address, WSClose.Abnormal);
 						}
 						else
 						{
 							if (state < 4)
 							{
-								state = 4;
-								close = new CloseWS("WebSocket Server", WSClose.ServerError);
-								Error(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
-								state = 5;
+								throw new WSException("Ошибка записи данных.", error, WSClose.ServerError);
 							}
 						}
 					}
