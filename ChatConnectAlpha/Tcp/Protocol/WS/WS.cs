@@ -409,7 +409,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 			}
 			catch (WSException exc)
 			{
-				if (!IsError)
+				if (!IsError())
 					Error(exc);
 				state = 5;
 				close = new CloseWS("Server", exc.Closes);
@@ -459,7 +459,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 					if (error == SocketError.Disconnecting && error == SocketError.ConnectionReset)
 					{
 						if (!IsClose())
-							close = new CloseWS(Session.Address, WSClose.Abnormal);
+							close = new CloseWS(Session.Address.ToString(), WSClose.Abnormal);
 					}
 					else
 					{
@@ -499,7 +499,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 						if (error == SocketError.Disconnecting && error == SocketError.ConnectionReset)
 						{
 							if (!IsClose())
-								close = new CloseWS(Session.Address, WSClose.Abnormal);
+								close = new CloseWS(Session.Address.ToString(), WSClose.Abnormal);
 						}
 						else
 						{

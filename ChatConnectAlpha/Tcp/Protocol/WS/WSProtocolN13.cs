@@ -90,8 +90,8 @@ namespace ChatConnect.Tcp.Protocol.WS
 			
 			lock (Writer)
 			{
-				writer.Frame.BitFin = Fin;
-				writer.Frame.BitPcod = Opcod;
+				writer.Frame.BitFin   = Fin;
+				writer.Frame.BitPcod  = Opcod;
 				writer.Frame.PartBody = recive;
 				writer.Frame.LengBody = length;
 				writer.Frame.DataBody = message;
@@ -101,16 +101,18 @@ namespace ChatConnect.Tcp.Protocol.WS
 				if (Writer.Clear > ( writer.Frame.DataHead.Length
 								   + writer.Frame.DataBody.Length ))
 				{
-					Writer.Write(writer.Frame.DataHead, 0, (int)writer.Frame.LengHead);
-					Writer.Write(writer.Frame.DataBody, (int)writer.Frame.PartBody, 
-									       (int)writer.Frame.LengBody);
+					if (IsSend())
+					{
+						Writer.Write(writer.Frame.DataHead, 0, (int)writer.Frame.LengHead);
+						Writer.Write(writer.Frame.DataBody, (int)writer.Frame.PartBody,
+															   (int)writer.Frame.LengBody);
+						/*      Очитстить.      */
+						writer.Frame.ClearFrame();
+						return true;
+					}
 					
-					/*      Очитстить.      */
-					writer.Frame.ClearFrame();
-					return true;
 				}
-			}
-			
+			}			
 			return false;
 		}
 		protected override void Work()
