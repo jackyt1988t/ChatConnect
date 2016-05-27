@@ -290,8 +290,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 				if (error != SocketError.WouldBlock
 					&& error != SocketError.NoBufferSpaceAvailable)
 				{
-					if (error == SocketError.Disconnecting
-						&& error == SocketError.ConnectionReset)
+					if (error == SocketError.Disconnecting && error == SocketError.ConnectionReset)
 					{
 						if (state < 4)
 						{
@@ -512,8 +511,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 				if (error != SocketError.WouldBlock
 					&& error != SocketError.NoBufferSpaceAvailable)
 				{
-					if (error == SocketError.Disconnecting
-						&& error == SocketError.ConnectionReset)
+					if (error == SocketError.Disconnecting && error == SocketError.ConnectionReset)
 					{
 						if (state < 4)
 						{
@@ -562,8 +560,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 					if (error != SocketError.WouldBlock
 						&& error != SocketError.NoBufferSpaceAvailable)
 					{
-						if (error == SocketError.Disconnecting
-							&& error == SocketError.ConnectionReset)
+						if (error == SocketError.Disconnecting && error == SocketError.ConnectionReset)
 						{
 							if (state < 4)
 							{
