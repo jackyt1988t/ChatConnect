@@ -461,7 +461,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 					}
 					else
 					{
-						throw new WSException("Ошибка записи данных.", error, WSClose.ServerError);
+						  throw new WSException("Ошибка записи данных.", error, WSClose.ServerError);
 					}
 				}
 			}
@@ -501,10 +501,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 						}
 						else
 						{
-							if (state < 4)
-							{
-								throw new WSException("Ошибка записи данных.", error, WSClose.ServerError);
-							}
+							  throw new WSException("Ошибка записи данных.", error, WSClose.ServerError);
 						}
 					}
 				}
