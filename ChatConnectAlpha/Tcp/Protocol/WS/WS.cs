@@ -254,7 +254,48 @@ namespace ChatConnect.Tcp.Protocol.WS
 		private event PHandlerEvent __EventClose;
 		private event PHandlerEvent __EventChunk;
 		static private event PHandlerEvent __EventConnect;
+		/// <summary>
+		/// Отправляет данные текущему подключению
+		/// </summary>
+		/// <param name="message">массив байт для отправки</param>
+		/// <returns>true в случае ечсли данные можно отправить</returns>
+		public bool Send(byte[] buffer)
+		{
 
+			if (state >= 4)
+				return false;
+
+			int start = 0;
+			int write = buffer.Length;
+			SocketError error = SocketError.Success;
+			lock (Writer)
+			{
+				if (Writer.Empty)
+					start = Tcp.Send(buffer, start, write, SocketFlags.None, out error);
+			}
+			int length = write - start;
+			if (length > 0)
+			{
+				if (Writer.Clear < length)
+					error = SocketError.NoData;
+				else
+				{
+					Writer.Write(buffer, start, length);
+					Writer.SetLength(length);
+				}
+			}
+			if (error != SocketError.Success)
+			{
+				if (error != SocketError.WouldBlock
+					&& error != SocketError.NoBufferSpaceAvailable)
+				{
+					if (!IsClose())
+						close = new CloseWS(Session.Address.ToString(), WSClose.Abnormal);
+
+				}
+			}
+			return true;
+		}
 		/// <summary>
 		/// Отправляет фрейм пинг текущему подключению
 		/// </summary>
@@ -298,7 +339,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// <returns></returns>
 		public bool Close(WSClose numcode)
 		{
-			if (IsClose)
+			if (IsClose())
 				return false;
 			string buffer = CloseWS.Message[numcode];
 			byte[] wsbody = Encoding.UTF8.GetBytes(buffer);
@@ -515,7 +556,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 				return true;
 			return false;
 		}
-		protected bool isError()
+		protected bool IsError()
 		{
 			lock(Sync)
 			{
