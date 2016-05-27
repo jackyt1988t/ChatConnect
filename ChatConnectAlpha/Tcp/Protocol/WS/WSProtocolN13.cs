@@ -83,6 +83,9 @@ namespace ChatConnect.Tcp.Protocol.WS
 			
 			lock (Writer)
 			{
+				/*      Очитстить.      */
+				writer.Frame.ClearFrame();
+
 				writer.Frame.BitFin   = Fin;
 				writer.Frame.BitPcod  = Opcod;
 				writer.Frame.PartBody = recive;
@@ -90,24 +93,12 @@ namespace ChatConnect.Tcp.Protocol.WS
 				writer.Frame.DataBody = message;
 				writer.Frame.InitializationHeader();
 				if (Debug)
-					WSDebug.DebugN13(writer.Frame);
-				if (Writer.Clear > ( writer.Frame.DataHead.Length
-								   + writer.Frame.DataBody.Length ))
-				{
-					if (IsSend())
-					{
-						Writer.Write(writer.Frame.DataHead, 0, (int)writer.Frame.LengHead);
-						Writer.Write(writer.Frame.DataBody, (int)writer.Frame.PartBody,
-															   (int)writer.Frame.LengBody);
-						/*      Очитстить.      */
-						writer.Frame.ClearFrame();
-						return true;
-					}
-				}
+					WSDebug.DebugN13( writer.Frame );
+				if (!Send(writer.Frame.DataHead, 0, (int)writer.Frame.LengHead))
+					return false;
 				else
-					Error(new WSException("Server", SocketError.NoBufferSpaceAvailable, WSClose.ServerError));
-			}			
-			return false;
+					return Send(writer.Frame.DataBody, (int)writer.Frame.PartBody, (int)writer.Frame.LengBody);
+			}
 		}
 		protected override void Work()
 		{

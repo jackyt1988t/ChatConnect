@@ -345,7 +345,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// <returns></returns>
 		public bool Close(WSClose numcode)
 		{
-			if (!SetClose())
+			if (SetClose())
 				return false;
 
 			close  =  new CloseWS("Server", numcode);
@@ -365,7 +365,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// <returns></returns>
 		public bool сlose(WSClose numcode)
 		{
-			if (!SetClose())
+			if (SetClose())
 				return false;
 			
 			close = new CloseWS(
@@ -588,12 +588,6 @@ namespace ChatConnect.Tcp.Protocol.WS
 			}
 		}
 
-		protected bool IsSend()
-		{
-			if (state < 4)
-				return true;
-			return false;
-		}
 		protected bool SetClose()
 		{
 			lock(Sync)
