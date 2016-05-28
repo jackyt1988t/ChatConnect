@@ -4,6 +4,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 {
     class WStreamN13 : WStream
     {
+		byte _ngHead;
 		public WSFrameN13 Frame;
 
         public WStreamN13(int length)
@@ -14,7 +15,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 			_buffer = new byte[ length ];
         }
 
-		unsafe public override int ReadBody()
+ unsafe public override int ReadBody()
         {
             int read = 0;
 
@@ -27,9 +28,6 @@ namespace ChatConnect.Tcp.Protocol.WS
 
 					while (!Empty)
 					{
-						if (Frame.MaskPos > 3)
-							Frame.MaskPos = 0;
-
 						*pt = *ps;
 						ps++;
 						pt++;						
@@ -95,6 +93,8 @@ namespace ChatConnect.Tcp.Protocol.WS
                         Frame.PartBody = 0;
                         /*  Обработчик.  */
                         Frame.Handler += 1;
+
+						_ngHead = Buffer[PointR];
 						break;
                     case 1:
 						Frame.BitMask = (Buffer[PointR] & 0x80) >> 7;
@@ -117,9 +117,12 @@ namespace ChatConnect.Tcp.Protocol.WS
                             Frame.Handler += 9;
                             Frame.LengBody = Frame.BitLeng;
                         }
-						Frame.DataHead = new byte[Frame.LengHead];
+						
+						Frame.DataHead = 
+							new byte[Frame.LengHead];
+						Frame.DataHead[0] = _ngHead;
 						Frame.DataHead[Frame.PartHead] = Buffer[PointR];
-						Frame.DataHead[Frame.PartHead - 1] = Buffer[PointR - 1];
+						
 						break;
                     case 2:
                         /*  Обработчик.  */

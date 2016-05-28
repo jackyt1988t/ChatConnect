@@ -120,7 +120,7 @@
     </Compile>
     <Compile Include="Tcp\Protocol\WS\WSException.cs" />
     <Compile Include="Tcp\Protocol\WS\WSFrame\WSFin.cs" />
-    <Compile Include="Tcp\Protocol\WS\WSFrame\WSFrameRFC75.cs">
+    <Compile Include="Tcp\Protocol\WS\WSFrame\WSFrameSample.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
     <Compile Include="Tcp\Protocol\WS\WSFrame\WSFrameN13.cs">
@@ -132,7 +132,7 @@
     <Compile Include="Tcp\Protocol\WS\WSProtocolN13.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
-    <Compile Include="Tcp\Protocol\WS\WStream\WStreamRFC75.cs">
+    <Compile Include="Tcp\Protocol\WS\WStream\WStreamSample.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
     <Compile Include="Tcp\Protocol\WS\WStream\WStreamN13.cs">

@@ -5,6 +5,10 @@ namespace ChatConnect.Tcp.Protocol.WS
 {
     class WSData
     {
+		public WSFin Fin
+		{
+			get;
+		}
 		public string _Text
 		{
 			get;
@@ -27,9 +31,10 @@ namespace ChatConnect.Tcp.Protocol.WS
         {
 			_Data = data;            
 		}
-		public WSData(byte[] data, WSOpcod opcod) :
+		public WSData(byte[] data, WSOpcod opcod, WSFin fin) :
 			this(data)
 		{
+			Fin = fin;
 			Opcod = opcod;
 			Create = DateTime.Now;
 			if (opcod == WSOpcod.Text)

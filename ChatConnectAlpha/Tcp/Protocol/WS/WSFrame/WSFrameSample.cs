@@ -23,15 +23,15 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// <summary>
 		/// Binary опкод
 		/// </summary>
-		public const int BINNARY = 0x04;
+		public const int BINNARY = 0x05;
 		/// <summary>
 		/// Continue опкод
 		/// </summary>
-		public const int CONTINUE = 0x05;
+		public const int CONTINUE = 0x00;
 		/// <summary>
 		/// бит FIN 
 		/// </summary>
-		public int BitFin
+		public int BitMore
 		{
 			get;
 			set;
@@ -84,11 +84,6 @@ namespace ChatConnect.Tcp.Protocol.WS
 			get;
 			set;
 		}
-		public int BitExtn
-		{
-			get;
-			set;
-		}
 		/// <summary>
 		/// 4 бита длинны тела, если 126 и 137 дополнительная длинна
 		/// </summary>
@@ -130,14 +125,6 @@ namespace ChatConnect.Tcp.Protocol.WS
 			set;
 		}
 		/// <summary>
-		/// 
-		/// </summary>
-		public long PartExtn
-		{
-			get;
-			set;
-		}
-		/// <summary>
 		/// Текущее количество полученных байт заголвока
 		/// </summary>
 		public long PartHead
@@ -149,14 +136,6 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// Длинна заголвоков
 		/// </summary>
 		public long LengHead
-		{
-			get;
-			set;
-		}
-		/// <summary>
-		/// 
-		/// </summary>
-		public long LengExtn
 		{
 			get;
 			set;
@@ -186,14 +165,6 @@ namespace ChatConnect.Tcp.Protocol.WS
 			set;
 		}
 		/// <summary>
-		/// 
-		/// </summary>
-		public byte[] DataExtn
-		{
-			get;
-			set;
-		}
-		/// <summary>
 		/// Буффер тела
 		/// </summary>
 		public byte[] DataBody
@@ -204,15 +175,14 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// <summary>
 		/// Сбрасывает все перменный в стандартные значения
 		/// </summary>
-		public void Clear()
+		public void ClearFrame()
 		{
-			BitFin = 0;
+			BitMore = 0;
 			Handler = 0;			
 			BitRsv1 = 0;
 			BitRsv2 = 0;
 			BitRsv3 = 0;
 			BitPcod = 0;
-			BitExtn = 0;
 			BitLeng = 0;
 			PartBody = 0;
 			PartHead = 0;
@@ -223,15 +193,13 @@ namespace ChatConnect.Tcp.Protocol.WS
 			GetsHead = false;
 			GetsBody = false;
 		}
-		public void InitializationHeaders()
+		public void InitializationHeader()
 		{
 			if (SetsHead)
 				return;
 
 			LengHead = 2;
 			SetsHead = true;
-			LengData = LengExtn 
-				     + LengBody;
 			if ((LengData) <= 125)
 			{
 				BitLeng = 
@@ -251,7 +219,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 			int length = 0;
 			DataHead = new byte[LengHead];
 
-			DataHead[length] = (byte)(BitFin << 7);
+			DataHead[length] = (byte)(BitMore << 7);
 			DataHead[length] = (byte)(DataHead[length] |
 										(BitRsv1 << 6));
 			DataHead[length] = (byte)(DataHead[length] |

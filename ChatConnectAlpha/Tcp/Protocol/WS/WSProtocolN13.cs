@@ -142,19 +142,19 @@ namespace ChatConnect.Tcp.Protocol.WS
 						if (reader.Frame.BitFin == 0)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
 
-						OnEventData(new WSData(reader.Frame.DataBody, WSOpcod.Text));
+						OnEventData(new WSData(reader.Frame.DataBody, WSOpcod.Text, WSFin.Last));
 						break;
 					case WSFrameN13.PING:
 						if (reader.Frame.BitFin == 0)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
 
-						OnEventPing(new WSData(reader.Frame.DataBody, WSOpcod.Ping));
+						OnEventPing(new WSData(reader.Frame.DataBody, WSOpcod.Ping, WSFin.Last));
 						break;
 					case WSFrameN13.PONG:
 						if (reader.Frame.BitFin == 0)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
 
-						OnEventPong(new WSData(reader.Frame.DataBody, WSOpcod.Pong));
+						OnEventPong(new WSData(reader.Frame.DataBody, WSOpcod.Pong, WSFin.Last));
 						break;
 					case WSFrameN13.CLOSE:
 						if (reader.Frame.BitFin == 0)
@@ -165,7 +165,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 							int number;
 							number = reader.Frame.DataBody[0] << 8;
 							number = reader.Frame.DataBody[1] | number;
-
+							Console.WriteLine(Encoding.UTF8.GetString(reader.Frame.DataBody));
 							if ( number  >=  1000  &&  number  <= 1012 )
 								сlose(WSClose.Normal);
 							else
@@ -177,12 +177,12 @@ namespace ChatConnect.Tcp.Protocol.WS
 					case WSFrameN13.BINNARY:
 						if (reader.Frame.BitFin == 0)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
-						OnEventData(new WSData(reader.Frame.DataBody, WSOpcod.Binnary));
+						OnEventData(new WSData(reader.Frame.DataBody, WSOpcod.Binnary, WSFin.Last));
 						break;
 					case WSFrameN13.CONTINUE:
 						if (reader.Frame.BitFin == 0)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
-						OnEventChunk(new WSData(reader.Frame.DataBody, WSOpcod.Continue));
+						OnEventChunk(new WSData(reader.Frame.DataBody, WSOpcod.Continue, WSFin.Next));
 						break;
 					default:
 						throw new WSException("Опкод: " + reader.Frame.BitPcod, WsError.PcodNotSuported, WSClose.UnsupportedData);
