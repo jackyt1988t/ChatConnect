@@ -5,14 +5,14 @@ namespace ChatConnect.Tcp.Protocol.WS
 {
     class WSData
     {
-		public WSFin Fin
-		{
-			get;
-		}
-		public string _Text
-		{
-			get;
-		}
+	public WSFin Fin
+	{
+		get;
+	}
+	public string _Text
+	{
+		get;
+	}
         public byte[] _Data
         {
 			get;
