@@ -29,32 +29,32 @@ namespace ChatConnect.Tcp.Protocol.WS
         }
 		public WSData(byte[] data)
         {
-			_Data = data;            
-		}
-		public WSData(byte[] data, WSOpcod opcod, WSFin fin) :
-			this(data)
-		{
-			Fin = fin;
-			Opcod = opcod;
-			Create = DateTime.Now;
-			if (opcod == WSOpcod.Text)
-				_Text = Encoding.UTF8.GetString(data);		
-		}
-		/// <summary>
-		/// Возвращает сырые данные
-		/// </summary>
-		/// <returns></returns>
-		public byte[] ToByte()
-		{
-			return _Data;
-		}
-		/// <summary>
-		/// Возвращает текстовые данные если Opcod = Text
-		/// </summary>
-		/// <returns></returns>
-		public override string ToString()
-		{
-			return _Text;
-		}
+		_Data = data;            
 	}
+	public WSData(byte[] data, WSOpcod opcod, WSFin fin) :
+		this(data)
+	{
+		Fin = fin;
+		Opcod = opcod;
+		Create = DateTime.Now;
+		if (opcod == WSOpcod.Text)
+			_Text = Encoding.UTF8.GetString(data);		
+	}
+	/// <summary>
+	/// Возвращает сырые данные
+	/// </summary>
+	/// <returns></returns>
+	public byte[] ToByte()
+	{
+		return _Data;
+	}
+	/// <summary>
+	/// Возвращает текстовые данные если Opcod = Text
+	/// </summary>
+	/// <returns></returns>
+	public override string ToString()
+	{
+		return _Text;
+	}
+    }
 }
