@@ -127,6 +127,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
     <Compile Include="Tcp\Protocol\WS\WSFrame\WSFrame.cs" />
+    <Compile Include="Tcp\Protocol\WS\WSPingControl.cs" />
     <Compile Include="Tcp\Protocol\WS\WSProtocolSample.cs" />
     <Compile Include="Tcp\Protocol\WStateEnum.cs" />
     <Compile Include="Tcp\Protocol\WS\WSProtocolN13.cs">

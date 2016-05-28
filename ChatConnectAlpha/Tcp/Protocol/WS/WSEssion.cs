@@ -29,7 +29,10 @@ namespace ChatConnect.Tcp.Protocol.WS
 		{
 			get;
 		}
-
+		/// <summary>
+		/// Создает новую сессию
+		/// </summary>
+		/// <param name="address">ip адресс уд. стороны</param>
 		public WSEssion(IPAddress address)
 		{
 			Start =

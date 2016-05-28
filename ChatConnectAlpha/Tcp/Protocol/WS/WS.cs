@@ -111,6 +111,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 			get;
 			protected set;
 		}
+		public WSPingControl PingControl;
 		/// <summary>
 		/// Событие которое наступает при проходе по циклу
 		/// </summary>
@@ -255,6 +256,17 @@ namespace ChatConnect.Tcp.Protocol.WS
 		private event PHandlerEvent __EventClose;
 		private event PHandlerEvent __EventChunk;
 		static private event PHandlerEvent __EventConnect;
+
+		public WS()
+		{
+			Sync = new object();
+			State =
+				States.Connection;
+			Response = new Header();
+			TaskResult = new TaskResult();
+			PingControl = new WSPingControl();
+		}
+
 		/// <summary>
 		/// Отправляет данные текущему подключению
 		/// </summary>
@@ -289,7 +301,9 @@ namespace ChatConnect.Tcp.Protocol.WS
 				if (error != SocketError.WouldBlock
 					&& error != SocketError.NoBufferSpaceAvailable)
 				{
-					if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset)
+					/*        Текущее подключение было отключено сброшено или разорвано         */
+					if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
+														   || error == SocketError.ConnectionAborted)
 						Close(WSClose.Abnormal);
 					else
 					{
@@ -458,7 +472,11 @@ namespace ChatConnect.Tcp.Protocol.WS
 					if (Interlocked.CompareExchange(ref state, 0, 2) == 2)
 						return TaskResult;
 				}
-
+				/*==================================================================
+					Если соединение было закрыто правильно пытается отправить
+					оставшиеся данные в течении одной секунды после чего 
+					закрывает соединение.
+				==================================================================*/
 				if (state == 5)
 				{
 					if (close.AwaitTime.Seconds < 1
@@ -531,7 +549,9 @@ namespace ChatConnect.Tcp.Protocol.WS
 				if (error != SocketError.WouldBlock
 					&& error != SocketError.NoBufferSpaceAvailable)
 				{
-					if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset)
+					/*        Текущее подключение было отключено сброшено или разорвано         */
+					if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
+														   || error == SocketError.ConnectionAborted)
 						Close(WSClose.Abnormal);
 					else
 					{
@@ -572,7 +592,9 @@ namespace ChatConnect.Tcp.Protocol.WS
 					if (error != SocketError.WouldBlock
 						&& error != SocketError.NoBufferSpaceAvailable)
 					{
-						if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset)
+						/*        Текущее подключение было отключено сброшено или разорвано         */
+						if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
+															   || error == SocketError.ConnectionAborted)
 							Close(WSClose.Abnormal);
 						else
 						{

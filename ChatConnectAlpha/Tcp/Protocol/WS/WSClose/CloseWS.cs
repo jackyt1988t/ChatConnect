@@ -5,27 +5,41 @@ namespace ChatConnect.Tcp.Protocol.WS
 {
 	class CloseWS
 	{
+		/// <summary>
+		/// Инициатор закрытия
+		/// </summary>
 		public string Host
 		{
 			get;
-			private set;
+			set;
 		}
+		/// <summary>
+		/// Информация о закрытии
+		/// </summary>
 		public string CloseMsg
 		{
 			get;
-			private set;
+			set;
 		}
+		/// <summary>
+		/// Код закрытия WebSocket
+		/// </summary>
 		public WSClose CloseCode
 		{
 			get;
-			private set;
+			set;
 		}
-		 
+		/// <summary>
+		/// Вермя закрытия соединения
+		/// </summary>	 
 		public DateTime CloseTime
 		{
 			get;
-			private set;
+			set;
 		}
+		/// <summary>
+		/// Вермя прошедшее после закрытия
+		/// </summary>
 		public TimeSpan AwaitTime
 		{
 			get
@@ -33,7 +47,9 @@ namespace ChatConnect.Tcp.Protocol.WS
 				return DateTime.Now - CloseTime;
 			}
 		}
-		
+		/// <summary>
+		/// Содержит описание завершения подключения
+		/// </summary>
 		public static Dictionary<WSClose, string> Message;
 		
 		public CloseWS(string host, WSClose code)
@@ -60,6 +76,10 @@ namespace ChatConnect.Tcp.Protocol.WS
 			Message.Add(WSClose.ServerError, "Произошла ошибка сервера");
 			Message.Add(WSClose.TLSHandshake, "не удалось совершить рукопожатие");
 		}
+		/// <summary>
+		/// Возвращает информацию о том каким образом было закрыто соединение
+		/// </summary>
+		/// <returns>строка с информацие о закрытом подключении</returns>
 		public override string ToString()
 		{
 			return "Инициатор "  +  Host + ". "  +  CloseCode.ToString()  +  ": " + CloseMsg;

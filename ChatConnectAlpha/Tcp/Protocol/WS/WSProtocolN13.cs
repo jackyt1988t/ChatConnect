@@ -9,7 +9,8 @@ namespace ChatConnect.Tcp.Protocol.WS
 {
 	class WSProtocolN13 : WS
 	{
-		const string CHECKKEY = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+		private const int PING = 5;
+		private const string CHECKKEY = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"; 
 
 		WStreamN13 reader;
 		public override WStream Reader
@@ -27,26 +28,20 @@ namespace ChatConnect.Tcp.Protocol.WS
 				return writer;
 			}
 		}
-
 		/// <summary>
 		/// Ининцилазириует класс протокола WS без подключения
 		/// </summary>
-		public WSProtocolN13()
+		public WSProtocolN13() :
+			base()
 		{
-			Sync = new object();
-			State = 
-				States.Connection;
-			reader     = new WStreamN13(SizeRead);
-			writer     = new WStreamN13(SizeWrite);
-			Response   = new Header();
-			TaskResult = new TaskResult();
+			reader = new WStreamN13(SizeRead);
+			writer = new WStreamN13(SizeWrite);
 			TaskResult.Protocol = TaskProtocol.WSRFC76;
 		}
 		/// <summary>
 		/// Инициализрует класс протокола WS с указанным обработчиком
 		/// </summary>
 		/// <param name="http">протокол  http</param>
-		/// <param name="connect">обрабтчик собятия подключения</param>
 		public WSProtocolN13(IProtocol http) :
 			this()
 		{
@@ -54,6 +49,15 @@ namespace ChatConnect.Tcp.Protocol.WS
 			Request = http.Request;
 			Session = new WSEssion(((IPEndPoint)Tcp.RemoteEndPoint).Address);
 		}
+		/// <summary>
+		/// Отправляет фрейм по протоколу N13 с указанными входными параметрами
+		/// </summary>
+		/// <param name="message">масси байт</param>
+		/// <param name="recive">начальная позиция</param>
+		/// <param name="length">количество отправляемых байт</param>
+		/// <param name="opcod">опкод который необходимо отправить</param>
+		/// <param name="fin">указывает проводить фрагментацию или нет</param>
+		/// <returns></returns>
 		public override bool Message(byte[] message, int recive, int length, WSOpcod opcod, WSFin fin)
 		{
 			int Fin = 1;
@@ -103,6 +107,16 @@ namespace ChatConnect.Tcp.Protocol.WS
 		protected override void Work()
 		{
 			OnEventWork();
+			
+
+			if (!PingControl.IsPong && PingControl.GetPong > PingControl.SetPing)
+				 throw new WSException("Нет ответа Понг", WsError.PingNotResponse, WSClose.ServerError);
+
+			if (!PingControl.IsPing && PingControl.SetPing.Ticks < DateTime.Now.Ticks)
+			{	
+				 PingControl.SetPing  =  new TimeSpan(DateTime.Now.Ticks + TimeSpan.TicksPerSecond * 5);
+			Ping(PingControl.SetPing.ToString());
+			}			
 		}
 
 		protected override void Data()
@@ -153,6 +167,9 @@ namespace ChatConnect.Tcp.Protocol.WS
 					case WSFrameN13.PONG:
 						if (reader.Frame.BitFin == 0)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
+						if (PingControl.SetPing.ToString() != Encoding.UTF8.GetString(reader.Frame.DataBody))
+							throw new WSException("Неверный бит fin.", WsError.PongBodyIncorrect,WSClose.PolicyViolation);
+							PingControl.GetPong = new TimeSpan( DateTime.Now.Ticks );
 
 						OnEventPong(new WSData(reader.Frame.DataBody, WSOpcod.Pong, WSFin.Last));
 						break;
@@ -160,19 +177,20 @@ namespace ChatConnect.Tcp.Protocol.WS
 						if (reader.Frame.BitFin == 0)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
 
-						if (reader.Frame.DataBody.Length > 1)
+						if (reader.Frame.LengBody > 1)
 						{
 							int number;
 							number = reader.Frame.DataBody[0] << 8;
 							number = reader.Frame.DataBody[1] | number;
-							Console.WriteLine(Encoding.UTF8.GetString(reader.Frame.DataBody));
 							if ( number  >=  1000  &&  number  <= 1012 )
-								сlose(WSClose.Normal);
+								сlose((WSClose)number);
 							else
-								сlose(WSClose.Abnormal);
+								сlose( WSClose.Abnormal );
 						}
 							else
-								сlose(WSClose.Abnormal);
+								сlose( WSClose.Abnormal );
+						if (reader.Frame.LengBody > 2)
+							close.CloseMsg = Encoding.UTF8.GetString(reader.Frame.DataBody, 2, (int) (reader.Frame.LengBody - 2));
 						return;
 					case WSFrameN13.BINNARY:
 						if (reader.Frame.BitFin == 0)

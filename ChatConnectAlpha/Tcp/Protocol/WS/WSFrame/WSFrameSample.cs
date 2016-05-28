@@ -29,7 +29,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// </summary>
 		public const int CONTINUE = 0x00;
 		/// <summary>
-		/// бит FIN 
+		/// бит More 
 		/// </summary>
 		public int BitMore
 		{
