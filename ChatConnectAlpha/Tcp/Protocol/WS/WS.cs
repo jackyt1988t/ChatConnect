@@ -548,6 +548,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 				if (error != SocketError.WouldBlock
 					&& error != SocketError.NoBufferSpaceAvailable)
 				{
+					
 					/*        Текущее подключение было отключено сброшено или разорвано         */
 					if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
 														   || error == SocketError.ConnectionAborted)
@@ -560,6 +561,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 							сlose(WSClose.ServerError);
 						}
 					}
+					Reader.SetLength(Reader.Length);
 				}
 			}
 		}
