@@ -561,7 +561,6 @@ namespace ChatConnect.Tcp.Protocol.WS
 							сlose(WSClose.ServerError);
 						}
 					}
-					Reader.SetLength(Reader.Length);
 				}
 			}
 		}
@@ -605,6 +604,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 								сlose(WSClose.ServerError);
 							}
 						}
+						Writer.Position = Writer.Length;
 					}
 				}
 			}
