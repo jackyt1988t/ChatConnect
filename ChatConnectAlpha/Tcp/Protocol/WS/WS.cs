@@ -472,6 +472,11 @@ namespace ChatConnect.Tcp.Protocol.WS
 					if (Interlocked.CompareExchange(ref state, 0, 2) == 2)
 						return TaskResult;
 				}
+					if (state == 3)
+					{
+						Connection(Request, Response);
+						Interlocked.CompareExchange(ref state, 0, 3);
+					}
 				/*==================================================================
 					Если соединение было закрыто правильно пытается отправить
 					оставшиеся данные в течении одной секунды после чего 
@@ -479,30 +484,24 @@ namespace ChatConnect.Tcp.Protocol.WS
 				==================================================================*/
 				if (state == 5)
 				{
-					if (close.AwaitTime.Seconds < 1
-						&& close.CloseCode != WSClose.Abnormal
-						&& close.CloseCode != WSClose.ServerError)
+					if (!Writer.Empty && close.AwaitTime.Seconds < 1
+						&& close.CloseCode  !=  WSClose.Abnormal
+						&& close.CloseCode  !=  WSClose.ServerError)
 					{
-						if (close.AwaitTime.Seconds < 1)
-							Write();
+						Write();
 						return TaskResult;
 					}
 					state = 7;
 					Tcp.Close();
 					Close(close);
 				}
-				if (state == 3)
-				{
-					Connection(Request, Response);
-					Interlocked.CompareExchange(ref state, 0, 3);
-				}
-				if (state == 7)
-				{
-					TaskResult.Option = TaskOption.Delete;
-					if (Tcp != null)
-						Tcp.Dispose();
+					if (state == 7)
+					{
+						TaskResult.Option   =   TaskOption.Delete;
+						if (Tcp != null)
+							Tcp.Dispose();
 
-				}
+					}
 			}
 			catch (WSException exc)
 			{
