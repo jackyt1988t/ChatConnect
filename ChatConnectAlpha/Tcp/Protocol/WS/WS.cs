@@ -507,8 +507,6 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// </summary>
 		private void Read()
 		{
-			if (state > 4)
-				return;
 			int count = 8000;
 			int start =
 			   (int)Reader.PointW;
