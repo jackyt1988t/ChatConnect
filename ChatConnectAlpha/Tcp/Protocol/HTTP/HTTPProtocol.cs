@@ -61,10 +61,11 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 							string protocol = string.Empty;
 							if (Request.ContainsKey("websocket-protocol"))
 								protocol = Request["websocket-protocol"];
-							else if (Request.ContainsKey("sec-websocket-protocol"))
-								protocol = Request["sec-websocket-protocol"];
 							else if (Request.ContainsKey("sec-websocket-version"))
 								protocol = Request["sec-websocket-version"];
+							else if (Request.ContainsKey("sec-websocket-protocol"))
+								protocol = Request["sec-websocket-protocol"];
+							
 							switch (protocol)
 							{
 								case "sample":
