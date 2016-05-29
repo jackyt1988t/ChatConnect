@@ -200,6 +200,8 @@ namespace ChatConnect.Tcp.Protocol
 					*ps = *pt;					
 					pt++;
 					PointW++;
+					if (!Empty)
+						return i;
 				}
 			}
 		}
