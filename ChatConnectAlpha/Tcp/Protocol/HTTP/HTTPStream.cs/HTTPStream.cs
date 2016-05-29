@@ -69,7 +69,6 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 						break;
 					case 4:
 						if (_char == CR)
-							frame.Pcod  =  HTTPFrame.DATA;
 							frame.Handl = 5;
 						else
 							throw new HTTPException("отсутсвует символ[CR]");
