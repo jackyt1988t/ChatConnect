@@ -13,7 +13,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		private const string CHECKKEY = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"; 
 
 		WStreamN13 reader;
-		public override WStream Reader
+		public override StreamS Reader
 		{
 			get
 			{
@@ -21,7 +21,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 			}
 		}
 		WStreamN13 writer;
-		public override WStream Writer
+		public override StreamS Writer
 		{
 			get
 			{
@@ -47,6 +47,12 @@ namespace ChatConnect.Tcp.Protocol.WS
 		{
 			Tcp = http.Tcp;
 			Request = http.Request;
+			if (!http.Reader.Empty)
+			{
+				int start = (int)http.Reader.PointR;
+				int length = (int)http.Reader.Length;
+				Reader.Write(http.Reader.Buffer, start, length);
+			}
 			Session = new WSEssion(((IPEndPoint)Tcp.RemoteEndPoint).Address);
 		}
 		/// <summary>
@@ -231,12 +237,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 
 			OnEventConnect(request, response);
 			byte[] buffer = response.ToByte();
-			Send(  buffer, 0, buffer.Length  );
-			if (Request.SegmentsBuffer.Count > 0)
-			{
-				byte[] buff = Request.SegmentsBuffer.Dequeue();
-				reader.Write (     buff, 0, buff.Length      );
-			}
+			Send ( buffer, 0, buffer.Length );
 		}
 	}
 

@@ -3,7 +3,7 @@ using System.IO;
 
 namespace ChatConnect.Tcp.Protocol.WS
 {
-	class WStreamSample : WStream
+	class WStreamSample : StreamS
 	{
 		byte _ngHead;
 		public WSFrameSample Frame = new WSFrameSample();

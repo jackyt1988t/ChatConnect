@@ -2,7 +2,7 @@
 
 namespace ChatConnect.Tcp.Protocol.HTTP
 {
-	struct HTTPFrame
+	class HTTPFrame
 	{
 		public const int DATA = 0;
 		public const int CHUNK = 1; 

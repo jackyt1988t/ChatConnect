@@ -102,6 +102,9 @@
     <Compile Include="Tcp\Protocol\HTTP\HTTPStream.cs\HTTPStream.cs" />
     <Compile Include="Tcp\Protocol\HTTP\HTTPExcept.cs" />
     <Compile Include="Tcp\Protocol\IProtocol.cs" />
+    <Compile Include="Tcp\Protocol\MyStream.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Compile>
     <Compile Include="Tcp\Protocol\WS\Headers\WSHeaders.cs" />
     <Compile Include="Tcp\Protocol\WS\WSClose\CloseWS.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -129,7 +132,7 @@
     <Compile Include="Tcp\Protocol\WS\WSFrame\WSFrame.cs" />
     <Compile Include="Tcp\Protocol\WS\WSPingControl.cs" />
     <Compile Include="Tcp\Protocol\WS\WSProtocolSample.cs" />
-    <Compile Include="Tcp\Protocol\WStateEnum.cs" />
+    <Compile Include="Tcp\Protocol\StateEnum.cs" />
     <Compile Include="Tcp\Protocol\WS\WSProtocolN13.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
@@ -137,9 +140,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
     <Compile Include="Tcp\Protocol\WS\WStream\WStreamN13.cs">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Compile>
-    <Compile Include="Tcp\Protocol\WS\WStream\WStream.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
     <Compile Include="Tcp\WServer.cs">

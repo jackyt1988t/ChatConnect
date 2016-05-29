@@ -1,9 +1,9 @@
 ﻿using System;
 using System.IO;
 
-namespace ChatConnect.Tcp.Protocol.WS
+namespace ChatConnect.Tcp.Protocol
 {
-	class WStream : Stream
+	class StreamS : Stream
 	{
 		public long Count
 		{

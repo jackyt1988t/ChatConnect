@@ -72,16 +72,16 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// <summary>
 		/// 
 		/// </summary>
-		abstract
-				public WStream Reader
+abstract
+		public StreamS Reader
 		{
 			get;
 		}
 		/// <summary>
 		/// 
 		/// </summary>
-		abstract
-				public WStream Writer
+abstract
+		public StreamS Writer
 		{
 			get;
 		}
@@ -501,7 +501,6 @@ namespace ChatConnect.Tcp.Protocol.WS
 					TaskResult.Option = TaskOption.Delete;
 					if (Tcp != null)
 						Tcp.Dispose();
-
 				}
 			}
 			catch (WSException exc)
@@ -569,40 +568,39 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// </summary>
 		/// <param name="data">Данные</param>
 		private void Write()
-		{			
+		{
 			if (!Writer.Empty)
+				return;
+			int start =
+				(int)Writer.PointR;
+			int write =
+				(int)Writer.Length;
+			if (write > 16000)
+				write = 16000;
+			byte[] buffer =
+					 Writer.Buffer;
+			SocketError error = SocketError.Success;
+			if (Writer.Count - start < write)
+				write =
+				  (int)(Writer.Count - start);
+			int length = Tcp.Send(buffer, start, write, SocketFlags.None, out error);
+			if (length > 0)
+				Writer.Position = length;
+			if (error != SocketError.Success)
 			{
-				int start =
-					(int)Writer.PointR;
-				int write =
-					(int)Writer.Length;
-				if (write > 16000)
-					write = 16000;
-				byte[] buffer =
-						 Writer.Buffer;
-				SocketError error = SocketError.Success;
-				if (Writer.Count - start < write)
-					write =
-					  (int)(Writer.Count - start);
-				int length = Tcp.Send(buffer, start, write, SocketFlags.None, out error);
-				if (length > 0)
-					Writer.Position = length;
-				if (error != SocketError.Success)
+				if (error != SocketError.WouldBlock
+					&& error != SocketError.NoBufferSpaceAvailable)
 				{
-					if (error != SocketError.WouldBlock
-						&& error != SocketError.NoBufferSpaceAvailable)
+					/*        Текущее подключение было отключено сброшено или разорвано         */
+					if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
+														   || error == SocketError.ConnectionAborted)
+						Close(WSClose.Abnormal);
+					else
 					{
-						/*        Текущее подключение было отключено сброшено или разорвано         */
-						if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
-															   || error == SocketError.ConnectionAborted)
-							Close(WSClose.Abnormal);
-						else
+						if (!SetError())
 						{
-							if (!SetError())
-							{
-								Error(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
-								сlose(WSClose.ServerError);
-							}
+							Error(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
+							сlose(WSClose.ServerError);
 						}
 					}
 				}

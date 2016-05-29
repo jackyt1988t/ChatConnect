@@ -9,12 +9,12 @@ namespace ChatConnect.Tcp.Protocol.WS
     class WSProtocol : WS
     {
 		WStreamSample reader;
-		public override WStream Reader
+		public override StreamS Reader
 		{
 			get;
 		}
 		WStreamSample writer;
-		public override WStream Writer
+		public override StreamS Writer
 		{
 			get;
 		}
@@ -22,34 +22,30 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// <summary>
 		/// Ининцилазириует класс протокола WS без подключения
 		/// </summary>
-		public WSProtocol()
+		public WSProtocol() :
+			base()
 		{
-			Sync       = new object();
-			State      = 
-					States.Connection;
-			reader	   = new WStreamSample(1204 * 512);
-			writer	   = new WStreamSample(1204 * 512);
-			Response   = new Header();
-			TaskResult = new TaskResult();
-			TaskResult.Protocol   =   TaskProtocol.WSRFC76;
+			reader = new WStreamSample(SizeRead);
+			writer = new WStreamSample(SizeWrite);
+			TaskResult.Protocol = TaskProtocol.WSRFC76;
 		}
 		/// <summary>
 		/// Инициализрует класс протокола WS с указанным обработчиком
 		/// </summary>
 		/// <param name="http">протокол  http</param>
 		/// <param name="connect">обрабтчик собятия подключения</param>
-		public WSProtocol(IProtocol http, PHandlerEvent connect)
-        {
-			Tcp        = http.Tcp;
-			Sync       = new object();
-			State      = 
-					States.Connection;
-			Reader     = new WStreamSample(1204 * 512);
-			Writer     = new WStreamSample(1204 * 512);
-			Request    = http.Request;
-			Response   = new Header();
-			TaskResult = new TaskResult();
-			TaskResult.Protocol   =   TaskProtocol.WSRFC76;
+		public WSProtocol(IProtocol http, PHandlerEvent connect) :
+			this()
+		{
+			Tcp = http.Tcp;
+			Request = http.Request;
+			if (!http.Reader.Empty)
+			{
+				int start = (int)http.Reader.PointR;
+				int length = (int)http.Reader.Length;
+				Reader.Write(http.Reader.Buffer, start, length);
+			}
+			Session = new WSEssion(((IPEndPoint)Tcp.RemoteEndPoint).Address);
 		}
 		public override bool Message(byte[] message, int recive, int length, WSOpcod opcod, WSFin fin)
 		{
@@ -225,11 +221,6 @@ namespace ChatConnect.Tcp.Protocol.WS
 			byte[] buffer = response.ToByte();
 			Send(  buffer, 0, buffer.Length  );
 			Send(request.Body, 0, request.Body.Length);
-			if (Request.SegmentsBuffer.Count > 0)
-			{
-				byte[] buff = Request.SegmentsBuffer.Dequeue();
-				reader.Write(      buff, 0, buff.Length      );
-			}
 		}		
     }
 	

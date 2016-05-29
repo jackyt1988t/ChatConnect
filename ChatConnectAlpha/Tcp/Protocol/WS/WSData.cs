@@ -5,23 +5,38 @@ namespace ChatConnect.Tcp.Protocol.WS
 {
     class WSData
     {
+		/// <summary>
+		/// Фрагментация
+		/// </summary>
 		public WSFin Fin
 		{
 			get;
 		}
+		/// <summary>
+		/// Содержут строку если получен текстовый фрейм
+		/// </summary>
 		public string _Text
 		{
 			get;
 		}
+		/// <summary>
+		/// Содержит полученный массив байт(сырые данные)
+		/// </summary>
         public byte[] _Data
         {
 			get;
         }
+		/// <summary>
+		/// Содержит информацию о том какие данные были получены
+		/// </summary>
 		public WSOpcod Opcod
         {
             get;
             private set;
         }
+		/// <summary>
+		/// Показывает время поучения данных от удаленной стороны
+		/// </summary>
         public DateTime Create
         {
             get;

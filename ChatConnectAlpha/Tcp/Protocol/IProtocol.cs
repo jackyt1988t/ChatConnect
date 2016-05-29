@@ -13,6 +13,14 @@ namespace ChatConnect.Tcp.Protocol
 		{
 			get;
 		}
+		StreamS Reader
+		{
+			get;
+		}
+		StreamS Writer
+		{
+			get;
+		}
 		IHeader Request
 		{
 			get;

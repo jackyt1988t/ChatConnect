@@ -53,7 +53,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 
 		public WSPingControl()
 		{
-			GetPong = new TimeSpan(DateTime.Now.Ticks);
+			_setping = new TimeSpan(DateTime.Now.Ticks + TimeSpan.TicksPerSecond * 5);
 		}
 	}
 }

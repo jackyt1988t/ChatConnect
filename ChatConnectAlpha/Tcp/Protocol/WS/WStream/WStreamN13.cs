@@ -2,7 +2,7 @@
 
 namespace ChatConnect.Tcp.Protocol.WS
 {
-    class WStreamN13 : WStream
+    class WStreamN13 : StreamS
     {
 		byte _ngHead;
 		public WSFrameN13 Frame;

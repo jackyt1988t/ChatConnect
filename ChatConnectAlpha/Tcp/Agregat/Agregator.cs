@@ -11,8 +11,7 @@ namespace ChatConnect.Tcp
 {
 	class Agregator
 	{
-		public IProtocol Protocol;
-		private static PHandlerEvent Connect;		
+		public IProtocol Protocol;		
 		private static ConcurrentQueue<Agregator> Container;
 
 		static Agregator()
@@ -21,7 +20,7 @@ namespace ChatConnect.Tcp
 		}
 		public Agregator(Socket tcp)
 		{
-			Protocol = new HTTPProtocol( tcp, Connect );
+			Protocol = new HTTPProtocol(tcp);
 			Container.Enqueue(this);
 		}
  static public void Loop()

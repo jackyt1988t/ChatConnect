@@ -1,11 +1,8 @@
 ﻿using System;
-using System.IO;
-using System.IO.Compression;
-			using System.Text;
 
 namespace ChatConnect.Tcp.Protocol.HTTP
 {
-	class HTTPStream
+	class HTTPStream : StreamS
 	{
 		const int LF = 0x0A;
 		const int CR = 0x0D;
@@ -18,9 +15,8 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 		public static readonly byte[] ENDCHUNCK;
 		public static readonly byte[] EOFCHUNCK;
 
-		public int Length;
-        public int Position;
-        public byte[] __Buffer;
+		public IHeader header;
+		public HTTPFrame frame;
 
 		static HTTPStream()
 		{
@@ -29,48 +25,22 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 			EOFCHUNCK = 
 				new byte[] { 0x30, 0x0D, 0x0A, 0x0D, 0x0A };
 		}
-		public HTTPStream(byte[] buffer)
+		public HTTPStream(int length)
 		{
-			Position = 0;
-			__Buffer = buffer;
-				Length = buffer.Length;
+			frame = new HTTPFrame();
+			
+			_len = length;
+			_buffer = new byte[ length ];
 		}
-		public HTTPStream(byte[] buffer, int pos)
+		public override int ReadBody()
 		{
-			Position = pos;
-			__Buffer = buffer;
-				Length = buffer.Length;
-		}
-		public HTTPStream(byte[] buffer, int pos, int length)
-		{
-			Position = pos;
-			__Buffer = buffer;
-				Length = length;
-		}
-		public byte[] ToArray()
-		{
-			byte[] arr = new byte[Length - Position];
-			Array.Copy(__Buffer, Position, arr, 0, arr.Length);
-
-			return arr;
-		}
-		public   int   ReadByte()
-		{
-            if (__Buffer == null)
-                throw new ArgumentNullException( "DataBuffer" );
-            if (Position >= __Buffer.Length)
-                return -1;
-
-            return __Buffer[  Position++  ];
-        }
-		public   int   ReadBody(ref HTTPFrame frame, IHeader header)
-		{
+			int read = 0;
 			int _char = 0;
-			int _reads = 0;
+			
 			if (frame.Handl == 0)
 			{
 				frame.GetBody = true;
-				return _reads;
+				return read;
 			}
 			while ((_char = ReadByte()) > -1)
 			{
@@ -116,7 +86,7 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 						break;
 
 				}
-				_reads++;
+				read++;
 				frame.bpart++;
 
 				if (frame.bpart == frame.bleng)
@@ -129,16 +99,17 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 					// Добавлем в тело данных запроса
 					header.SegmentsBuffer.Enqueue(frame.DataBody);
 
-					return _reads;
+					return read;
 				}
 			}
-			_reads = -1;
-			return _reads;
+			read = -1;
+			return read;
 		} 
-		public   int   ReadHead(ref HTTPFrame frame, IHeader header)
+		public override int ReadHead()
 		{
+			int read = 0;
 			int _char = 0;
-			int _reads = 0;
+			
 			while ( (_char = ReadByte() ) > -1)
 			{
 				if ( frame.hleng > 36000 )
@@ -153,7 +124,7 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 						{
 							frame.Handl = 4;
 							header.StartString = frame.StStr;
-								  frame.StStr = string.Empty;
+								   frame.StStr = string.Empty;
 						}
 						else
 						{
@@ -247,15 +218,15 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 						if (_char == LF)
 						{
 							frame.GetHead = true;
-							return _reads;
+							return read;
 						}
 						else
 							throw new HTTPException( "Отсутствует символ [LF]" );
 				}
 				frame.hleng++;
 			}
-            _reads = -1;
-			return _reads;
+            read = -1;
+			return read;
 		}
 		public static  void  ParsePath(string strdata, IHeader header)
 		{
@@ -264,27 +235,6 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 				header.File = "html";
 			else
 				header.File = strdata.Substring(index + 1);
-		}
-		public static  void  WriteBody(byte[] chunkdata, IHeader header)
-		{
-			using (MemoryStream memory = new MemoryStream())
-			{
-				using (GZipStream gzipstream = new GZipStream(memory, CompressionMode.Compress))
-				{
-					gzipstream.Write(chunkdata, 0, chunkdata.Length);
-				}
-				chunkdata = memory.ToArray();
-			}
-			string hex = chunkdata.Length.ToString("X");
-			byte[] _hexsdata = Encoding.UTF8.GetBytes(hex);
-
-			lock (header.SegmentsBuffer)
-			{
-				header.SegmentsBuffer.Enqueue( _hexsdata );
-				header.SegmentsBuffer.Enqueue( ENDCHUNCK );
-				header.SegmentsBuffer.Enqueue( chunkdata );
-				header.SegmentsBuffer.Enqueue( ENDCHUNCK );
-			}
 		}
 	}
 }
