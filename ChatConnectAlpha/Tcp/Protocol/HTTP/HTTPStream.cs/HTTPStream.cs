@@ -68,24 +68,37 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 						frame.DataBody = new byte[frame.bleng];
 						break;
 					case 4:
-						if (_char != CR)
-						{
-							frame.Pcod  =  HTTPFrame.CHUNK;
-							frame.Handl = 5;
-						}
-						else
-						{
+						if (_char == CR)
 							frame.Pcod  =  HTTPFrame.DATA;
-							if (_char == CR)
-							{
-								frame.Handl = 3;
-							}
-							else
-								frame.Param += char.ToLower((char)_char);
-						}
+							frame.Handl = 5;
+						else
+							throw new HTTPException("отсутсвует символ[CR]");
 						break;
 					case 5:
-						if (_char != LF)
+						if (_char == LF)
+						{
+							frame.Pcod = 1;
+							frame.handl = 6;
+						}
+						else
+							throw new HTTPException("отсутсвует символ[LF]");
+						break;
+					case 6:
+						if (_char == CR)
+							frame.handl = 7;
+						else
+						{
+							frame.Param += char.ToLower((char)_char);
+							return read;
+						}
+						break;
+					case 7:
+						if (_char == LF)
+						{
+							frame.Pcod = 0;
+							return read;
+						}
+						else
 							throw new HTTPException("отсутсвует символ[LF]");
 						break;
 
@@ -95,15 +108,15 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 
 				if (frame.bpart == frame.bleng)
 				{
+					header.SegmentsBuffer.Enqueue(
+							       frame.DataBody);
 					if (!string.IsNullOrEmpty(frame.Param))
-						frame.Handl = 3;
+						frame.Handl = 4;
 					else
+					{
 						frame.GetBody = true;
-
-					// Добавлем в тело данных запроса
-					header.SegmentsBuffer.Enqueue(frame.DataBody);
-
-					return read;
+						return read;
+					}
 				}
 			}
 			read = -1;
