@@ -30,7 +30,7 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 			frame = new HTTPFrame();
 			
 			_len = length;
-			_buffer = new byte[ length ];
+			_buffer = new byte[length];
 		}
 		public override int ReadBody()
 		{
@@ -47,10 +47,7 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 				switch (frame.Handl)
 				{
 					case 1:
-						if (frame.DataBody == null)
-							frame.DataBody = new byte [frame.bleng];
-
-						frame.DataBody[frame.bpart] = ( byte )_char;
+						frame.DataBody[frame.bpart] = (byte)_char;
 						break;
 					case 2:
 						if (_char == CR)
@@ -66,22 +63,29 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 							throw new HTTPException("отсутсвует символ[LF]");
 						if (!int.TryParse(frame.Param, out frame.bleng))
 							throw new HTTPException("Неверная длинна тела.");
-
-						goto case 4;
+						
+						frame.Handl = 1;
+						frame.DataBody = new byte[frame.bleng];
+						break;
 					case 4:
 						if (_char != CR)
 						{
-							frame.Pcod = HTTPFrame.DATA;
-							goto case 2;
+							frame.Pcod  =  HTTPFrame.CHUNK;
+							frame.Handl = 5;
 						}
 						else
 						{
-							frame.Pcod = HTTPFrame.CHUNK;
-							frame.Handl = 5;
+							frame.Pcod  =  HTTPFrame.DATA;
+							if (_char == CR)
+							{
+								frame.Handl = 3;
+							}
+							else
+								frame.Param += char.ToLower((char)_char);
 						}
 						break;
 					case 5:
-						if (_char == LF)
+						if (_char != LF)
 							throw new HTTPException("отсутсвует символ[LF]");
 						break;
 
