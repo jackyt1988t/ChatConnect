@@ -77,14 +77,14 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 						if (_char == LF)
 						{
 							frame.Pcod = 1;
-							frame.handl = 6;
+							frame.Handl = 6;
 						}
 						else
 							throw new HTTPException("отсутсвует символ[LF]");
 						break;
 					case 6:
 						if (_char == CR)
-							frame.handl = 7;
+							frame.Handl = 7;
 						else
 						{
 							frame.Param += char.ToLower((char)_char);

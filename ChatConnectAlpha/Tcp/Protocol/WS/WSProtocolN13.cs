@@ -19,10 +19,6 @@ namespace ChatConnect.Tcp.Protocol.WS
 			{
 				return reader;
 			}
-			protected set
-			{
-				reader = (WStreamN13)value;
-			}
 		}
 		WStreamN13 writer;
 		public override StreamS Writer
@@ -30,10 +26,6 @@ namespace ChatConnect.Tcp.Protocol.WS
 			get
 			{
 				return writer;
-			}
-			protected set
-			{
-				reader = (WStreamN13)value;
 			}
 		}
 		/// <summary>
@@ -54,8 +46,13 @@ namespace ChatConnect.Tcp.Protocol.WS
 			this()
 		{
 			Tcp = http.Tcp;
-			Reader = http.Reader;
 			Request = http.Request;
+			if (!http.Reader.Empty)
+			{
+				int start = (int)http.Reader.PointR;
+				int length = (int)http.Reader.Length;
+				Reader.Write(http.Reader.Buffer, start, length);
+			}
 			Session = new WSEssion(((IPEndPoint)Tcp.RemoteEndPoint).Address);
 		}
 		/// <summary>

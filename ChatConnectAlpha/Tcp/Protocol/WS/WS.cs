@@ -76,7 +76,6 @@ namespace ChatConnect.Tcp.Protocol.WS
 		public StreamS Reader
 		{
 			get;
-			protected set;
 		}
 		/// <summary>
 		/// 
@@ -85,7 +84,6 @@ namespace ChatConnect.Tcp.Protocol.WS
 		public StreamS Writer
 		{
 			get;
-			protected set;
 		}
 		/// <summary>
 		/// Заголвоки полученные при открытии соединеия
