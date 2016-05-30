@@ -208,14 +208,14 @@ override
 			}
 		}
 		private object SyncEvent = new object();
-		private event PHandlerEvent __EventWork;
-		private event PHandlerEvent __EventPing;
-		private event PHandlerEvent __EventPong;
-		private event PHandlerEvent __EventData;
-		private event PHandlerEvent __EventError;
-		private event PHandlerEvent __EventClose;
-		private event PHandlerEvent __EventChunk;
-		static private event PHandlerEvent __EventConnect;
+		private  event PHandlerEvent __EventWork;
+		private  event PHandlerEvent __EventPing;
+		private  event PHandlerEvent __EventPong;
+		private  event PHandlerEvent __EventData;
+		private  event PHandlerEvent __EventError;
+		private  event PHandlerEvent __EventClose;
+		private  event PHandlerEvent __EventChunk;
+		private static event PHandlerEvent __EventConnect;
 
 		public WS()
 		{
