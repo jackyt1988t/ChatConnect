@@ -569,44 +569,44 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// <param name="data">Данные</param>
 		private void Write()
 		{			
-			if (!Writer.Empty)
+			if (Writer.Empty)
 				return;
-				int start =
-					(int)Writer.PointR;
-				int write =
-					(int)Writer.Length;
-				if (write > 16000)
-					write = 16000;
-				byte[] buffer =
-						 Writer.Buffer;
-				SocketError error = SocketError.Success;
-				if (Writer.Count - start < write)
-					write =
-					  (int)(Writer.Count - start);
-				int length = Tcp.Send(buffer, start, write, SocketFlags.None, out error);
-				if (length > 0)
-					Writer.Position = length;
-				if (error != SocketError.Success)
+			int start =
+				(int)Writer.PointR;
+			int write =
+				(int)Writer.Length;
+			if (write > 16000)
+				write = 16000;
+			byte[] buffer =
+					Writer.Buffer;
+			SocketError error = SocketError.Success;
+			if (Writer.Count - start < write)
+				write =
+				  (int)(Writer.Count - start);
+			int length = Tcp.Send(buffer, start, write, SocketFlags.None, out error);
+			if (length > 0)
+				Writer.Position = length;
+			if (error != SocketError.Success)
+			{
+				if (error != SocketError.WouldBlock
+					&& error != SocketError.NoBufferSpaceAvailable)
 				{
-					if (error != SocketError.WouldBlock
-						&& error != SocketError.NoBufferSpaceAvailable)
+					/*        Текущее подключение было отключено сброшено или разорвано         */
+					if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
+														   || error == SocketError.ConnectionAborted)
+						Close(WSClose.Abnormal);
+					else
 					{
-						/*        Текущее подключение было отключено сброшено или разорвано         */
-						if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
-															   || error == SocketError.ConnectionAborted)
-							Close(WSClose.Abnormal);
-						else
+						if (!SetError())
 						{
-							if (!SetError())
-							{
-								Error(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
-								сlose(WSClose.ServerError);
-							}
+							Error(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
+							сlose(WSClose.ServerError);
 						}
-						Writer.Position = Writer.Length;
 					}
+					Writer.Position = Writer.Length;
 				}
 			}
+		}
 
 		protected bool SetClose()
 		{

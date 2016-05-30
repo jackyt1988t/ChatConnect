@@ -450,7 +450,7 @@ abstract
 		/// <param name="data">Данные</param>
 		private void Write()
 		{
-			if (!Writer.Empty)
+			if (Writer.Empty)
 				return;
 			int start =
 				(int)Writer.PointR;
