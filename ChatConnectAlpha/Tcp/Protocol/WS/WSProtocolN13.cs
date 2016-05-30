@@ -115,14 +115,14 @@ namespace ChatConnect.Tcp.Protocol.WS
 			OnEventWork();
 			
 
-			/*if (!PingControl.IsPong && PingControl.GetPong > PingControl.SetPing)
+			if (!PingControl.IsPong && PingControl.GetPong > PingControl.SetPing)
 				 throw new WSException("Нет ответа Понг", WsError.PingNotResponse, WSClose.ServerError);
 
 			if (!PingControl.IsPing && PingControl.SetPing.Ticks < DateTime.Now.Ticks)
 			{	
 				 PingControl.SetPing  =  new TimeSpan(DateTime.Now.Ticks + TimeSpan.TicksPerSecond * 5);
 			Ping(PingControl.SetPing.ToString());
-			}*/			
+			}			
 		}
 
 		protected override void Data()
