@@ -413,7 +413,7 @@ abstract
 		/// <summary>
 		/// 
 		/// </summary>
-		private void Read()
+		public void Read()
 		{
 			int count = 8000;
 			int start =

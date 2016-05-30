@@ -93,14 +93,13 @@ namespace ChatConnect.Tcp
 					write = new ArrayList(ArrSocket);
 				try
 				{
-				Socket.Select(write, null, null, 1000);
+				Socket.Select(write, null, null, 0);
 				
 					for (int i = 0; i < write.Count; i++)
 					{
 						Socket _socket = write[i] as Socket;
 						if (_socket != null)
 						{
-							IProtocol p;
 							lock (ArrProtocol)
 							{
 								if (ArrProtocol.ContainsKey((int)_socket.Handle))

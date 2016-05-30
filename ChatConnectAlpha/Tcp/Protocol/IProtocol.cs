@@ -34,6 +34,7 @@ namespace ChatConnect.Tcp.Protocol
 		{
 			get;
 		}
+		void Read();
 		/// <summary>
 		/// 
 		/// </summary>

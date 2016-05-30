@@ -534,7 +534,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// <summary>
 		/// 
 		/// </summary>
-		private void Read()
+		public void Read()
 		{
 			int count = 8000;
 			int start =
@@ -583,7 +583,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// <param name="data">Данные</param>
 		private void Write()
 		{			
-			if (!Writer.Empty)
+			if (Writer.Empty)
 				return;
 				int start =
 					(int)Writer.PointR;
