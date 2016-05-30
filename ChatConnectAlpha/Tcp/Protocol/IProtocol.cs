@@ -5,6 +5,11 @@ namespace ChatConnect.Tcp.Protocol
 {
 	interface IProtocol : IAgregator
 	{
+		bool ssdwrite
+		{
+			get;
+			set;
+		}
 		Socket Tcp
         {
             get;

@@ -10,6 +10,18 @@ namespace ChatConnect.Tcp.Protocol.WS
 {
 	abstract class WS : IProtocol
 	{
+		bool ss = false;
+		public bool ssdwrite
+		{
+			get
+			{
+				return ss;
+			}
+			set
+			{
+				ss = value;
+			}
+		}
 		private static readonly string S_WORK = "work";
 		private static readonly string S_SEND = "send";
 		private static readonly string S_DATA = "data";
@@ -458,7 +470,8 @@ namespace ChatConnect.Tcp.Protocol.WS
 				==================================================================*/
 					if (Interlocked.CompareExchange(ref state, 1, 0) != 0)
 						return TaskResult;
-					Read();
+					if (ssdwrite)
+						Read();
 					Data();
 				/*==================================================================
 					Проверяет возможность отправки данных. Если данные можно 
@@ -541,6 +554,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 				int length = Tcp.Receive(buffer, start, count, SocketFlags.None, out error);
 				if (length > 0)
 					Reader.SetLength(length);
+				ssdwrite = false;
 			}
 			if (error != SocketError.Success)
 			{

@@ -9,7 +9,11 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 {
     abstract class HTTP : IProtocol
     {
- 
+ 		public bool ssdwrite
+		{
+			get;
+			set;
+		}
         public Socket Tcp
         {
             get;
@@ -341,7 +345,8 @@ abstract
 						return TaskResult;
 					if (!Request.IsReq)
 					{
-						Read();
+						if (ssdwrite)
+							Read();
 						Data();
 					}
 					else
@@ -428,6 +433,7 @@ abstract
 				int length = Tcp.Receive(buffer, start, count, SocketFlags.None, out error);
 				if (length > 0)
 					Reader.SetLength(length);
+				ssdwrite = false;
 			}
 			if (error != SocketError.Success)
 			{
