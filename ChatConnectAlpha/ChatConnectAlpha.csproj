@@ -92,7 +92,7 @@
     <Compile Include="Tcp\Headers\IHeaders.cs" />
     <Compile Include="Tcp\Headers\StatusCod.cs" />
     <Compile Include="Tcp\PoolObj\PoolObj.cs" />
-    <Compile Include="Tcp\Protocol\Buffer\Buffer.cs" />
+    <Compile Include="Tcp\Protocol\BASE\Base.cs" />
     <Compile Include="Tcp\Protocol\EventArg.cs" />
     <Compile Include="Tcp\Protocol\HTTP\HTTP.cs" />
     <Compile Include="Tcp\Protocol\HTTP\HTTPFrame\HTTPFrame.cs" />
@@ -111,7 +111,6 @@
     </Compile>
     <Compile Include="Tcp\Protocol\WS\WS.cs" />
     <Compile Include="Tcp\Protocol\WS\WSData.cs" />
-    <Compile Include="Tcp\Protocol\Buffer\IBuffer.cs" />
     <Compile Include="Tcp\Protocol\WS\WSClose\WSClose.cs" />
     <Compile Include="Tcp\Protocol\WS\WSDebug\WSDebug.cs" />
     <Compile Include="Tcp\Protocol\WS\WSEnum.cs">

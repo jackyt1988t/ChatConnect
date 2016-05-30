@@ -8,7 +8,7 @@ using System;
 
 namespace ChatConnect.Tcp.Protocol.WS
 {
-	abstract class WS : IProtocol
+	abstract class WS : BaseProtocol
 	{
 		private static readonly string S_WORK = "work";
 		private static readonly string S_SEND = "send";
@@ -30,14 +30,6 @@ namespace ChatConnect.Tcp.Protocol.WS
 
 		public static bool Debug;
 		/// <summary>
-		/// tcp/ip соединение
-		/// </summary>
-		public Socket Tcp
-		{
-			get;
-			protected set;
-		}
-		/// <summary>
 		/// Объект синхронизации
 		/// </summary>
 		public object Sync
@@ -57,7 +49,8 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// <summary>
 		/// Текщий статус протокола
 		/// </summary>
-		public States State
+override
+		public  States State
 		{
 			get
 			{
@@ -67,39 +60,6 @@ namespace ChatConnect.Tcp.Protocol.WS
 			{
 				state = (int)value;
 			}
-		}
-
-		/// <summary>
-		/// 
-		/// </summary>
-		abstract
-		public StreamS Reader
-		{
-			get;
-		}
-		/// <summary>
-		/// 
-		/// </summary>
-		abstract
-		public StreamS Writer
-		{
-			get;
-		}
-		/// <summary>
-		/// Заголвоки полученные при открытии соединеия
-		/// </summary>
-		public IHeader Request
-		{
-			get;
-			protected set;
-		}
-		/// <summary>
-		/// Заголвоки которые были отправлены удаленной стороне
-		/// </summary>
-		public IHeader Response
-		{
-			get;
-			protected set;
 		}
 		public WSEssion Session
 		{
@@ -266,57 +226,6 @@ namespace ChatConnect.Tcp.Protocol.WS
 			TaskResult = new TaskResult();
 			PingControl = new WSPingControl();
 		}
-
-		/// <summary>
-		/// Отправляет данные текущему подключению
-		/// </summary>
-		/// <param name="message">массив байт для отправки</param>
-		/// <returns>true в случае ечсли данные можно отправить</returns>
-		public bool Send(byte[] buffer, int start, int write)
-		{
-
-			if (state > 3)
-				return false;
-			
-			SocketError error = SocketError.Success;
-			lock (Writer)
-			{
-				if (Writer.Empty)
-					start = Tcp.Send(buffer, start, write, SocketFlags.None, out error);
-			
-				int length = write - start;
-				if (length > 0)
-				{
-					if (Writer.Clear < length)
-						error = SocketError.NoData;
-					else
-					{
-						Writer.Write(buffer, start, length);
-							   Writer.SetLength(length);
-					}
-				}
-			}
-			if (error != SocketError.Success)
-			{
-				if (error != SocketError.WouldBlock
-					&& error != SocketError.NoBufferSpaceAvailable)
-				{
-					/*        Текущее подключение было отключено сброшено или разорвано         */
-					if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
-														   || error == SocketError.ConnectionAborted)
-						Close(WSClose.Abnormal);
-					else
-					{
-						if (!SetError())
-						{
-							Error(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
-							сlose(WSClose.ServerError);
-						}
-					}
-				}
-			}
-			return true;
-		}
 		/// <summary>
 		/// Отправляет фрейм пинг текущему подключению
 		/// </summary>
@@ -415,6 +324,43 @@ namespace ChatConnect.Tcp.Protocol.WS
 			return Message(message, WSOpcod.Binnary, WSFin.Last);
 		}
 		/// <summary>
+		/// Отправляет данные текущему подключению
+		/// </summary>
+		/// <param name="message">массив байт для отправки</param>
+		/// <returns>true в случае ечсли данные можно отправить</returns>
+		public bool Message(byte[] buffer, int start, int write)
+		{
+
+			if (state > 3)
+				return false;
+
+			SocketError error;
+			lock (Writer)
+			{
+				if ((error = Write(buffer, start, write)) != SocketError.Success)
+				{
+					if (error != SocketError.WouldBlock
+						&& error != SocketError.NoBufferSpaceAvailable)
+					{
+						/*        Текущее подключение было отключено сброшено или разорвано         */
+						if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
+															   || error == SocketError.ConnectionAborted)
+							Close(WSClose.Abnormal);
+						else
+						{
+							if (!SetError())
+							{
+								Error(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
+								сlose(WSClose.ServerError);
+							}
+						}
+						return false;
+					}
+				}
+			}
+			return true;
+		}
+		/// <summary>
 		/// Отправляет текстовый фрейм текущему подключению
 		/// </summary>
 		/// <param name="message">массив байт для отправки</param>
@@ -437,6 +383,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// Функция 1 прохода обработки ws протокола соединения
 		/// </summary>
 		/// <returns>информация о дальнейшей обработки соединения</returns>
+override
 		public TaskResult TaskLoopHandlerProtocol()
 		{
 			try
@@ -458,7 +405,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 				==================================================================*/
 					if (Interlocked.CompareExchange(ref state, 1, 0) != 0)
 						return TaskResult;
-					Read();
+					read();
 					Data();
 				/*==================================================================
 					Проверяет возможность отправки данных. Если данные можно 
@@ -468,7 +415,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 				==================================================================*/
 					if (Interlocked.CompareExchange(ref state, 2, 1) != 1)
 						return TaskResult;
-					Write();
+					write();
 					if (Interlocked.CompareExchange(ref state, 0, 2) == 2)
 						return TaskResult;
 				}
@@ -488,7 +435,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 						&& close.CloseCode  !=  WSClose.Abnormal
 						&& close.CloseCode  !=  WSClose.ServerError)
 					{
-							Write();
+							write();
 						return TaskResult;
 					}
 					state = 7;
@@ -497,7 +444,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 				}
 				if (state == 7)
 				{
-						TaskResult.Option   =   TaskOption.Delete;
+						TaskResult.Option    =    TaskOption.Delete;
 					if (Tcp != null)
 						Tcp.Dispose();
 				}
@@ -521,33 +468,14 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// <summary>
 		/// 
 		/// </summary>
-		private void Read()
+		private void read()
 		{
-			int count = 8000;
-			int start =
-			   (int)Reader.PointW;
-			byte[] buffer =
-					Reader.Buffer;
-			SocketError error = SocketError.Success;
-			if (Reader.Clear == 0)
-			{
-				error = SocketError.NoData;
-			}
-			else
-			{
-			if (Reader.Count - start < count)
-				count =
-				   (int)(Reader.Count - start);
-				int length = Tcp.Receive(buffer, start, count, SocketFlags.None, out error);
-				if (length > 0)
-					Reader.SetLength(length);
-			}
-			if (error != SocketError.Success)
+			SocketError error;
+			if ((error = Read()) != SocketError.Success)
 			{
 				if (error != SocketError.WouldBlock
 					&& error != SocketError.NoBufferSpaceAvailable)
 				{
-					
 					/*        Текущее подключение было отключено сброшено или разорвано         */
 					if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
 														   || error == SocketError.ConnectionAborted)
@@ -567,30 +495,17 @@ namespace ChatConnect.Tcp.Protocol.WS
 		/// Отправляет сообщение
 		/// </summary>
 		/// <param name="data">Данные</param>
-		private void Write()
-		{			
+		private void write()
+		{
 			if (Writer.Empty)
 				return;
-			int start =
-				(int)Writer.PointR;
-			int write =
-				(int)Writer.Length;
-			if (write > 16000)
-				write = 16000;
-			byte[] buffer =
-					Writer.Buffer;
-			SocketError error = SocketError.Success;
-			if (Writer.Count - start < write)
-				write =
-				  (int)(Writer.Count - start);
-			int length = Tcp.Send(buffer, start, write, SocketFlags.None, out error);
-			if (length > 0)
-				Writer.Position = length;
-			if (error != SocketError.Success)
+			SocketError error;
+			if ((error = Send()) !=  SocketError.Success)
 			{
 				if (error != SocketError.WouldBlock
 					&& error != SocketError.NoBufferSpaceAvailable)
 				{
+					Writer.Position = Writer.Length;
 					/*        Текущее подключение было отключено сброшено или разорвано         */
 					if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
 														   || error == SocketError.ConnectionAborted)
@@ -603,7 +518,6 @@ namespace ChatConnect.Tcp.Protocol.WS
 							сlose(WSClose.ServerError);
 						}
 					}
-					Writer.Position = Writer.Length;
 				}
 			}
 		}

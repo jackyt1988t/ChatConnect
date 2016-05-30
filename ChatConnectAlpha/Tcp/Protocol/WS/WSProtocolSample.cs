@@ -11,12 +11,18 @@ namespace ChatConnect.Tcp.Protocol.WS
 		WStreamSample reader;
 		public override StreamS Reader
 		{
-			get;
+			get
+			{
+				return reader;
+			}
 		}
 		WStreamSample writer;
 		public override StreamS Writer
 		{
-			get;
+			get
+			{
+				return writer;
+			}
 		}
 		
 		/// <summary>
@@ -89,10 +95,10 @@ namespace ChatConnect.Tcp.Protocol.WS
 				writer.Frame.InitializationHeader();
 				if (Debug)
 					WSDebug.DebugSample(writer.Frame);
-				if (!Send(writer.Frame.DataHead, 0, (int)writer.Frame.LengHead))
+				if (!Message(writer.Frame.DataHead, 0, (int)writer.Frame.LengHead))
 					return false;
 				else
-					return Send(writer.Frame.DataBody, (int)writer.Frame.PartBody, (int)writer.Frame.LengBody);
+					return Message(writer.Frame.DataBody, (int)writer.Frame.PartBody, (int)writer.Frame.LengBody);
 			}
 		}
 
@@ -219,8 +225,8 @@ namespace ChatConnect.Tcp.Protocol.WS
 			md5.Clear();
 			OnEventConnect(request, response);
 			byte[] buffer = response.ToByte();
-			Send(  buffer, 0, buffer.Length  );
-			Send(request.Body, 0, request.Body.Length);
+			Message(  buffer, 0, buffer.Length  );
+			Message(request.Body, 0, request.Body.Length);
 		}		
     }
 	

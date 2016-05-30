@@ -29,21 +29,5 @@ namespace ChatConnect.Tcp.Protocol
 		{
 			get;
 		}
-		/// <summary>
-		/// 
-		/// </summary>
-		event PHandlerEvent EventWork;
-        /// <summary>
-        /// 
-        /// </summary>
-        event PHandlerEvent EventData;
-        /// <summary>
-        /// 
-        /// </summary>
-        event PHandlerEvent EventError;
-        /// <summary>
-        /// 
-        /// </summary>
-        event PHandlerEvent EventClose;
     }
 }

@@ -17,7 +17,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		{
 			get
 			{
-				return reader;
+				return (StreamS)reader;
 			}
 		}
 		WStreamN13 writer;
@@ -25,7 +25,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 		{
 			get
 			{
-				return writer;
+				return (StreamS)writer;
 			}
 		}
 		/// <summary>
@@ -104,10 +104,10 @@ namespace ChatConnect.Tcp.Protocol.WS
 				writer.Frame.InitializationHeader();
 				if (Debug)
 					WSDebug.DebugN13( writer.Frame );
-				if (!Send(writer.Frame.DataHead, 0, (int)writer.Frame.LengHead))
+				if (!Message(writer.Frame.DataHead, 0, (int)writer.Frame.LengHead))
 					return false;
 				else
-					return Send(writer.Frame.DataBody, (int)writer.Frame.PartBody, (int)writer.Frame.LengBody);
+					return Message(writer.Frame.DataBody, (int)writer.Frame.PartBody, (int)writer.Frame.LengBody);
 			}
 		}
 		protected override void Work()
@@ -237,7 +237,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 
 			OnEventConnect(request, response);
 			byte[] buffer = response.ToByte();
-			Send ( buffer, 0, buffer.Length );
+			Message ( buffer, 0, buffer.Length );
 		}
 	}
 

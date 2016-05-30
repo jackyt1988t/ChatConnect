@@ -169,8 +169,6 @@ abstract
 
 		private object SyncEvent = new object();
 		private event PHandlerEvent __EventWork;
-		private event PHandlerEvent __EventPing;
-		private event PHandlerEvent __EventPong;
 		private event PHandlerEvent __EventData;
 		private event PHandlerEvent __EventError;
 		private event PHandlerEvent __EventClose;
