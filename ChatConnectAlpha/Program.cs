@@ -44,7 +44,7 @@ namespace ChatConnect
 					Console.WriteLine(e.sender.ToString());
 				};
 			};
-			WServer Server = new WServer("0.0.0.0", 8081, 2);
+			WServer Server = new WServer("0.0.0.0", 8081, 8);
 			
         }
     }
