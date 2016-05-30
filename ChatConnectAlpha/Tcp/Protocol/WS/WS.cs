@@ -52,13 +52,13 @@ namespace ChatConnect.Tcp.Protocol.WS
 override
 		public  States State
 		{
-			get
-			{
-				return (States)state;
-			}
 			protected set
 			{
 				state = (int)value;
+			}
+			get
+			{
+				return (States)state;
 			}
 		}
 		public WSEssion Session
