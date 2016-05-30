@@ -328,7 +328,7 @@ override
 		/// </summary>
 		/// <param name="message">массив байт для отправки</param>
 		/// <returns>true в случае ечсли данные можно отправить</returns>
-		public bool Message(byte[] buffer, int start, int write)
+		public bool Message(byte[] message, int start, int write)
 		{
 
 			if (state > 3)
@@ -337,7 +337,7 @@ override
 			SocketError error;
 			lock (Writer)
 			{
-				if ((error = Write(buffer, start, write)) != SocketError.Success)
+				if ((error = Write(message, start, write)) != SocketError.Success)
 				{
 					if (error != SocketError.WouldBlock
 						&& error != SocketError.NoBufferSpaceAvailable)
