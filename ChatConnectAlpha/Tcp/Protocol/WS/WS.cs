@@ -310,8 +310,7 @@ override
 		/// <returns>true в случае ечсли данные можно отправить</returns>
 		public bool Message(string message)
 		{
-			byte[] _buffer = Encoding.UTF8.GetBytes(
-												message);
+			byte[] _buffer = Encoding.UTF8.GetBytes(message);
 			return Message(_buffer, WSOpcod.Text, WSFin.Last);
 		}
 		/// <summary>
@@ -344,7 +343,7 @@ override
 					{
 						/*        Текущее подключение было отключено сброшено или разорвано         */
 						if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
-															   || error == SocketError.ConnectionAborted)
+										       || error == SocketError.ConnectionAborted)
 							Close(WSClose.Abnormal);
 						else
 						{
@@ -442,12 +441,12 @@ override
 					Tcp.Close();
 					Close(close);
 				}
-				if (state == 7)
-				{
-						TaskResult.Option    =    TaskOption.Delete;
-					if (Tcp != null)
-						Tcp.Dispose();
-				}
+						if (state == 7)
+						{
+							TaskResult.Option = TaskOption.Delete;
+							if (Tcp != null)
+								Tcp.Dispose();
+						}
 			}
 			catch (WSException exc)
 			{
@@ -478,7 +477,7 @@ override
 				{
 					/*        Текущее подключение было отключено сброшено или разорвано         */
 					if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
-														   || error == SocketError.ConnectionAborted)
+									       || error == SocketError.ConnectionAborted)
 						Close(WSClose.Abnormal);
 					else
 					{
@@ -508,7 +507,7 @@ override
 					Writer.Position = Writer.Length;
 					/*        Текущее подключение было отключено сброшено или разорвано         */
 					if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
-														   || error == SocketError.ConnectionAborted)
+									       || error == SocketError.ConnectionAborted)
 						Close(WSClose.Abnormal);
 					else
 					{
