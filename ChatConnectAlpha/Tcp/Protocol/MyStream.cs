@@ -200,7 +200,7 @@ namespace ChatConnect.Tcp.Protocol
 					*ps = *pt;					
 					pt++;
 					PointW++;
-					if (!Empty)
+					if (Clear == 0)
 						throw new IOException();
 				}
 			}

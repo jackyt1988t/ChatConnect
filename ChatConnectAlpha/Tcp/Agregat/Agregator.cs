@@ -37,7 +37,7 @@ namespace ChatConnect.Tcp
 					else
 					{
 						agregator.TaskLoopHandler();
-						if (loop++ > 500)
+						if (loop++ > 1000)
 						{
 							loop = 0;
 							Thread.Sleep(1);
@@ -58,6 +58,12 @@ namespace ChatConnect.Tcp
 				case TaskOption.Loop:
 					Container.Enqueue(this);
 					break;
+				case TaskOption.Delete:
+					lock (WServer.ArrSocket)
+						WServer.ArrSocket.Remove(Protocol.Tcp);
+					lock (WServer.ArrProtocol)
+						WServer.ArrProtocol.Remove((int)Protocol.Tcp.Handle);
+					break;
 				case TaskOption.Protocol:
 					if (TaskResult.Protocol == TaskProtocol.WSRFC76)
 					{
@@ -69,7 +75,7 @@ namespace ChatConnect.Tcp
 						Thread thr = new Thread( TaskLoopThreading );
 							   thr.IsBackground = true;
 							   thr.Start();
-						break;
+					break;
 			}
 		}
 		private void TaskLoopThreading()
