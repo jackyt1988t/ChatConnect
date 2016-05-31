@@ -366,8 +366,10 @@ abstract
 					else
 					{
 						state = 0;
-						Request = new Header();
-						Response = new Header();
+						reader.header =
+							Request = new Header();
+						writer.header =
+							Response = new Header();
 					}
 					if (Interlocked.CompareExchange(ref state,-1, 2) == 2)
 						return TaskResult;
