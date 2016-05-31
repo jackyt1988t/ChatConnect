@@ -47,8 +47,7 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 		protected override void Data()
 		{
 			if (!reader.frame.GetHead)
-				{
-					reader.header = Request;
+			{
 					if (reader.ReadHead() == -1)
 						return;
 
@@ -106,7 +105,6 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 				}
 			if (!reader.frame.GetBody)
 			{
-				writer.header = Response;
 				if (reader.ReadBody() == -1)
 					return;
 				
