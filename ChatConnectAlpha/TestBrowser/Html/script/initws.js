@@ -49,8 +49,8 @@ unction init() {
 function initws()
 {
 	init();
-	var str = 'ws://192.168.0.14:8081';
-	var user = new User();
+	// адрес сервера
+	var str = 'ws://12.0.0.1:8081';
 	var info = document.getElementById("info");
     var elem = document.getElementById("elem");
 	var _text = document.getElementById("text");
@@ -73,21 +73,15 @@ function initws()
 			}
 			else {
 				var div  =  document.createElement('div');
-					div.style.backgroundColor = 'yellow';
-				div.innerText = date.toString() + 
-								' ' + date.getMilliseconds() + ':' + wsjson.jstring.Text;
+				div.style.backgroundColor = 'yellow';
+				div.innerText = event.data;
 				elem.appendChild(div);
 			}
         }
 		};
 		_send.onclick = function () {
-			var date = new Date();
-			info.innerText = date.toString() + ' ' + date.getMilliseconds();
-			if (_text !== null && _text.value !== '') {
-				wsock.send(JSON.stringify(
-								new WsJson("Message", 
-									new JsMsg(_text.value, user))));
-											  _text.value = '';
+			wsock.send(_text.value, user);
+				   _text.value = '';
 			}
 		}
 }
