@@ -227,6 +227,8 @@ namespace ChatConnect.Tcp.Protocol.WS
 		protected override void Connection(IHeader request, IHeader response)
 		{
 			SHA1 sha1 = SHA1.Create();
+			if (!request.ContainsKey("sec-websocket-key"))
+				throw new WSException("Отсутствует заголовок sec-webspcket-key", WsError.PcodNotSuported, WSClose.UnsupportedData);
 			string key = Convert.ToBase64String(sha1.ComputeHash(Encoding.UTF8.GetBytes(Request["sec-websocket-key"] + CHECKKEY)));
 			sha1.Clear();
 
@@ -237,7 +239,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 
 			OnEventConnect(request, response);
 			byte[] buffer = response.ToByte();
-			Message ( buffer, 0, buffer.Length );
+			Message(buffer, 0, buffer.Length);
 		}
 	}
 
