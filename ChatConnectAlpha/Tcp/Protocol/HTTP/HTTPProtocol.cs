@@ -110,16 +110,12 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 				if (reader.ReadBody() == -1)
 					return;
 				
-				if (reader.frame.Pcod != HTTPFrame.CHUNK)
+				if (reader.frame.Pcod == HTTPFrame.DATA)
 				{
 					Request.Req();
+					if (TaskResult.Protocol != TaskProtocol.HTTP)
+						TaskResult.Option = TaskOption.Protocol;
 					reader.frame.Clear();
-					switch (TaskResult.Protocol)
-					{
-						case TaskProtocol.WSRFC76:
-							TaskResult.Option = TaskOption.Protocol;
-							break;
-					}
 					return;
 				}
 			}
@@ -127,9 +123,6 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 		protected override void Close()
 		{
 			OnEventClose();
-
-			Request = null;
-			Response = null;
 			
 		}
 		protected override void Error(HTTPException error)
