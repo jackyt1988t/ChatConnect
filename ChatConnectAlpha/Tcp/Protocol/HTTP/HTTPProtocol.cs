@@ -32,7 +32,7 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 			{
 				header = Request
 			};
-			writer = new HTTPStream(1000 * 32)
+			writer = new HTTPStream(1000 * 128)
 			{
 				header = Response
 			};
@@ -51,14 +51,16 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 				reader.header = Request;
 				if (reader.ReadHead() == -1)
 					return;
-		
+				
+				string protocol = 
+						string.Empty;
 				reader.frame.Handl = 0;
 				if (Request.ContainsKey("upgrade"))
 				{
 					string ng = Request["upgrade"];
 					if (ng.ToLower() == "websocket")
 					{
-						string protocol = string.Empty;
+						
 						if (Request.ContainsKey("websocket-protocol"))
 							protocol = Request["websocket-protocol"];
 						else if (Request.ContainsKey("sec-websocket-version"))
@@ -86,7 +88,14 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 							}
 						}
 					}
-
+					else
+					{
+						if (!__handconn)
+						{
+							Close();
+							return;
+						}
+					}
 					if (Request.ContainsKey("content-length"))
 					{
 						if (int.TryParse(Request["content-length"], 

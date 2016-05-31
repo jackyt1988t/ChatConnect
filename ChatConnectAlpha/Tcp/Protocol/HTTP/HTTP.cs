@@ -18,6 +18,7 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 			get;
 			protected set;
 		}
+		volatile int state;
 override
 		public States State
 		{
@@ -124,30 +125,31 @@ override
 		/// Событие которое наступает при открвтии соединения когда получены заголвоки
 		/// </summary>
 		static
-			  public event PHandlerEvent EventConnect
+		public event PHandlerEvent EventConnect
 		{
 			add
 			{
+				__handconn = true;
 				__EventConnect += value;
-
 			}
 			remove
 			{
+				__handconn = false;
 				__EventConnect -= value;
 			}
 		}
 
 		private object SyncEvent = new object();
-		private event PHandlerEvent __EventWork;
-		private event PHandlerEvent __EventData;
-		private event PHandlerEvent __EventError;
-		private event PHandlerEvent __EventClose;
-		private event PHandlerEvent __EventChunk;
-		static private event PHandlerEvent __EventConnect;
-
-
-		private volatile int state;
-
+		private  event PHandlerEvent __EventWork;
+		private  event PHandlerEvent __EventData;
+		private  event PHandlerEvent __EventError;
+		private  event PHandlerEvent __EventClose;
+		private  event PHandlerEvent __EventChunk;
+		static 
+		private  event PHandlerEvent __EventConnect;
+		
+		static
+		protected bool __handconn = false;
 		protected long __twaitconn = DateTime.Now.Ticks;
 
 		public HTTP()
@@ -158,7 +160,8 @@ override
 			Response = new Header();
 			TaskResult = new TaskResult();
 		}
-  async public void File(string path, string type)
+		async 
+		public void File(string path, string type)
 		{
 			await Task.Run(() =>
 			{
@@ -317,7 +320,6 @@ override
 					Connection(Request, Response);
 					if (Interlocked.CompareExchange(ref state,-1, 3) == 3)
 					{
-						File("Html" + Request.Path, Request.File);
 						return TaskResult;
 					}
 				}
