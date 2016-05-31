@@ -78,7 +78,6 @@ namespace ChatConnect.Tcp.Protocol.WS
 			Array.Copy(key2_byte, 0, key_string, 4, 4);
 			Array.Copy(keyb_byte, 0, key_string, 8, 8);
 
-			res.State = Header.RESPONSE;
 			res.StartString = "HTTP/1.1 101 Web Socket Protocol Handshake";
 
 			res.Add("Upgrade", "WebSocket");

@@ -5,11 +5,6 @@ namespace ChatConnect.Tcp
 {
     interface IHeader : IDictionary<string, string>
     {
-		int State
-		{
-			get;
-			set;
-		}
 		bool IsEnd
 		{
 			get;
@@ -62,9 +57,9 @@ namespace ChatConnect.Tcp
 			get;
 		}
 
-		void Req();
-		void Res();
-		void End();
+		bool SetReq();
+		bool SetRes();
+		bool SetEnd();
 		byte[] ToByte();
 	}
     interface IHeaders

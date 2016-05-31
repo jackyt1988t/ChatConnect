@@ -48,39 +48,40 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 		{
 			if (!reader.frame.GetHead)
 			{
-					if (reader.ReadHead() == -1)
-						return;
-
-					reader.frame.Handl = 0;
-					if (Request.ContainsKey("upgrade"))
+				reader.header = Request;
+				if (reader.ReadHead() == -1)
+					return;
+		
+				reader.frame.Handl = 0;
+				if (Request.ContainsKey("upgrade"))
+				{
+					string ng = Request["upgrade"];
+					if (ng.ToLower() == "websocket")
 					{
-						string ng = Request["upgrade"];
-						if (ng.ToLower() == "websocket")
+						string protocol = string.Empty;
+						if (Request.ContainsKey("websocket-protocol"))
+							protocol = Request["websocket-protocol"];
+						else if (Request.ContainsKey("sec-websocket-version"))
+							protocol = Request["sec-websocket-version"];
+						else if (Request.ContainsKey("sec-websocket-protocol"))
+							protocol = Request["sec-websocket-protocol"];
+						
+						switch (protocol)
 						{
-							string protocol = string.Empty;
-							if (Request.ContainsKey("websocket-protocol"))
-								protocol = Request["websocket-protocol"];
-							else if (Request.ContainsKey("sec-websocket-version"))
-								protocol = Request["sec-websocket-version"];
-							else if (Request.ContainsKey("sec-websocket-protocol"))
-								protocol = Request["sec-websocket-protocol"];
-							
-							switch (protocol)
-							{
-								case "sample":
-									reader.frame.Handl = 1;
-									reader.frame.bleng = 8;
-									break;
-								case "7":
-									TaskResult.Protocol = TaskProtocol.WSRFC76;
-									break;
-								case "8":
-									TaskResult.Protocol = TaskProtocol.WSRFC76;
-									break;
-								case "13":
-									TaskResult.Protocol = TaskProtocol.WSRFC76;
-									break;
-								default:
+							case "sample":
+								reader.frame.Handl = 1;
+								reader.frame.bleng = 8;
+								break;
+							case "7":
+								TaskResult.Protocol = TaskProtocol.WSRFC76;
+								break;
+							case "8":
+								TaskResult.Protocol = TaskProtocol.WSRFC76;
+								break;
+							case "13":
+								TaskResult.Protocol = TaskProtocol.WSRFC76;
+								break;
+							default:
 								throw new HTTPException("Неверные заголовки");
 							}
 						}
@@ -105,12 +106,13 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 				}
 			if (!reader.frame.GetBody)
 			{
+				writer.header = Response;
 				if (reader.ReadBody() == -1)
 					return;
 				
 				if (reader.frame.Pcod == HTTPFrame.DATA)
 				{
-					Request.Req();
+					Request.SetReq();
 					if (TaskResult.Protocol != TaskProtocol.HTTP)
 						TaskResult.Option = TaskOption.Protocol;
 					reader.frame.Clear();

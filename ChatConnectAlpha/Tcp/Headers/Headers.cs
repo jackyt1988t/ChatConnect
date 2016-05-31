@@ -6,16 +6,6 @@ namespace ChatConnect.Tcp
 {
     class Header : Dictionary<string, string>, IHeader
     {
-		public const int NONE = 0;
-		public const int HEADERS = 1;
-		public const int REQUEST = 2;
-		public const int RESPONSE = 3;
-		
-		public int State
-		{
-			get;
-			set;
-		}
 		public bool IsEnd
 		{
 			get;
@@ -36,6 +26,10 @@ namespace ChatConnect.Tcp
             get;
             set;
         }
+		public object Sync
+		{
+			get;
+		}
 		public string File
 		{
 			get;
@@ -74,23 +68,45 @@ namespace ChatConnect.Tcp
  
         public Header()
         {
-            Body = null;
-            State = NONE;
+			Sync = new object();
 			TimeConnection = DateTime.Now;
 			SegmentsBuffer = new Queue<byte[]>(50);
         }
-		public void Req()
+		public bool SetReq()
 		{
-			IsReq = true;
+			lock (Sync)
+			{
+				if (!IsReq)
+				{
+					IsReq = true;
+					return false;
+				}
+			}
+			return true;
 		}
-		public void Res()
+		public bool SetRes()
 		{
-			IsRes = true;
+			lock (Sync)
+			{
+				if (!IsRes)
+				{
+					IsRes = true;
+					return false;
+				}
+			}
+			return true;
 		}
-		public void End()
+		public bool SetEnd()
 		{
-			IsEnd = true;
-			SegmentsBuffer.Enqueue(new byte[0]);	
+			lock (Sync)
+			{
+				if (!IsEnd)
+				{
+					IsEnd = true;
+					return false;
+				}
+			}
+			return true;
 		}
 		public virtual byte[] ToByte()
 			{	
