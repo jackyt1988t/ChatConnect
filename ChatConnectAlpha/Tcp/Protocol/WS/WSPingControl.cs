@@ -44,7 +44,7 @@ namespace ChatConnect.Tcp.Protocol.WS
 				IsPong   = false;
 				_setping = value;
 				_getpong = 
-					new TimeSpan(DateTime.Now.Ticks);
+					new TimeSpan(DateTime.Now.Ticks + TimeSpan.TicksPerSecond * 2);
 			}
 		}
 
@@ -53,6 +53,8 @@ namespace ChatConnect.Tcp.Protocol.WS
 
 		public WSPingControl()
 		{
+			IsPong = true;
+			_getpong =
 			_setping = new TimeSpan(DateTime.Now.Ticks + TimeSpan.TicksPerSecond * 5);
 		}
 	}
