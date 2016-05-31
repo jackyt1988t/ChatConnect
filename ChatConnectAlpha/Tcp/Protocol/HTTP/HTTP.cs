@@ -181,7 +181,8 @@ override
 		{
 			int i = 0;
 			int maxlen = 1000 * 16;
-			using (FileStream sr = new FileStream(path, FileMode.Open, FileAccess.Read))
+			using (FileStream sr = new FileStream(
+							path, FileMode.Open, FileAccess.Read))
 			{
 				if (Response.SetRes())
 					return;
@@ -190,10 +191,10 @@ override
 					Response.Add("Connection", "keep-alive");
 				if (!Response.ContainsKey("Content-Type"))
 				Response.Add("Content-Type", "text/" + type);
-				int _count = (int)(sr.Length / maxlen);
-				int length = (int)(sr.Length - _count * maxlen);
 				Response.Add("Content-Length", sr.Length.ToString());
 
+				int _count = (int)(sr.Length / maxlen);
+				int length = (int)(sr.Length - _count * maxlen);
 				byte[] header = Response.ToByte();
 				if (!Message(header, 0, header.Length))
 					return;

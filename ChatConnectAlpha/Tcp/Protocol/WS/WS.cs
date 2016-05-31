@@ -343,7 +343,7 @@ override
 					{
 						/*        Текущее подключение было отключено сброшено или разорвано         */
 						if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
-										       || error == SocketError.ConnectionAborted)
+															   || error == SocketError.ConnectionAborted)
 							Close(WSClose.Abnormal);
 						else
 						{
