@@ -48,7 +48,7 @@ WS.EventConnect += (object obj, PEventArgs a) =>
 WServer Server = new WServer("0.0.0.0", 8081, 2);
 ```
 <div>Отладочная информация</div>
-<img src="MyWebSocketDebug.png" alt="Отладочная информация">
+<img src="https://github.com/jackyt1988t/WebSocket/blob/master/MyWebSocketDebug.png" alt="Отладочная информация">
 <div>
 	Средствами сервера можно отдавать статические фалы по http протоколу
 	Как и для WebSocket необходимо зарегистрировать обработчик события полученного запроса
