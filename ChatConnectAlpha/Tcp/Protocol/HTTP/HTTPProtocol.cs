@@ -52,23 +52,35 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 				if (reader.ReadHead() == -1)
 					return;
 				
-				string protocol = 
-						string.Empty;
 				reader.frame.Handl = 0;
 				if (Request.ContainsKey("upgrade"))
 				{
-					string ng = Request["upgrade"];
-					if (ng.ToLower() == "websocket")
+					string ng = Request["upgrade"].ToLower();
+					if (ng == "close")
 					{
-						
+						Response.Add("Connection", "Close");
+					}
+					if (ng == "websocket")
+					{
+						string version = string.Empty;
+						string protocol	= string.Empty;
 						if (Request.ContainsKey("websocket-protocol"))
-							protocol = Request["websocket-protocol"];
+						{
+							version = Request["websocket-protocol"];
+							protocol = "websocket-protocol";
+						}
 						else if (Request.ContainsKey("sec-websocket-version"))
-							protocol = Request["sec-websocket-version"];
+						{
+							version = Request["sec-websocket-version"];
+							protocol = "sec-websocket-version";
+						}
 						else if (Request.ContainsKey("sec-websocket-protocol"))
-							protocol = Request["sec-websocket-protocol"];
+						{
+							version = Request["protocol"];
+							protocol = sec-websocket-protocol; 
+						}
 						
-						switch (protocol)
+						switch (version)
 						{
 							case "sample":
 								reader.frame.Handl = 1;
@@ -84,17 +96,15 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 								TaskResult.Protocol = TaskProtocol.WSRFC76;
 								break;
 							default:
+								Response.Add(protocol, "sample, 7, 8, 13");
 								throw new HTTPException("Неверные заголовки");
 							}
 						}
 					}
-					else
+					else if (!__handconn)
 					{
-						if (!__handconn)
-						{
-							Close();
-							return;
-						}
+						Close();
+						return;
 					}
 					if (Request.ContainsKey("content-length"))
 					{
