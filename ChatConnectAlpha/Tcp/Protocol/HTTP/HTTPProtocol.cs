@@ -52,7 +52,6 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 				if (reader.ReadHead() == -1)
 					return;
 				
-				reader.frame.Handl = 0;
 				if (Request.ContainsKey("upgrade"))
 				{
 					string ng = Request["upgrade"].ToLower();
@@ -73,7 +72,7 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 						else if (Request.ContainsKey("sec-websocket-protocol"))
 						{
 							version = Request["sec-websocket-protocol"].ToLower();
-							protocol = sec-websocket-protocol; 
+							protocol = "sec-websocket-protocol"; 
 						}
 						
 						switch (version)
