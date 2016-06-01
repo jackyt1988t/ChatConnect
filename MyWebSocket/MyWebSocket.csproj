@@ -145,6 +145,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="MyWebSocket.userprefs" />
     <None Include="TestBrowser\Html\README.md" />
   </ItemGroup>
   <ItemGroup>
