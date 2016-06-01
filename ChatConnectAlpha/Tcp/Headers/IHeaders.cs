@@ -17,7 +17,11 @@ namespace ChatConnect.Tcp
 		{
 			get;
 		}
-		
+		bool Close
+		{
+			get;
+			set;
+		}
 		byte[] Body
         {
             get;
