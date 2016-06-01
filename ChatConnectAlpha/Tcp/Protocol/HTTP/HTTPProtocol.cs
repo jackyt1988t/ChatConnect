@@ -66,17 +66,17 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 						string protocol	= string.Empty;
 						if (Request.ContainsKey("websocket-protocol"))
 						{
-							version = Request["websocket-protocol"];
+							version = Request["websocket-protocol"].ToLower();
 							protocol = "websocket-protocol";
 						}
 						else if (Request.ContainsKey("sec-websocket-version"))
 						{
-							version = Request["sec-websocket-version"];
+							version = Request["sec-websocket-version"].ToLower();
 							protocol = "sec-websocket-version";
 						}
 						else if (Request.ContainsKey("sec-websocket-protocol"))
 						{
-							version = Request["protocol"];
+							version = Request["sec-websocket-protocol"].ToLower();
 							protocol = sec-websocket-protocol; 
 						}
 						
