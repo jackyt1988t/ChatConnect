@@ -106,6 +106,7 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 						Request.Close = true;
 						Response.Close = true;
 						Response.Add("Connection", "close");
+						}
 					else
 						Response.Add("Connection", "keep-alive");
 					if (Request.ContainsKey("content-length"))
@@ -130,7 +131,7 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 				writer.header = Response;
 				if (reader.ReadBody() == -1)
 					return;
-				
+
 				if (reader.frame.Pcod == HTTPFrame.DATA)
 				{
 					Request.SetReq();

@@ -233,8 +233,9 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 					case 5:
 						if (_char == LF)
 						{
+							frame.Handl = 0;
 							frame.GetHead = true;
-							reader.frame.Handl = 0;
+							
 							return read;
 						}
 						else
