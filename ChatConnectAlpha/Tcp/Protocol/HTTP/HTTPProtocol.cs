@@ -56,11 +56,6 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 				if (Request.ContainsKey("upgrade"))
 				{
 					string ng = Request["upgrade"].ToLower();
-					if (ng == "close")
-					{
-						Response.Add("Connection", "Close");
-						Response.Close = true;
-					}
 					if (ng == "websocket")
 					{
 						string version = string.Empty;
@@ -106,6 +101,14 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 					{
 						throw new HTTPException("Неверные заголовки");
 					}
+					if (Request.ContainsKey("connection")
+					    && Request["connection"] == "close")
+					{
+						Request.Close = true;
+						Response.Close = true;
+						Response.Add("Connection", "close");
+					else
+						Response.Add("Connection", "keep-alive");
 					if (Request.ContainsKey("content-length"))
 					{
 						if (int.TryParse(Request["content-length"], 
