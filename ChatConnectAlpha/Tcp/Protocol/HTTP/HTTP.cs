@@ -332,9 +332,14 @@ override
 						write();	
 					else
 					{
-						state = 0;
-						Request = new Header();
-						Response = new Header();
+						if (Response.Close)
+							state = 5;
+						else
+						{
+							state = 0;
+							Request = new Header();
+							Response = new Header();
+						}
 					}
 					if (Interlocked.CompareExchange(ref state,-1, 2) == 2)
 						return TaskResult;
