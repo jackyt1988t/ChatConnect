@@ -21,11 +21,16 @@ namespace ChatConnect.Tcp
 			get;
 			private set;
 		}
+		public bool Close
+		{
+			get;
+			set;
+		}
 		public byte[] Body
-        {
-            get;
-            set;
-        }
+        	{
+            		get;
+            		set;
+        	}
 		public object Sync
 		{
 			get;
