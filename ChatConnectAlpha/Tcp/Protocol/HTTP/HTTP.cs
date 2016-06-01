@@ -190,10 +190,8 @@ override
 				if (Response.SetRes())
 					return;
 				Response.StartString = "HTTP/1.1 200 OK";
-				if (!Response.ContainsKey("Connection"))
-					Response.Add("Connection", "keep-alive");
 				if (!Response.ContainsKey("Content-Type"))
-				Response.Add("Content-Type", "text/" + type);
+					Response.Add("Content-Type", "text/" + type);
 				Response.Add("Content-Length", sr.Length.ToString());
 
 				int _count = (int)(sr.Length / maxlen);
