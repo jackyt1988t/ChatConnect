@@ -234,6 +234,7 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 						if (_char == LF)
 						{
 							frame.GetHead = true;
+							reader.frame.Handl = 0;
 							return read;
 						}
 						else
