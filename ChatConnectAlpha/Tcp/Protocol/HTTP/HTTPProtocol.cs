@@ -59,6 +59,7 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 					if (ng == "close")
 					{
 						Response.Add("Connection", "Close");
+						Response.Close = true;
 					}
 					if (ng == "websocket")
 					{
@@ -103,8 +104,7 @@ namespace ChatConnect.Tcp.Protocol.HTTP
 					}
 					else if (!__handconn)
 					{
-						Close();
-						return;
+						throw new HTTPException("Неверные заголовки");
 					}
 					if (Request.ContainsKey("content-length"))
 					{
