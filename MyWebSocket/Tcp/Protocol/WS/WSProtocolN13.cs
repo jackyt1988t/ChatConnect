@@ -172,12 +172,12 @@ namespace MyWebSocket.Tcp.Protocol.WS
 						}
 						break;
 					case WSFrameN13.PING:
-						if (Rchunk || reader.Frame.BitFin == 0)
+						if (reader.Frame.BitFin == 0)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
 							OnEventPing(new WSData(reader.Frame.DataBody, WSOpcod.Ping, WSFin.Last));
 						break;
 					case WSFrameN13.PONG:
-						if (Rchunk || reader.Frame.BitFin == 0)
+						if (reader.Frame.BitFin == 0)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
 							OnEventPong(new WSData(reader.Frame.DataBody, WSOpcod.Pong, WSFin.Last));
 						if (PingControl.SetPing.ToString() != Encoding.UTF8.GetString(reader.Frame.DataBody))
@@ -187,7 +187,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 						OnEventPong(new WSData(reader.Frame.DataBody, WSOpcod.Pong, WSFin.Last));
 						break;
 					case WSFrameN13.CLOSE:
-						if (Rchunk || reader.Frame.BitFin == 0)
+						if (reader.Frame.BitFin == 0)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
 
 						if (reader.Frame.LengBody > 1)
