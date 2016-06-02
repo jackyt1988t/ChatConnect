@@ -1,9 +1,10 @@
 # MyWebSocket
 ## WebSocket Server написанный на языке c#.
-Поддержка .NET Framework 4.5, Mono 4.2 <br>
-http://jackyt1988t.github.io/WebSocket <br>
-Пример простейшего WebSocket echo сервера <br> 
-Данный пример показывает как запустить  WebSocket Сервер и зарегистировать обработчики событий
+###### Поддержка .NET Framework 4.5, Mono 4.2 <br>
+###### http://jackyt1988t.github.io/WebSocket <br>
+###### В данный момент поддерживается Протокол 13(RFC6455) https://tools.ietf.org/html/rfc6455<br>
+###### Пример простейшего WebSocket echo сервера <br> 
+###### Данный пример показывает как запустить  WebSocket Сервер и зарегистировать обработчики событий
 ```C#
 using System;
 using System.Text;
@@ -50,8 +51,8 @@ WServer Server = new WServer("0.0.0.0", 8081, 2);
 <div>Отладочная информация</div>
 <img src="https://github.com/jackyt1988t/WebSocket/blob/master/MyWebSocketDebug.png" alt="Отладочная информация">
 <div>
-	Средствами сервера можно отдавать статические фалы по http протоколу
-	Как и для WebSocket необходимо зарегистрировать обработчик события полученного запроса
+	###### Средствами сервера можно отдавать статические фалы по http протоколу
+	###### Как и для WebSocket необходимо зарегистрировать обработчик события полученного запроса
 </div>
 ```C#
 // Обрабатываем новый http запрос
