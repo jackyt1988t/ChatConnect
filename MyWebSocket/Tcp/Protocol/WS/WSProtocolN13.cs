@@ -228,23 +228,23 @@ namespace MyWebSocket.Tcp.Protocol.WS
 						if (Rchunk)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
 						if (reader.Frame.BitFin == 1)
-						{
-							Rchunk = false;
 							OnEventData(new WSData(reader.Frame.DataBody, WSOpcod.Binnary, WSFin.Last));
-						}
 						else
+						{
+							Rchunk = true;
 							OnEventChunk(new WSData(reader.Frame.DataBody, WSOpcod.Binnary, WSFin.Next));
+						}
 						break;
 					case WSFrameN13.CONTINUE:
 						if (!Rchunk)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
 						if (reader.Frame.BitFin == 1)
-							OnEventData(new WSData(reader.Frame.DataBody, WSOpcod.Text, WSFin.Last));
-						else
 						{
 							Rchunk = false;
-							OnEventChunk(new WSData(reader.Frame.DataBody, WSOpcod.Text, WSFin.Next));
-						}
+							OnEventData(new WSData(reader.Frame.DataBody, WSOpcod.Continue, WSFin.Last));
+						}					}
+						else
+							OnEventChunk(new WSData(reader.Frame.DataBody, WSOpcod.Continue, WSFin.Next));
 						break;
 					default:
 						throw new WSException("Опкод: " + reader.Frame.BitPcod, WsError.PcodNotSuported, WSClose.UnsupportedData);
