@@ -18,7 +18,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			{
 				debug.Append(frame.DataHead[i].ToString("X") + " ");
 			}
-			debug.Append("[");
+			debug.Append("[ ");
 			for (int i = 0; i < frame.DataHead.Length; i++)
 			{
 				string bin = Convert.ToString(frame.DataHead[i], 2);
@@ -28,7 +28,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 				}
 				debug.Append(bin + " ");
 			}
-			debug.Append("]");
+			debug.Append("] ");
 			debug.AppendLine();
 			debug.AppendLine("FIND: " + frame.BitFin.ToString("X"));
 			debug.AppendLine("RSV1: " + frame.BitRsv1.ToString("X"));
@@ -94,7 +94,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			{
 				debug.Append(frame.DataHead[i].ToString("X") + " ");
 			}
-			debug.Append("[");
+			debug.Append("[ ");
 			for (int i = 0; i < frame.DataHead.Length; i++)
 			{
 				string bin = Convert.ToString(frame.DataHead[i], 2);
@@ -104,7 +104,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 				}
 				debug.Append(bin + " ");
 			}
-			debug.Append("]");
+			debug.Append("] ");
 			debug.AppendLine();
 			debug.AppendLine("More: " + frame.BitMore.ToString("X"));
 			debug.AppendLine("RSV1: " + frame.BitRsv1.ToString("X"));
