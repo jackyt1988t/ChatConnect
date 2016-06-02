@@ -150,9 +150,10 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 								frame.Hand++;
 								if (frame.Hand == 2)
 									ParsePath( header.Path, header );
-								if (frame.Hand  > 2)
-									throw new HTTPException("Некорректная стартовая строка");
-							}
+									if (frame.Hand > 2)
+										header.Http +=
+										   char.ToLower((char)_char);
+						}
 							else
 							{
 								switch (frame.Hand)

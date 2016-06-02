@@ -57,6 +57,13 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			}
 			Session = new WSEssion(((IPEndPoint)Tcp.RemoteEndPoint).Address);
 		}
+		static
+		public void Set101(IHeader header)
+		{
+			header.StartString = "HTTP/1.1 101 Switching Protocols";
+			header.Add("Upgrade", "WebSocket");
+			header.Add("Connection", "Upgrade");
+		}
 		/// <summary>
 		/// Отправляет фрейм по протоколу N13 с указанными входными параметрами
 		/// </summary>
@@ -68,7 +75,16 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		/// <returns></returns>
 		public override bool Message(byte[] message, int recive, int length, WSOpcod opcod, WSFin fin)
 		{
-			int Fin = 1;
+			int Fin = 0;
+			switch (fin)
+			{
+				case WSFin.Next:
+					Fin = 0;
+					break;
+				case WSFin.Last:
+					Fin = 1;
+					break;
+			}
 			int Opcod = 0;
 			switch (opcod)
 			{
@@ -88,7 +104,6 @@ namespace MyWebSocket.Tcp.Protocol.WS
 					Opcod = WSFrameN13.BINNARY;
 					break;
 				case WSOpcod.Continue:
-					Fin = 0;
 					Opcod = WSFrameN13.CONTINUE;
 					break;
 			}
@@ -116,7 +131,6 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		{
 			OnEventWork();
 			
-
 			if (!PingControl.IsPong && PingControl.GetPong.Ticks < DateTime.Now.Ticks)
 				 throw new WSException("Нет ответа Понг", WsError.PingNotResponse, WSClose.ServerError);
 
@@ -229,7 +243,8 @@ namespace MyWebSocket.Tcp.Protocol.WS
 							OnEventChunk(new WSData(reader.Frame.DataBody, WSOpcod.Continue, WSFin.Next));
 						break;
 					default:
-						throw new WSException("Опкод: " + reader.Frame.BitPcod, WsError.PcodNotSuported, WSClose.UnsupportedData);
+						throw new WSException("Опкод не поддерживается " + 
+												     reader.Frame.BitPcod, WsError.PcodNotSuported, WSClose.UnsupportedData);
 				}
 				/*      Очитстить.      */
 				reader.Frame.ClearFrame();				
@@ -251,12 +266,9 @@ namespace MyWebSocket.Tcp.Protocol.WS
 				throw new WSException("Отсутствует заголовок sec-webspcket-key", WsError.PcodNotSuported, WSClose.UnsupportedData);
 			string key = Convert.ToBase64String(sha1.ComputeHash(Encoding.UTF8.GetBytes(Request["sec-websocket-key"] + CHECKKEY)));
 			sha1.Clear();
+				Response.Add("Sec-WebSocket-Accept", key);
 
-			Response.StartString = "HTTP/1.1 101 Switching Protocols";
-			Response.Add("Upgrade", "WebSocket");
-			Response.Add("Connection", "Upgrade");
-			Response.Add("Sec-WebSocket-Accept", key);
-
+			Set101(Response);
 			OnEventConnect(request, response);
 			byte[] buffer = response.ToByte();
 			Message(buffer, 0, buffer.Length);

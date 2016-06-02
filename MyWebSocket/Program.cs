@@ -16,6 +16,7 @@ namespace MyWebSocket
 			WS.Debug = true;
 			WS.EventConnect += (object obj, PEventArgs a) =>
 			{
+				int i = 0;
 				// Объект WebSocket
 				WS WebSocket = obj as WS;
 				// Событие наступает когда приходят новые данные
@@ -31,7 +32,6 @@ namespace MyWebSocket
 					{
 						//Console.WriteLine(data.ToString());
 						// Отправляем текстовый фрейм
-						WebSocket.Message(data.ToString());
 					}
 				};
 				// Событие наступает если произошла ошибка данных

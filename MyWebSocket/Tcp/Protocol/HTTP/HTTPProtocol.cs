@@ -76,23 +76,24 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						}
 						switch (version)
 						{
+							case "7":
+								TaskResult.Jump = true;
+								TaskResult.Protocol = TaskProtocol.WSN13;
+								break;
+							case "8":
+								TaskResult.Jump = true;
+								TaskResult.Protocol = TaskProtocol.WSN13;
+								break;
+							case "13":
+								TaskResult.Jump = true;
+								TaskResult.Protocol = TaskProtocol.WSN13;
+								break;
 							case "sample":
+								TaskResult.Jump = true;
 								reader.frame.Handl = 1;
 								reader.frame.bleng = 8;
 								TaskResult.Protocol = TaskProtocol.WSAMPLE;
 								break;
-							case "7":
-								TaskResult.Protocol = TaskProtocol.WSN13;
-								break;
-							case "8":
-								TaskResult.Protocol = TaskProtocol.WSN13;
-								break;
-							case "13":
-								TaskResult.Protocol = TaskProtocol.WSN13;
-								break;
-							default:
-								Response.Add(protocol, "sample, 7, 8, 13");
-								throw new HTTPException("Неверные заголовки");
 							}
 						}
 					}
