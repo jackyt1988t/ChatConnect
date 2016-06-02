@@ -174,12 +174,12 @@ namespace MyWebSocket.Tcp.Protocol.WS
 					case WSFrameN13.PING:
 						if (reader.Frame.BitFin == 0)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
+
 							OnEventPing(new WSData(reader.Frame.DataBody, WSOpcod.Ping, WSFin.Last));
 						break;
 					case WSFrameN13.PONG:
 						if (reader.Frame.BitFin == 0)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
-							OnEventPong(new WSData(reader.Frame.DataBody, WSOpcod.Pong, WSFin.Last));
 						if (PingControl.SetPing.ToString() != Encoding.UTF8.GetString(reader.Frame.DataBody))
 							throw new WSException("Неверный бит fin.", WsError.PongBodyIncorrect,WSClose.PolicyViolation);
 							PingControl.GetPong = new TimeSpan( DateTime.Now.Ticks );
@@ -203,7 +203,8 @@ namespace MyWebSocket.Tcp.Protocol.WS
 							else
 								сlose( WSClose.Abnormal );
 						if (reader.Frame.LengBody > 2)
-							close.CloseMsg = Encoding.UTF8.GetString(reader.Frame.DataBody, 2, (int) (reader.Frame.LengBody - 2));
+							close.CloseMsg = Encoding.UTF8.GetString(reader.Frame.DataBody, 2, 
+																					( int )( reader.Frame.LengBody - 2 ));
 						return;
 					case WSFrameN13.BINNARY:
 						if (Rchunk)
