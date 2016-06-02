@@ -172,26 +172,14 @@ namespace MyWebSocket.Tcp.Protocol.WS
 						}
 						break;
 					case WSFrameN13.PING:
-						if (Rchunk)
+						if (Rchunk || reader.Frame.BitFin == 1)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
-						if (reader.Frame.BitFin == 1)
-							OnEventData(new WSData(reader.Frame.DataBody, WSOpcod.Ping, WSFin.Last));
-						else
-						{
-							Rchunk = true;
-							OnEventChunk(new WSData(reader.Frame.DataBody, WSOpcod.Ping, WSFin.Next));
-						}
+							OnEventPing(new WSData(reader.Frame.DataBody, WSOpcod.Ping, WSFin.Last));
 						break;
 					case WSFrameN13.PONG:
-						if (Rchunk)
+						if (Rchunk || reader.Frame.BitFin == 1)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
-						if (reader.Frame.BitFin == 1)
-							OnEventData(new WSData(reader.Frame.DataBody, WSOpcod.Pong, WSFin.Last));
-						else
-						{
-							Rchunk = true;
-							OnEventChunk(new WSData(reader.Frame.DataBody, WSOpcod.Pong, WSFin.Next));
-						}
+							OnEventPong(new WSData(reader.Frame.DataBody, WSOpcod.Pong, WSFin.Last));
 						if (PingControl.SetPing.ToString() != Encoding.UTF8.GetString(reader.Frame.DataBody))
 							throw new WSException("Неверный бит fin.", WsError.PongBodyIncorrect,WSClose.PolicyViolation);
 							PingControl.GetPong = new TimeSpan( DateTime.Now.Ticks );
@@ -199,15 +187,8 @@ namespace MyWebSocket.Tcp.Protocol.WS
 						OnEventPong(new WSData(reader.Frame.DataBody, WSOpcod.Pong, WSFin.Last));
 						break;
 					case WSFrameN13.CLOSE:
-						if (Rchunk)
+						if (Rchunk || reader.Frame.BitFin == 1)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
-						if (reader.Frame.BitFin == 1)
-							OnEventData(new WSData(reader.Frame.DataBody, WSOpcod.Close, WSFin.Last));
-						else
-						{
-							Rchunk = true;
-							OnEventChunk(new WSData(reader.Frame.DataBody, WSOpcod.Close, WSFin.Next));
-						}
 
 						if (reader.Frame.LengBody > 1)
 						{
