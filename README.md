@@ -6,7 +6,7 @@
 	В данный момент поддерживается: <br>
 	WebSocket Протокол Sample - требует тестов https://tools.ietf.org/html/draft-ietf-hybi-thewebsocketprotocol-03 <br>
 	WebSocket Протокол №13(RFC6455) - требует тестов https://tools.ietf.org/html/rfc6455 <br>
-	ПланируетсЯ поддержка всех протоеолов.
+	ПланируетсЯ поддержка всех протоколов.
 	Пример простейшего WebSocket echo сервера <br> 
 	Данный пример показывает как запустить  WebSocket Сервер и зарегистировать обработчики событий
 </div>
