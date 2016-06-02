@@ -21,7 +21,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 				return (StreamS)reader;
 			}
 		}
-		bool Rchunk;
+		bool Wchunk;
 		WStreamN13 writer;
 		public override StreamS Writer
 		{
