@@ -1,12 +1,12 @@
 # MyWebSocket
 ## WebSocket Server написанный на языке c#.
-<div style="font-size: 10%">
+<h1 style="font-size: 10%">
 	Поддержка .NET Framework 4.5, Mono 4.2 <br>
 	http://jackyt1988t.github.io/WebSocket <br>
 	В данный момент поддерживается Протокол 13(RFC6455) https://tools.ietf.org/html/rfc6455<br>
 	Пример простейшего WebSocket echo сервера <br> 
 	Данный пример показывает как запустить  WebSocket Сервер и зарегистировать обработчики событий
-</div>
+</h1>
 ```C#
 using System;
 using System.Text;
