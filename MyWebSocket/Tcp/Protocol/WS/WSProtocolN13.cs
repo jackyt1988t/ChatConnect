@@ -184,7 +184,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 							throw new WSException("Неверный бит fin.", WsError.PongBodyIncorrect,WSClose.PolicyViolation);
 							PingControl.GetPong = new TimeSpan( DateTime.Now.Ticks );
 
-						OnEventPong(new WSData(reader.Frame.DataBody, WSOpcod.Pong, WSFin.Last));
+							OnEventPong(new WSData(reader.Frame.DataBody, WSOpcod.Pong, WSFin.Last));
 						break;
 					case WSFrameN13.CLOSE:
 						if (reader.Frame.BitFin == 0)
@@ -223,7 +223,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 						{
 							Rchunk = false;
 							OnEventData(new WSData(reader.Frame.DataBody, WSOpcod.Continue, WSFin.Last));
-						}					}
+						}
 						else
 							OnEventChunk(new WSData(reader.Frame.DataBody, WSOpcod.Continue, WSFin.Next));
 						break;
