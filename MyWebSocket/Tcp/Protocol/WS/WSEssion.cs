@@ -43,9 +43,11 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		/// <param name="address">ip адресс уд. стороны</param>
 		public WSEssion(IPAddress address)
 		{
+			Res = new WSInfo();
+			Req = new WSInfo();
 			Start =
-				DateTime.Now;
-			Address = address;
+			      DateTime.Now;
+			Address  =  address;
 		}
 	}
 }
