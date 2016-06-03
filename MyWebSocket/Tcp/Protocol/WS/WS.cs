@@ -275,17 +275,18 @@ override
 		  	       wsdata[0] = (byte) ((int)numcode >> 08);
 		   	       wsdata[1] = (byte) ((int)numcode >> 00);
 		   	       wsbody.CopyTo(wsdata, 2);
-			bool rtrn;
+			
+			bool rtrn = false;
 			lock(Sync)
 			{
-				if (state > 3)
+				if (state > 4)
 				{
 					if (state == 5
 					    && !close.Res)
 					        close.Res = true;
 					rtrn = false;
 				}
-				else
+				else if (close == null)
 				{
 
 				rtrn = Message(wsdata, WSOpcod.Close, WSFin.Last);
@@ -312,24 +313,24 @@ override
 		  	       wsdata[0] = (byte) ((int)numcode >> 00);
 		   	       wsdata[1] = (byte) ((int)numcode >> 08);
 		   	       wsbody.CopyTo(wsdata, 2);
-			bool rtrn;
+			bool rtrn = false;
 			lock(Sync)
 			{
 				string _point = 
 				    Session.Address.ToString();
-				if (state > 3)
+				if (state > 4)
 				{
 					if (state == 5
 					    && !close.Req)
 					        close.Req = true;
 					rtrn = false;
 				}
-				else
+				else if (close == null)
 				{
 
 				rtrn = Message(wsdata, WSOpcod.Close, WSFin.Last);
 					
-					close = new CloseWS(   _point, numcode   )
+					close = new CloseWS(     _point, numcode     )
 					{
 						Req = true
 					};
@@ -366,7 +367,7 @@ override
 		{
 			lock (Sync)
 			{
-				if (state > 3)
+				if (state > 4)
 					return false;
 				SocketError error;
 				if ((error = Write(message, start, write)) != SocketError.Success)
@@ -498,36 +499,22 @@ override
 		{
 			lock(Sync)
 			{
-				Error(err);
-				if (err.Close == WSClose.ServerError)
-				{
-					if (state < 7)
-					{
-						close = new CloseWS("Server", err.Close);
-						state = 7;
-					}
-					else
-						return;
-				}
-				else
-				{
-					if (state < 5)
-					{
-						Close(
-						   err.Close);
-					}
-					else if (state < 7)
-					{
-						close = new CloseWS("Server", err.Close);
-						state = 4;
-					}
-					else
-						return;
-				}
-					Interlocked.CompareExchange(ref state, 7, 4);
 
+				if (state < 5 
+						&& err.Close != WSClose.ServerError)
+				{
+					state = 4;
+					Error(err);
+					Close(err.Close);
+				}
+				else if (state < 7)
+				{
+					state = 4;
+					Error(err);
+					close = new CloseWS("Server", err.Close);
+				}
+				Interlocked.CompareExchange(ref state, 7, 4);
 			}
-			
 		}
 		/// <summary>
 		/// 
