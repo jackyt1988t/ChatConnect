@@ -99,7 +99,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 					break;
 				case WSOpcod.Close:
 					Opcod = WSFrameN13.CLOSE;
-					break;
+				break;
 				case WSOpcod.Binnary:
 					Opcod = WSFrameN13.BINNARY;
 					break;
@@ -111,8 +111,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			lock (Writer)
 			{
 				/*      Очитстить.      */
-				writer.Frame.ClearFrame();
-
+				writer.Frame.Null();
 				writer.Frame.BitFin   = Fin;
 				writer.Frame.BitPcod  = Opcod;
 				writer.Frame.PartBody = recive;
@@ -145,6 +144,11 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		{
 			if (Reader.Empty)
 				return;
+			
+			if (reader.Frame.GetsHead 
+			 && reader.Frame.GetsBody)
+				reader.Frame.Null();
+
 			if (!reader.Frame.GetsHead)
 			{
 				if (reader.ReadHead() > 0)
@@ -175,8 +179,8 @@ namespace MyWebSocket.Tcp.Protocol.WS
 				{
 					
 					case WSFrameN13.TEXT:
-						if (Rchunk)
-							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
+						/*if (Rchunk)*/
+							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.Normal);
 						if (reader.Frame.BitFin == 1)
 							OnEventData(new WSData(reader.Frame.DataBody, WSOpcod.Text, WSFin.Last));
 						else
@@ -245,9 +249,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 					default:
 						throw new WSException("Опкод не поддерживается " + 
 												     reader.Frame.BitPcod, WsError.PcodNotSuported, WSClose.UnsupportedData);
-				}
-				/*      Очитстить.      */
-				reader.Frame.ClearFrame();				
+				}			
 			}
 		}
 		protected override void Close(CloseWS close)
@@ -257,6 +259,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		protected override void Error(WSException error)
 		{
 			OnEventError(error);
+			reader = new WStreamN13(1024);
 		}
 
 		protected override void Connection(IHeader request, IHeader response)

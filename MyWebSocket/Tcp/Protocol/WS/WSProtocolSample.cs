@@ -95,7 +95,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			lock (Writer)
 			{
 				/*      Очитстить.      */
-				writer.Frame.ClearFrame();
+				writer.Frame.Null();
 
 				writer.Frame.BitMore  = Fin;
 				writer.Frame.BitPcod  = Opcod;
@@ -129,6 +129,11 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		{
 			if (Reader.Empty)
 				return;
+
+			if (reader.Frame.GetsHead 
+			 && reader.Frame.GetsBody)
+				reader.Frame.Null();
+
 			if (!reader.Frame.GetsHead)
 			{
 				if (reader.ReadHead() == -1)
@@ -214,8 +219,6 @@ namespace MyWebSocket.Tcp.Protocol.WS
 					default:
 						throw new WSException("Опкод: " + reader.Frame.BitPcod, WsError.PcodNotSuported, WSClose.UnsupportedData);
 				}
-				/*      Очитстить.      */
-				reader.Frame.ClearFrame();
 			}
 		}
 		protected override void Close(CloseWS close)

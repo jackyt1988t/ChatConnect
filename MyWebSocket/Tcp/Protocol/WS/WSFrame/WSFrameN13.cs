@@ -171,7 +171,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
             set;
         }
 
-		public void ClearFrame()
+		public void Null()
 		{
 			BitFin = 0;
 			Handler = 0;

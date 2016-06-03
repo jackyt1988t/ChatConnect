@@ -6,13 +6,25 @@ namespace MyWebSocket.Tcp.Protocol.WS
 	class WStreamSample : StreamS
 	{
 		byte _ngHead;
-		public WSFrameSample Frame = new WSFrameSample();
-		public WStreamSample(int length)
+		public WSFrameSample Frame;
+
+		public WStreamSample() :
+			base(1024)
 		{
-			_len = length;
-			_buffer  =  new byte[length];
+			Frame = new WSFrameSample();
 		}
- unsafe public override int ReadBody()
+		public WStreamSample(int length) :
+			base(length)
+		{
+			Frame = new WSFrameSample();
+		}
+
+		public override void Reset()
+		{
+			base.Reset();
+			Frame.Null();
+		}
+		unsafe public override int ReadBody()
 		{
 			int read = 0;
 

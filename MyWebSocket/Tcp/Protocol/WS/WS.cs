@@ -268,13 +268,13 @@ override
 		/// <param name="numcode"></param>
 		/// <returns></returns>
 		public bool Close(WSClose numcode)
-		{	
+		{
 			string buffer = CloseWS.Message[numcode];
 			byte[] wsbody = Encoding.UTF8.GetBytes(buffer);
 			byte[] wsdata = new byte [2  +  wsbody.Length];
 		  	       wsdata[0] = (byte) ((int)numcode >> 08);
-		   	       wsdata[1] = (byte) ((int)numcode >> 16);
-		   	       wsbody.CopyTo(wsdata,state = 5;
+		   	       wsdata[1] = (byte) ((int)numcode >> 00);
+		   	       wsbody.CopyTo(wsdata, 2);
 			bool rtrn;
 			lock(Sync)
 			{
@@ -282,18 +282,18 @@ override
 				{
 					if (state == 5
 					    && !close.Res)
-					        close.Ree = true;
+					        close.Res = true;
 					rtrn = false;
 				}
 				else
 				{
 
-				rtrn = Message(wsbody, WSOpcod.Close, WSFin.Last);
-					
-					close = new CloseWS(  "Server", numcode  )
+				rtrn = Message(wsdata, WSOpcod.Close, WSFin.Last);
+
+					close = new CloseWS(    "Server", numcode    )
 					{
-						Res = true;
-					}
+						Res = true
+					};
 					state = 5;
 				}
 			}
@@ -309,9 +309,9 @@ override
 			string buffer = CloseWS.Message[numcode];
 			byte[] wsbody = Encoding.UTF8.GetBytes(buffer);
 			byte[] wsdata = new byte [2  +  wsbody.Length];
-		  	       wsdata[0] = (byte) ((int)numcode >> 08);
-		   	       wsdata[1] = (byte) ((int)numcode >> 16);
-		   	       wsbody.CopyTo(wsdata,state = 5;
+		  	       wsdata[0] = (byte) ((int)numcode >> 00);
+		   	       wsdata[1] = (byte) ((int)numcode >> 08);
+		   	       wsbody.CopyTo(wsdata, 2);
 			bool rtrn;
 			lock(Sync)
 			{
@@ -327,11 +327,11 @@ override
 				else
 				{
 
-				rtrn = Message(wsbody, WSOpcod.Close, WSFin.Last);
+				rtrn = Message(wsdata, WSOpcod.Close, WSFin.Last);
 					
 					close = new CloseWS(   _point, numcode   )
 					{
-						Req = true;
+						Req = true
 					};
 					state = 5;
 				}
@@ -379,13 +379,7 @@ override
 															   || error == SocketError.ConnectionAborted)
 							Close(WSClose.Abnormal);
 						else
-						{
-							if (!SetError())
-							{
-								Error(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
-								сlose(WSClose.ServerError);
-							}
-						}
+							exc(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
 						return false;
 					}
 				}
@@ -461,9 +455,10 @@ override
 					оставшиеся данные в течении одной секунды после чего 
 					закрывает соединение.
 				==================================================================*/
-					if (state == 5)
+					if (state == 5)										 
 					{
-						if (close.AwaitTime.Seconds < 1)
+						if ((!close.Req || !Writer.Empty) 
+								     && close.AwaitTime.Seconds < 2)
 						{
 							if (!close.Req)
 							{
@@ -479,15 +474,14 @@ override
 						if (state == 7)
 						{
 							Close(close);
-							TaskResult.Option = TaskOption.Delete;
+							TaskResult.Option  =  TaskOption.Delete;
 							if (Tcp != null)
 								Tcp.Close();
 						}
 			}
-			catch (WSException exc)
+			catch (WSException err)
 			{
-				Error( exc );
-				сlose(WSClose.ServerError);
+				exc(err);
 			}
 			return TaskResult;
 		}
@@ -500,16 +494,17 @@ override
 			return "WS";
 		}
 		
-		/*private void exc(WSException _exc)
+		private void exc(WSException err)
 		{
 			lock(Sync)
 			{
-				if (_exc.Close == _exc.ServerError)
+				Error(err);
+				if (err.Close == WSClose.ServerError)
 				{
 					if (state < 7)
 					{
-						state = 4;
-						close = new CloseWS(_exc.Close);
+						close = new CloseWS("Server", err.Close);
+						state = 7;
 					}
 					else
 						return;
@@ -517,20 +512,23 @@ override
 				else
 				{
 					if (state < 5)
-						Close(_exc.Close);
+					{
+						Close(
+						   err.Close);
+					}
 					else if (state < 7)
 					{
-						close = new CloseWS(_exc.Close);
+						close = new CloseWS("Server", err.Close);
 						state = 4;
 					}
 					else
 						return;
 				}
-			   	    
+					Interlocked.CompareExchange(ref state, 7, 4);
+
 			}
-			Error(exc);
-			Interlocked.CompareExchange(ref state, 7, 4);
-		}*/
+			
+		}
 		/// <summary>
 		/// 
 		/// </summary>
@@ -547,13 +545,7 @@ override
 									       || error == SocketError.ConnectionAborted)
 						Close(WSClose.Abnormal);
 					else
-					{
-						if (!SetError())
-						{
-							Error(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
-							сlose(WSClose.ServerError);
-						}
-					}
+						exc(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
 				}
 			}
 		}
@@ -577,36 +569,9 @@ override
 									       || error == SocketError.ConnectionAborted)
 						Close(WSClose.Abnormal);
 					else
-					{
-						if (!SetError())
-						{
-							Error(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
-							сlose(WSClose.ServerError);
-						}
-					}
+						exc(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
 				}
 			}
-		}
-		protected bool SetClose()
-		{
-			lock(Sync)
-			{
-				if (state > 3)
-					return true;
-				state = 5;
-				return false;
-			}
-			
-		}
-		protected bool SetError()
-		{
-			lock(Sync)
-			{
-				if (state > 3)
-					return true;
-				state = 4;
-				return false;
-			}		
 		}		
 		protected void OnEventWork()
 		{

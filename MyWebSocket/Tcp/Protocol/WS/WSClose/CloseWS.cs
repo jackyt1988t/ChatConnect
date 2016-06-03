@@ -65,8 +65,10 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		public CloseWS(string host, WSClose code)
 		{
 			Host	  = host;
-			CloseMsg  = Message[code];
+			CloseMsg  = 
+			    Message[code];
 			CloseCode = code;
+			CloseTime = DateTime.Now;
 		}
 		static CloseWS()
 		{

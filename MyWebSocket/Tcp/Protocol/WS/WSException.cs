@@ -16,7 +16,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			get;
 			private set;
 		}
-		public WSClose Closes
+		public WSClose Close
 		{
 			get;
 			private set;
@@ -39,21 +39,21 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		public WSException(string message, WsError num, WSClose close) :
 			base( message )
 			{
-				Closes = close;
+				Close = close;
 				Number = (int)num;
 				Errors = WSErrorMsg.Error(num);
 			}
 		public WSException(string message, SocketError num, WSClose close) :
 			base( message )
 			{
-				Closes = close;
+				Close = close;
 				Number = (int)num;				
 				Errors = WSErrorMsg.Error(num);
 			}
 			
 		public override string ToString()
 		{
-			return "Код ошибки: " + Number + "("+ Closes.ToString() +"). Сообщение об ошибке: " + Errors;	
+			return "Код ошибки: " + Number + "("+ Close.ToString() +"). Сообщение об ошибке: " + Errors;	
 		}
     }
 }

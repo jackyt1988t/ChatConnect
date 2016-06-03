@@ -25,12 +25,10 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			EOFCHUNCK = 
 				new byte[] { 0x30, 0x0D, 0x0A, 0x0D, 0x0A };
 		}
-		public HTTPStream(int length)
+		public HTTPStream(int length) :
+			base(length)
 		{
 			frame = new HTTPFrame();
-			
-			_len = length;
-			_buffer = new byte[length];
 		}
 		public override int ReadBody()
 		{

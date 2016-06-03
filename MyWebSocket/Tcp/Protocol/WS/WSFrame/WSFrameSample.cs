@@ -175,7 +175,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		/// <summary>
 		/// Сбрасывает все перменный в стандартные значения
 		/// </summary>
-		public void ClearFrame()
+		public void Null()
 		{
 			BitMore = 0;
 			Handler = 0;			

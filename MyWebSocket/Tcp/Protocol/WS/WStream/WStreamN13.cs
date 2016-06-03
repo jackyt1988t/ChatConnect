@@ -7,15 +7,23 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		byte _ngHead;
 		public WSFrameN13 Frame;
 
-        public WStreamN13(int length)
+		public WStreamN13() : 
+			base(1024)
+		{
+			Frame = new WSFrameN13();
+		}
+		public WStreamN13(int length) :
+			base(length)
         {
 			Frame  =  new WSFrameN13();
-
-			_len = length;
-			_buffer = new byte[ length ];
         }
 
- unsafe public override int ReadBody()
+		public override void Reset()
+		{
+			base.Reset();
+			Frame.Null();
+		}
+		unsafe public override int ReadBody()
         {
             int read = 0;
 
