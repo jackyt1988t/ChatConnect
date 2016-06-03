@@ -273,6 +273,9 @@ override
 			{
 				if (state > 3)
 				{
+					if (state == 5
+					    && !close.Res)
+					        close.Res = true;
 					return false;
 				}
 				state = 5;
@@ -456,7 +459,6 @@ override
 						return TaskResult;
 					}
 					state = 7;
-					close.Res = true;
 				}
 						if (state == 7)
 						{
