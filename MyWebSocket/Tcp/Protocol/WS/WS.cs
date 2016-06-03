@@ -271,7 +271,6 @@ override
 		{
 			if (SetClose())
 			{
-				close.Res 
 				return false;
 			}
 
