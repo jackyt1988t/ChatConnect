@@ -461,21 +461,21 @@ override
 					оставшиеся данные в течении одной секунды после чего 
 					закрывает соединение.
 				==================================================================*/
-				if (state == 5)
-				{
-					if (!Writer.Empty || close.AwaitTime.Seconds < 1)
+					if (state == 5)
 					{
-						if (!close.Req)
+						if (close.AwaitTime.Seconds < 1)
 						{
-							Read();
-							Data();
+							if (!close.Req)
+							{
+								Read();
+								Data();
+							}
+							if (!Writer.Empty)
+								write();
+							return TaskResult;
 						}
-
-							write();
-						return TaskResult;
+						state = 7;
 					}
-					state = 7;
-				}
 						if (state == 7)
 						{
 							Close(close);
