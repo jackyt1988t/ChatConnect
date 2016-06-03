@@ -268,13 +268,16 @@ override
 		/// <param name="numcode"></param>
 		/// <returns></returns>
 		public bool Close(WSClose numcode)
-		{
-			if (SetClose())
+		{	
+			lock(Sync)
 			{
-				return false;
+				if (state > 3)
+				{
+					return false;
+				}
+				state = 5;
+				close = new CloseWS("Server", numcode);
 			}
-
-			close = new CloseWS("Server", numcode);
 			string buffer = CloseWS.Message[numcode];
 			byte[] wsbody = Encoding.UTF8.GetBytes(buffer);
 			byte[] wsdata = new byte [2  +  wsbody.Length];
@@ -291,14 +294,23 @@ override
 		/// <returns></returns>
 		public bool сlose(WSClose numcode)
 		{
-			if (SetClose())
-				return false;
-			
-			close = new CloseWS(
-				Session.Address.ToString(), numcode);
+			lock(Sync)
+			{
+				string _point = 
+				    Session.Address.ToString();
+				if (state > 3)
+				{
+					if (state == 5
+					    && !close.Req)
+					        close.Req = true;
+					return false;
+				}
+				state = 5;
+				close = new CloseWS( _point, numcode );
+			}
 			string buffer = CloseWS.Message[numcode];
 			byte[] wsbody = Encoding.UTF8.GetBytes(buffer);
-			byte[] wsdata = new byte[2 + wsbody.Length];
+			byte[] wsdata = new byte [2  +  wsbody.Length];
 				   wsdata[0] = (byte)((int)numcode >> 08);
 				   wsdata[1] = (byte)((int)numcode >> 16);
 				   wsbody.CopyTo(wsdata, 2);
@@ -432,22 +444,26 @@ override
 				==================================================================*/
 				if (state == 5)
 				{
-					if (!Writer.Empty && close.AwaitTime.Seconds < 1
-						&& close.CloseCode  !=  WSClose.Abnormal
-						&& close.CloseCode  !=  WSClose.ServerError)
+					if (!Writer.Empty || close.AwaitTime.Seconds < 1)
 					{
+						if (!close.Req)
+						{
+							Read();
+							Data();
+						}
+
 							write();
 						return TaskResult;
 					}
 					state = 7;
-					Tcp.Close();
-					Close(close);
+					close.Res = true;
 				}
 						if (state == 7)
 						{
+							Close(close);
 							TaskResult.Option = TaskOption.Delete;
 							if (Tcp != null)
-								Tcp.Dispose();
+								Tcp.Close();
 						}
 			}
 			catch (WSException exc)
