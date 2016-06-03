@@ -346,13 +346,11 @@ override
 		/// <returns>true в случае ечсли данные можно отправить</returns>
 		public bool Message(byte[] message, int start, int write)
 		{
-
-			if (state > 3)
-				return false;
-
-			SocketError error;
-			lock (Writer)
+			lock (Sync)
 			{
+				if (state > 3)
+					return false;
+				SocketError error;
 				if ((error = Write(message, start, write)) != SocketError.Success)
 				{
 					if (error != SocketError.WouldBlock
@@ -483,7 +481,38 @@ override
 		{
 			return "WS";
 		}
-
+		
+		/*private void exc(WSException _exc)
+		{
+			lock(Sync)
+			{
+				if (_exc.Close == _exc.ServerError)
+				{
+					if (state < 7)
+					{
+						state = 4;
+						close = new CloseWS(_exc.Close);
+					}
+					else
+						return;
+				}
+				else
+				{
+					if (state < 5)
+						Close(_exc.Close);
+					else if (state < 7)
+					{
+						state = 4;
+						close = new CloseWS(_exc.Close);
+					}
+					else
+						return;
+				}
+			   	    
+			}
+			Error(exc);
+			Interlocked.CompareExchange(ref state, 7, 4);
+		}*/
 		/// <summary>
 		/// 
 		/// </summary>
@@ -540,23 +569,6 @@ override
 				}
 			}
 		}
-		/*private void error(WSException _exc)
-		{
-			lock(Sync)
-			{
-				if (state < 5 && _exc.Close != WSClose.ServerError)
-					Close(_exc.Close);
-				else if (state < 7)
-				{
-					state = 7;
-					close = new CloseWS(_exc.Close);
-				}
-				else
-					return;
-			   	    
-			}
-			Error(exc);
-		}*/
 		protected bool SetClose()
 		{
 			lock(Sync)
