@@ -269,26 +269,32 @@ override
 		/// <returns></returns>
 		public bool Close(WSClose numcode)
 		{	
+			string buffer = CloseWS.Message[numcode];
+			byte[] wsbody = Encoding.UTF8.GetBytes(buffer);
+			byte[] wsdata = new byte [2  +  wsbody.Length];
+		  	       wsdata[0] = (byte) ((int)numcode >> 08);
+		   	       wsdata[1] = (byte) ((int)numcode >> 16);
+		   	       wsbody.CopyTo(wsdata,state = 5;
+			bool rtrn;
 			lock(Sync)
 			{
 				if (state > 3)
 				{
 					if (state == 5
 					    && !close.Res)
-					        close.Res = true;
-					return false;
+					        close.Ree = true;
+					rtrn = false;
 				}
-				state = 5;
-				close = new CloseWS("Server", numcode);
-			}
-			string buffer = CloseWS.Message[numcode];
-			byte[] wsbody = Encoding.UTF8.GetBytes(buffer);
-			byte[] wsdata = new byte [2  +  wsbody.Length];
-				   wsdata[0] = (byte) ((int)numcode >> 08);
-				   wsdata[1] = (byte) ((int)numcode >> 16);
-				   wsbody.CopyTo(wsdata, 2);
+				else
+				{
 
-			return Message(wsbody, WSOpcod.Close, WSFin.Last);
+				rtrn = Message(wsbody, WSOpcod.Close, WSFin.Last);
+					
+					state = 5;
+					close = new CloseWS(  "Server", numcode  );
+				}
+			}
+			return rtrn;
 		}
 		/// <summary>
 		/// 
@@ -297,6 +303,13 @@ override
 		/// <returns></returns>
 		public bool сlose(WSClose numcode)
 		{
+			string buffer = CloseWS.Message[numcode];
+			byte[] wsbody = Encoding.UTF8.GetBytes(buffer);
+			byte[] wsdata = new byte [2  +  wsbody.Length];
+		  	       wsdata[0] = (byte) ((int)numcode >> 08);
+		   	       wsdata[1] = (byte) ((int)numcode >> 16);
+		   	       wsbody.CopyTo(wsdata,state = 5;
+			bool rtrn;
 			lock(Sync)
 			{
 				string _point = 
@@ -306,19 +319,18 @@ override
 					if (state == 5
 					    && !close.Req)
 					        close.Req = true;
-					return false;
+					rtrn = false;
 				}
-				state = 5;
-				close = new CloseWS( _point, numcode );
-			}
-			string buffer = CloseWS.Message[numcode];
-			byte[] wsbody = Encoding.UTF8.GetBytes(buffer);
-			byte[] wsdata = new byte [2  +  wsbody.Length];
-				   wsdata[0] = (byte)((int)numcode >> 08);
-				   wsdata[1] = (byte)((int)numcode >> 16);
-				   wsbody.CopyTo(wsdata, 2);
+				else
+				{
 
-			return Message(wsbody, WSOpcod.Close, WSFin.Last);
+				rtrn = Message(wsbody, WSOpcod.Close, WSFin.Last);
+					
+					state = 5;
+					close = new CloseWS(   _point, numcode   );
+				}
+			}
+			return rtrn;
 		}
 		/// <summary>
 		/// Отправляет текстовый фрейм текущему подключению
