@@ -540,7 +540,23 @@ override
 				}
 			}
 		}
-
+		/*private void error(WSException _exc)
+		{
+			lock(Sync)
+			{
+				if (state < 5 && _exc.Close != WSClose.ServerError)
+					Close(_exc.Close);
+				else if (state < 7)
+				{
+					state = 7;
+					close = new CloseWS(_exc.Close);
+				}
+				else
+					return;
+			   	    
+			}
+			Error(exc);
+		}*/
 		protected bool SetClose()
 		{
 			lock(Sync)
