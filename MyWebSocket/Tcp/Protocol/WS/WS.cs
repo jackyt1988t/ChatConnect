@@ -270,7 +270,10 @@ override
 		public bool Close(WSClose numcode)
 		{
 			if (SetClose())
+			{
+				close.Res 
 				return false;
+			}
 
 			close = new CloseWS("Server", numcode);
 			string buffer = CloseWS.Message[numcode];
