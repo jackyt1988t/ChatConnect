@@ -290,8 +290,11 @@ override
 
 				rtrn = Message(wsbody, WSOpcod.Close, WSFin.Last);
 					
+					close = new CloseWS(  "Server", numcode  )
+					{
+						Res = true;
+					}
 					state = 5;
-					close = new CloseWS(  "Server", numcode  );
 				}
 			}
 			return rtrn;
@@ -326,8 +329,11 @@ override
 
 				rtrn = Message(wsbody, WSOpcod.Close, WSFin.Last);
 					
+					close = new CloseWS(   _point, numcode   )
+					{
+						Req = true;
+					};
 					state = 5;
-					close = new CloseWS(   _point, numcode   );
 				}
 			}
 			return rtrn;
@@ -514,8 +520,8 @@ override
 						Close(_exc.Close);
 					else if (state < 7)
 					{
-						state = 4;
 						close = new CloseWS(_exc.Close);
+						state = 4;
 					}
 					else
 						return;
