@@ -5,6 +5,16 @@ namespace MyWebSocket.Tcp.Protocol.WS
 {
 	class CloseWS
 	{
+		public bool Req
+		{
+			get;
+			set;
+		}
+		public bool Res
+		{
+			get;
+			set;
+		}
 		/// <summary>
 		/// Инициатор закрытия
 		/// </summary>
