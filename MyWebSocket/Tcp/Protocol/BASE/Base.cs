@@ -3,7 +3,7 @@ using System.Net.Sockets;
 
 namespace MyWebSocket.Tcp.Protocol
 {
-	class BaseProtocol : IProtocol
+	class BaseProtocol : IProtocol, IDisposable
 	{
 		/// <summary>
 		/// tcp/ip соединение
@@ -37,6 +37,29 @@ namespace MyWebSocket.Tcp.Protocol
 		{
 			get;
 			protected set;
+		}
+
+		public virtual void Dispose()
+		{
+			Dispose(true);
+			GC.SuppressFinalize(this);
+		}
+		public virtual void Dispose(bool disposing)
+		{
+			
+			if (disposing)
+			{
+				if (Tcp != null)
+					Tcp.Dispose();
+				if (Writer != null)
+					Writer.Dispose();
+				if (Reader != null)
+					Reader.Dispose();
+			}
+		}
+		public virtual TaskResult TaskLoopHandlerProtocol()
+		{
+			throw new NotSupportedException("Не поддерживается");
 		}
 
 		protected SocketError Read()
@@ -96,11 +119,6 @@ namespace MyWebSocket.Tcp.Protocol
 				}
 			}
 			return error;
-		}
-
-		public virtual TaskResult TaskLoopHandlerProtocol()
-		{
-			throw new NotSupportedException("Не поддерживается");
 		}
 	}
 }

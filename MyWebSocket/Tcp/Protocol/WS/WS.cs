@@ -57,7 +57,7 @@ override
 		/// <summary>
 		/// Информации о закрытии соединения
 		/// </summary>
-		public CloseWS Sr_Close
+		public CloseWS ___Close
 		{
 			get;
 			protected set;
@@ -234,7 +234,7 @@ override
 			State =
 				States.Connection;
 			Response = new Header();
-			Sr_Close = new CloseWS();
+			___Close = new CloseWS();
 			TaskResult = new TaskResult();
 			PingControl = new WSPingControl();
 		}
@@ -275,7 +275,7 @@ override
 			return Message(message, WSOpcod.Pong, WSFin.Last);
 		}
 		/// <summary>
-		/// 
+		/// закрывает текущее соединение от имени сервера
 		/// </summary>
 		/// <param name="numcode"></param>
 		/// <returns></returns>
@@ -285,28 +285,25 @@ override
 
 			lock (Sync)
 			{
-				lock (Sync)
+				if (!___Close.Req)
 				{
-					if (!Sr_Close.Req)
+					___Close.Req = true;
+					___Close.ServerHost = "WebSocket Server Close";
+					___Close.ServerCode = numcode;
+					___Close.ServerData = message;
+					if (!___Close.Res)
 					{
-						Sr_Close.Req = true;
-						Sr_Close.Host = "WebSocket Server Close";
-						Sr_Close.Code = numcode;
-						Sr_Close.Data = message;
-					}
-					if (state < 5)
-					{
+
 						byte[] _buffer = Encoding.UTF8.GetBytes(message);
-						rtrn = Message( _buffer, WSOpcod.Close, WSFin.Last );
+						rtrn = Message(_buffer, WSOpcod.Close, WSFin.Last);
 						state = 5;
 					}
-					
 				}
 			}
 			return rtrn;
 		}
 		/// <summary>
-		/// 
+		/// Закрывает соединение от имени удаленного узла
 		/// </summary>
 		/// <param name="numcode"></param>
 		/// <returns></returns>
@@ -316,20 +313,19 @@ override
 			
 			lock (Sync)
 			{
-				if (!Sr_Close.Res)
+				if (!___Close.Res)
 				{
-					Sr_Close.Res = true;
-					Sr_Close.host = Session.Address.ToString();
-					Sr_Close.code = numcode;
-					Sr_Close.Data = message;
+					___Close.Res = true;
+					___Close.ClientHost = Session.Address.ToString();
+					___Close.ClientCode = numcode;
+					___Close.ServerData = message;
+					if (!___Close.Req)
+					{
+						byte[] _buffer = Encoding.UTF8.GetBytes(message);
+						rtrn = Message(_buffer, WSOpcod.Close, WSFin.Last);
+						state = 5;
+					}
 				}
-				if (state < 5)
-				{
-					byte[] _buffer = Encoding.UTF8.GetBytes(message);
-					rtrn = Message( _buffer, WSOpcod.Close, WSFin.Last );
-					state = 5;
-				}
-
 			}
 			return rtrn;
 		}
@@ -421,8 +417,7 @@ override
 					Проверяет сокет были получены данные или нет. Если 
 					данные были получены Запускает функцию для получения данных.
 					В случае если соединеие было закрыто назначается 
-					соотвествующий обработчик, если нет утсанавливает обработчик 
-					отправки данных.
+					соотвествующий обработчик.
 				==================================================================*/
 					if (Interlocked.CompareExchange(ref state, 1, 0) != 0)
 						return TaskResult;
@@ -432,7 +427,7 @@ override
 					Проверяет возможность отправки данных. Если данные можно 
 					отправить запускает функцию для отправки данных, в случае 
 					если статус не был изменен выполняет переход к следующему 
-					обраотчику, обработчику обработки пользовательски данных.
+					обраотчику.
 				==================================================================*/
 					if (Interlocked.CompareExchange(ref state, 2, 1) != 1)
 						return TaskResult;
@@ -450,24 +445,31 @@ override
 					оставшиеся данные в течении одной секунды после чего 
 					закрывает соединение.
 				==================================================================*/
-					if (state == 5)										 
+				if (state == 5)										 
+				{
+					if (___Close.AwaitTime.Seconds < 1)
 					{
-						if (Sr_Close.AwaitTime.Seconds < 2 
-								&& (!Sr_Close.Req  ||  !Sr_Close.Res))
+						if ( !___Close.Req 
+							&&___Close.ServerCode == WSClose.Normal )
 						{
 							Read();
 							Data();
+						}
 							write();
 							return TaskResult;
-						}
-						state = 7;
 					}
+					Interlocked.CompareExchange(ref state, 7, 5);
+				}
+				/*==================================================================
+					Вызывает обраотчик закрытия соединения и освобождает занятые
+					ресурсы
+				==================================================================*/
 						if (state == 7)
 						{
-							Close(Sr_Close);
-							TaskResult.Option  =  TaskOption.Delete;
-							if (Tcp != null)
-								Tcp.Close();
+							Close(___Close);
+								TaskResult.Option = TaskOption.Delete;
+							Tcp.Close();
+							Dispose();
 						}
 			}
 			catch (WSException err)
@@ -484,12 +486,15 @@ override
 		{
 			return "WS";
 		}
-		
+		/// <summary>
+		/// Обрабатывает происходящие ошибки и назначает оьраьотчики
+		/// </summary>
+		/// <param name="err">Ошибка WebSocket</param>
 		private void exc(WSException err)
 		{
 			lock(Sync)
 			{
-				if (state < 5 
+				if (state < 4 
 						&& err.Close != WSClose.ServerError)
 				{
 					state = 4;
@@ -500,14 +505,13 @@ override
 				{
 					state = 4;
 					Error(err);
-						Sr_Close.Code = WSClose.ServerError;
 					state = 7;
 				}
 				Interlocked.CompareExchange(ref state, 7, 4);
 			}
 		}
 		/// <summary>
-		/// 
+		/// Читает данные из Socket и записывает их в поток
 		/// </summary>
 		private void read()
 		{

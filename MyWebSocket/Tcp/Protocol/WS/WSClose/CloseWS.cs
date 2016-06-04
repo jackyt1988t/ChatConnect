@@ -36,12 +36,41 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		/// <summary>
 		/// Инициатор закрытия
 		/// </summary>
-		public string Host
+		public string Initiator
 		{
 			get;
-			set;
+			private set;
 		}
-		public string host
+		string serverhost;
+		public string ServerHost
+		{
+			get
+			{
+				return serverhost;
+			}
+			set
+			{
+				if (string.IsNullOrEmpty(Initiator))
+					Initiator = serverhost = value;
+			}
+		}
+		string clienthost;
+		public string ClientHost
+		{
+			get
+			{
+				return clienthost;
+			}
+			set
+			{
+				if (string.IsNullOrEmpty(Initiator))
+					Initiator = clienthost = value;
+			}
+		}
+		/// <summary>
+		/// Информация о закрытии
+		/// </summary>
+		public string ServerData
 		{
 			get;
 			set;
@@ -49,12 +78,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		/// <summary>
 		/// Информация о закрытии
 		/// </summary>
-		public string Data
-		{
-			get;
-			set;
-		}
-		public string data
+		public string ClientData
 		{
 			get;
 			set;
@@ -62,12 +86,12 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		/// <summary>
 		/// Код закрытия WebSocket
 		/// </summary>
-		public WSClose Code
+		public WSClose ServerCode
 		{
 			get;
 			set;
 		}
-		public WSClose code
+		public WSClose ClientCode
 		{
 			get;
 			set;
@@ -101,10 +125,10 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		}
 		public CloseWS(string host, WSClose code)
 		{
-			Host	  = host;
-			Data  = 
-			    Message[code];
-			Code = code;
+			ServerHost = host;
+			ServerData = 
+			     Message[code];
+			ServerCode = code;
 			CloseTime = DateTime.Now;
 		}
 		static CloseWS()
@@ -131,7 +155,12 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		/// <returns>строка с информацие о закрытом подключении</returns>
 		public override string ToString()
 		{
-			return "Инициатор "  +  Host + ". "  +  Code.ToString()  +  ": " + Message[Code];
+			WSClose othercode;
+			if (ServerCode == 0)
+				othercode = ClientCode;
+			else
+				othercode = ServerCode;
+			return "Инициатор "  +  Initiator + ". " + othercode.ToString() + ": " + Message[othercode];
 		}
 	}
 }
