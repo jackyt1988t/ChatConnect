@@ -27,7 +27,8 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		unsafe public override int ReadBody()
 		{
 			int read = 0;
-
+			if (Frame.BitLeng == 0)
+				return read;
 			fixed (byte* sourse = _buffer, target = Frame.DataBody)
 			{
 				byte* ps = sourse + PointR;

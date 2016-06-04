@@ -192,8 +192,8 @@ namespace MyWebSocket.Tcp.Protocol.WS
 						if (reader.Frame.BitMore == 0)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
 						
-							сlose(  WSClose.Normal  );
-						return;
+							close(WSClose.Normal, Encoding.UTF8.GetString(  reader.Frame.DataBody  ));
+						break;
 					case WSFrameN13.BINNARY:
 						if (Rchunk)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);

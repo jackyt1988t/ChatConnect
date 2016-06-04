@@ -27,6 +27,8 @@ namespace MyWebSocket.Tcp.Protocol.WS
         {
             int read = 0;
 
+			if (  Frame.BitLeng == 0  )
+				return read;
             if (  Frame.BitMask == 0  )
             {
 				fixed (byte* sourse = _buffer, target = Frame.DataBody)

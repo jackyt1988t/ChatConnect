@@ -38,14 +38,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			protected set;
 		}
 		volatile int state;
-		/// <summary>
-		/// Информации о закрытии соединения
-		/// </summary>
-		public CloseWS close
-		{
-			get;
-			protected set;
-		}
+		
 		/// <summary>
 		/// Текщий статус протокола
 		/// </summary>
@@ -61,17 +54,35 @@ override
 				return (States)state;
 			}
 		}
+		/// <summary>
+		/// Информации о закрытии соединения
+		/// </summary>
+		public CloseWS Sr_Close
+		{
+			get;
+			protected set;
+		}
 		public WSEssion Session
 		{
 			get;
 			protected set;
 		}
+		
 		public TaskResult TaskResult
 		{
 			get;
 			protected set;
 		}
-		public WSPingControl PingControl;
+		public WSException WSException
+		{
+			get;
+			protected set;
+		}
+		public WSPingControl PingControl
+		{
+			get;
+			protected set;
+		}
 		/// <summary>
 		/// Событие которое наступает при проходе по циклу
 		/// </summary>
@@ -223,6 +234,7 @@ override
 			State =
 				States.Connection;
 			Response = new Header();
+			Sr_Close = new CloseWS();
 			TaskResult = new TaskResult();
 			PingControl = new WSPingControl();
 		}
@@ -267,35 +279,28 @@ override
 		/// </summary>
 		/// <param name="numcode"></param>
 		/// <returns></returns>
-		public bool Close(WSClose numcode)
+		public bool Close(WSClose numcode, string message)
 		{
-			string buffer = CloseWS.Message[numcode];
-			byte[] wsbody = Encoding.UTF8.GetBytes(buffer);
-			byte[] wsdata = new byte [2  +  wsbody.Length];
-		  	       wsdata[0] = (byte) ((int)numcode >> 08);
-		   	       wsdata[1] = (byte) ((int)numcode >> 00);
-		   	       wsbody.CopyTo(wsdata, 2);
-			
 			bool rtrn = false;
-			lock(Sync)
+
+			lock (Sync)
 			{
-				if (state > 4)
+				lock (Sync)
 				{
-					if (state == 5
-					    && !close.Res)
-					        close.Res = true;
-					rtrn = false;
-				}
-				else if (close == null)
-				{
-
-				rtrn = Message(wsdata, WSOpcod.Close, WSFin.Last);
-
-					close = new CloseWS(    "Server", numcode    )
+					if (!Sr_Close.Req)
 					{
-						Res = true
-					};
-					state = 5;
+						Sr_Close.Req = true;
+						Sr_Close.Host = "WebSocket Server Close";
+						Sr_Close.Code = numcode;
+						Sr_Close.Data = message;
+					}
+					if (state < 5)
+					{
+						byte[] _buffer = Encoding.UTF8.GetBytes(message);
+						rtrn = Message( _buffer, WSOpcod.Close, WSFin.Last );
+						state = 5;
+					}
+					
 				}
 			}
 			return rtrn;
@@ -305,37 +310,26 @@ override
 		/// </summary>
 		/// <param name="numcode"></param>
 		/// <returns></returns>
-		public bool сlose(WSClose numcode)
+		public bool close(WSClose numcode, string message)
 		{
-			string buffer = CloseWS.Message[numcode];
-			byte[] wsbody = Encoding.UTF8.GetBytes(buffer);
-			byte[] wsdata = new byte [2  +  wsbody.Length];
-		  	       wsdata[0] = (byte) ((int)numcode >> 00);
-		   	       wsdata[1] = (byte) ((int)numcode >> 08);
-		   	       wsbody.CopyTo(wsdata, 2);
 			bool rtrn = false;
-			lock(Sync)
+			
+			lock (Sync)
 			{
-				string _point = 
-				    Session.Address.ToString();
-				if (state > 4)
+				if (!Sr_Close.Res)
 				{
-					if (state == 5
-					    && !close.Req)
-					        close.Req = true;
-					rtrn = false;
+					Sr_Close.Res = true;
+					Sr_Close.host = Session.Address.ToString();
+					Sr_Close.code = numcode;
+					Sr_Close.Data = message;
 				}
-				else if (close == null)
+				if (state < 5)
 				{
-
-				rtrn = Message(wsdata, WSOpcod.Close, WSFin.Last);
-					
-					close = new CloseWS(     _point, numcode     )
-					{
-						Req = true
-					};
+					byte[] _buffer = Encoding.UTF8.GetBytes(message);
+					rtrn = Message( _buffer, WSOpcod.Close, WSFin.Last );
 					state = 5;
 				}
+
 			}
 			return rtrn;
 		}
@@ -378,7 +372,7 @@ override
 						/*        Текущее подключение было отключено сброшено или разорвано         */
 						if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
 															   || error == SocketError.ConnectionAborted)
-							Close(WSClose.Abnormal);
+							Close(WSClose.Abnormal, string.Empty);
 						else
 							exc(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
 						return false;
@@ -458,23 +452,19 @@ override
 				==================================================================*/
 					if (state == 5)										 
 					{
-						if ((!close.Req || !Writer.Empty) 
-								     && close.AwaitTime.Seconds < 2)
+						if (Sr_Close.AwaitTime.Seconds < 2 
+								&& (!Sr_Close.Req  ||  !Sr_Close.Res))
 						{
-							if (!close.Req)
-							{
-								Read();
-								Data();
-							}
-							if (!Writer.Empty)
-								write();
+							Read();
+							Data();
+							write();
 							return TaskResult;
 						}
 						state = 7;
 					}
 						if (state == 7)
 						{
-							Close(close);
+							Close(Sr_Close);
 							TaskResult.Option  =  TaskOption.Delete;
 							if (Tcp != null)
 								Tcp.Close();
@@ -499,19 +489,19 @@ override
 		{
 			lock(Sync)
 			{
-
 				if (state < 5 
 						&& err.Close != WSClose.ServerError)
 				{
 					state = 4;
 					Error(err);
-					Close(err.Close);
+					Close(err.Close, string.Empty);
 				}
 				else if (state < 7)
 				{
 					state = 4;
 					Error(err);
-					close = new CloseWS("Server", err.Close);
+						Sr_Close.Code = WSClose.ServerError;
+					state = 7;
 				}
 				Interlocked.CompareExchange(ref state, 7, 4);
 			}
@@ -521,18 +511,21 @@ override
 		/// </summary>
 		private void read()
 		{
-			SocketError error;
-			if ((error = Read()) != SocketError.Success)
+			lock (Reader)
 			{
-				if (error != SocketError.WouldBlock
-					&& error != SocketError.NoBufferSpaceAvailable)
+				SocketError error;
+				if ((error = Read()) != SocketError.Success)
 				{
-					/*        Текущее подключение было отключено сброшено или разорвано         */
-					if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
-									       || error == SocketError.ConnectionAborted)
-						Close(WSClose.Abnormal);
-					else
-						exc(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
+					if (error != SocketError.WouldBlock
+						&& error != SocketError.NoBufferSpaceAvailable)
+					{
+						/*        Текущее подключение было отключено сброшено или разорвано         */
+						if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
+															   || error == SocketError.ConnectionAborted)
+							Close(WSClose.Abnormal, string.Empty);
+						else
+							exc(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
+					}
 				}
 			}
 		}
@@ -544,19 +537,23 @@ override
 		{
 			if (Writer.Empty)
 				return;
-			SocketError error;
-			if ((error = Send()) !=  SocketError.Success)
+				
+			lock (Writer)
 			{
-				if (error != SocketError.WouldBlock
-					&& error != SocketError.NoBufferSpaceAvailable)
+				SocketError error;
+				if ((error = Send()) != SocketError.Success)
 				{
-					Writer.Position = Writer.Length;
-					/*        Текущее подключение было отключено сброшено или разорвано         */
-					if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
-									       || error == SocketError.ConnectionAborted)
-						Close(WSClose.Abnormal);
-					else
-						exc(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
+					if (error != SocketError.WouldBlock
+						&& error != SocketError.NoBufferSpaceAvailable)
+					{
+						Writer.Position = Writer.Length;
+						/*        Текущее подключение было отключено сброшено или разорвано         */
+						if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
+							    							   || error == SocketError.ConnectionAborted)
+							Close(WSClose.Abnormal, string.Empty);
+						else
+							exc(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
+					}
 				}
 			}
 		}		

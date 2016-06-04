@@ -98,7 +98,13 @@ namespace MyWebSocket.Tcp.Protocol.WS
 					Opcod = WSFrameN13.PONG;
 					break;
 				case WSOpcod.Close:
-					Opcod = WSFrameN13.CLOSE;
+					byte[] _buffer = new byte[2 + message.Length];
+						   _buffer[0] = (byte)((int)Sr_Close.Code >> 00);
+						   _buffer[1] = (byte)((int)Sr_Close.Code >> 08);
+					length = _buffer.Length;
+					message.CopyTo(_buffer, 2);
+							 message = _buffer;
+				Opcod = WSFrameN13.CLOSE;
 				break;
 				case WSOpcod.Binnary:
 					Opcod = WSFrameN13.BINNARY;
@@ -161,7 +167,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 						throw new WSException("Неверный бит rcv3", WsError.HeaderFrameError, WSClose.PolicyViolation);
 					if (reader.Frame.BitMask == 0)
 						throw new WSException("Неверный бит mask", WsError.HeaderFrameError, WSClose.PolicyViolation);
-					if (reader.Frame.LengBody > 32000 || reader.Frame.LengBody == 0)
+					if (reader.Frame.LengBody > 32000)
 					{
 						string length = reader.Frame.LengBody.ToString("X");
 						throw new WSException("Длинна: " + length, WsError.HeaderFrameError, WSClose.PolicyViolation);
@@ -207,23 +213,30 @@ namespace MyWebSocket.Tcp.Protocol.WS
 					case WSFrameN13.CLOSE:
 						if (reader.Frame.BitFin == 0)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
-
+						
+						string message;
+						WSClose __close;
+					
 						if (reader.Frame.LengBody > 1)
 						{
-							int number;
-							number = reader.Frame.DataBody[0] << 8;
-							number = reader.Frame.DataBody[1] | number;
-							if ( number  >=  1000  &&  number  <= 1012 )
-								сlose((WSClose)number);
+							int number = reader.Frame.DataBody[0] << 8;
+								number = reader.Frame.DataBody[1] | number;
+							
+							if (number >= 1000 && number <= 1012)
+								__close = (WSClose)number;
 							else
-								сlose( WSClose.Abnormal );
+								__close = (WSClose.Abnormal);
 						}
 							else
-								сlose( WSClose.Abnormal );
-						if (reader.Frame.LengBody > 2)
-							close.CloseMsg = Encoding.UTF8.GetString(reader.Frame.DataBody, 2, 
-																					( int )( reader.Frame.LengBody - 2 ));
-						return;
+								__close = (WSClose.Abnormal);
+						
+						if (reader.Frame.LengBody < 3)
+							message = string.Empty;
+						else
+							message = Encoding.UTF8.GetString(reader.Frame.DataBody, 2, (int)(reader.Frame.LengBody - 2));
+							close(__close, message);
+							Close(__close, message);
+						break;
 					case WSFrameN13.BINNARY:
 						if (Rchunk)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
@@ -248,7 +261,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 						break;
 					default:
 						throw new WSException("Опкод не поддерживается " + 
-												     reader.Frame.BitPcod, WsError.PcodNotSuported, WSClose.UnsupportedData);
+												    reader.Frame.BitPcod, WsError.PcodNotSuported, WSClose.UnsupportedData);
 				}			
 			}
 		}

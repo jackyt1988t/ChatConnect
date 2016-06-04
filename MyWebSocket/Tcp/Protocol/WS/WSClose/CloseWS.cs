@@ -5,15 +5,33 @@ namespace MyWebSocket.Tcp.Protocol.WS
 {
 	class CloseWS
 	{
+		bool req;
 		public bool Req
 		{
-			get;
-			set;
+			get
+			{
+				return req;
+			}
+			set
+			{
+				req = value;
+				if (!res)
+					CloseTime = DateTime.Now;
+			}
 		}
+		bool res;
 		public bool Res
 		{
-			get;
-			set;
+			get
+			{
+				return res;
+			}
+			set
+			{
+				res = value;
+				if (!req)
+					CloseTime = DateTime.Now;
+			}
 		}
 		/// <summary>
 		/// Инициатор закрытия
@@ -23,10 +41,20 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			get;
 			set;
 		}
+		public string host
+		{
+			get;
+			set;
+		}
 		/// <summary>
 		/// Информация о закрытии
 		/// </summary>
-		public string CloseMsg
+		public string Data
+		{
+			get;
+			set;
+		}
+		public string data
 		{
 			get;
 			set;
@@ -34,7 +62,12 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		/// <summary>
 		/// Код закрытия WebSocket
 		/// </summary>
-		public WSClose CloseCode
+		public WSClose Code
+		{
+			get;
+			set;
+		}
+		public WSClose code
 		{
 			get;
 			set;
@@ -61,13 +94,17 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		/// Содержит описание завершения подключения
 		/// </summary>
 		public static Dictionary<WSClose, string> Message;
-		
+
+		public CloseWS()
+		{
+			
+		}
 		public CloseWS(string host, WSClose code)
 		{
 			Host	  = host;
-			CloseMsg  = 
+			Data  = 
 			    Message[code];
-			CloseCode = code;
+			Code = code;
 			CloseTime = DateTime.Now;
 		}
 		static CloseWS()
@@ -94,7 +131,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		/// <returns>строка с информацие о закрытом подключении</returns>
 		public override string ToString()
 		{
-			return "Инициатор "  +  Host + ". "  +  CloseCode.ToString()  +  ": " + CloseMsg;
+			return "Инициатор "  +  Host + ". "  +  Code.ToString()  +  ": " + Message[Code];
 		}
 	}
 }
