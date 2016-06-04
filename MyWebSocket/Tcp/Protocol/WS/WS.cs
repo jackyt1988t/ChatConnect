@@ -515,21 +515,18 @@ override
 		/// </summary>
 		private void read()
 		{
-			lock (Reader)
+			SocketError error;
+			if ((error = Read()) != SocketError.Success)
 			{
-				SocketError error;
-				if ((error = Read()) != SocketError.Success)
+				if (error != SocketError.WouldBlock
+					&& error != SocketError.NoBufferSpaceAvailable)
 				{
-					if (error != SocketError.WouldBlock
-						&& error != SocketError.NoBufferSpaceAvailable)
-					{
-						/*        Текущее подключение было отключено сброшено или разорвано         */
-						if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
-															   || error == SocketError.ConnectionAborted)
-							Close(WSClose.Abnormal, string.Empty);
-						else
-							exc(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
-					}
+					/*         Текущее подключение было закрыто сброшено или разорвано          */
+					if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
+														   || error == SocketError.ConnectionAborted)
+						Close(WSClose.Abnormal, string.Empty);
+					else
+						exc(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
 				}
 			}
 		}
@@ -542,22 +539,19 @@ override
 			if (Writer.Empty)
 				return;
 				
-			lock (Writer)
+			SocketError error;
+			if ((error = Send()) != SocketError.Success)
 			{
-				SocketError error;
-				if ((error = Send()) != SocketError.Success)
+				if (error != SocketError.WouldBlock
+					&& error != SocketError.NoBufferSpaceAvailable)
 				{
-					if (error != SocketError.WouldBlock
-						&& error != SocketError.NoBufferSpaceAvailable)
-					{
-						Writer.Position = Writer.Length;
-						/*        Текущее подключение было отключено сброшено или разорвано         */
-						if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
-							    							   || error == SocketError.ConnectionAborted)
-							Close(WSClose.Abnormal, string.Empty);
-						else
-							exc(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
-					}
+					Writer.Position = Writer.Length;
+					/*         Текущее подключение было закрыто сброшено или разорвано          */
+					if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
+														   || error == SocketError.ConnectionAborted)
+						Close(WSClose.Abnormal, string.Empty);
+					else
+						exc(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
 				}
 			}
 		}		
