@@ -280,61 +280,13 @@ override
 			return Message(message, WSOpcod.Pong, WSFin.Last);
 		}
 		/// <summary>
-		/// закрывает текущее соединение от имени сервера
-		/// </summary>
-		/// <param name="numcode"></param>
-		/// <returns></returns>
-		public bool Close(WSClose numcode, string message)
-		{
-			bool rtrn = false;
-
-			lock (Sync)
-			{
-				if (!___Close.Req)
-				{
-					___Close.Req = true;
-					___Close.ServerCode = numcode;
-					___Close.ServerData = message;
-					___Close.ServerHost = "Server";
-					
-					if (!___Close.Res)
-					{
-
-						byte[] _buffer = Encoding.UTF8.GetBytes(message);
-						rtrn = Message(_buffer, WSOpcod.Close, WSFin.Last);
-						state = 5;
-					}
-				}
-			}
-			return rtrn;
-		}
-		/// <summary>
 		/// Закрывает соединение от имени удаленного узла
 		/// </summary>
 		/// <param name="numcode"></param>
 		/// <returns></returns>
-		public bool close(WSClose numcode, string message)
+		public bool Close(WSClose numcode)
 		{
-			bool rtrn = false;
-			
-			lock (Sync)
-			{
-				if (!___Close.Res)
-				{
-					___Close.Res = true;
-					___Close.ClientCode = numcode;
-					___Close.ServerData = message;
-					___Close.ClientHost = Session.Address.ToString();
-					
-					if (!___Close.Req)
-					{
-						byte[] _buffer = Encoding.UTF8.GetBytes(message);
-						rtrn = Message(_buffer, WSOpcod.Close, WSFin.Last);
-						state = 5;
-					}
-				}
-			}
-			return rtrn;
+			return CloseServer( numcode, string.Empty, true );
 		}
 		/// <summary>
 		/// Отправляет текстовый фрейм текущему подключению
@@ -375,7 +327,7 @@ override
 						/*        Текущее подключение было отключено сброшено или разорвано         */
 						if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
 															   || error == SocketError.ConnectionAborted)
-							Close(WSClose.Abnormal, string.Empty);
+							CloseServer( WSClose.Abnormal, string.Empty, false );
 						else
 							exc(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
 						return false;
@@ -453,7 +405,7 @@ override
 					{
 						Error(___Error);
 						if (___Close.ServerCode != WSClose.ServerError)
-							Close(___Error.Close, string.Empty);
+							Close(___Error.Close);
 							Interlocked.CompareExchange (ref state, 7, 4);
 					}
 				/*==================================================================
@@ -482,9 +434,10 @@ override
 				==================================================================*/
 						if (state == 7)
 						{
+							Tcp.Close();
 							Close(___Close);
 								TaskResult.Option   =   TaskOption.Delete;
-							Tcp.Close();
+							
 							Dispose();
 						}
 			}
@@ -536,7 +489,7 @@ override
 					/*         Текущее подключение было закрыто сброшено или разорвано          */
 					if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
 														   || error == SocketError.ConnectionAborted)
-						Close(WSClose.Abnormal, string.Empty);
+						CloseServer( WSClose.Abnormal, string.Empty, false );
 					else
 						exc(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
 				}
@@ -561,12 +514,12 @@ override
 					/*         Текущее подключение было закрыто сброшено или разорвано          */
 					if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
 														   || error == SocketError.ConnectionAborted)
-						Close(WSClose.Abnormal, string.Empty);
+						CloseServer( WSClose.Abnormal, string.Empty, false );
 					else
 						exc(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
 				}
 			}
-		}		
+		}
 		protected void OnEventWork()
 		{
 			PHandlerEvent e;
@@ -637,6 +590,60 @@ override
 				e = __EventConnect;
 			if (e != null)
 				e(this, new PEventArgs(S_CONNECT, string.Empty, null));
+		}
+		/// <summary>
+		/// закрывает текущее соединение от имени сервера
+		/// </summary>
+		/// <param name="numcode"></param>
+		/// <returns></returns>
+		protected bool CloseServer(WSClose numcode, string message, bool initiator)
+		{
+			bool rtrn = false;
+
+			lock (Sync)
+			{
+				if (initiator)
+				{
+					if (!___Close.Res)
+					{
+						___Close.Res = true;
+						___Close.ServerCode = numcode;
+						___Close.ServerData = message;
+						___Close.ServerHost = "Server";
+
+						if (!___Close.Req)
+						{
+
+							byte[] _buffer = Encoding.UTF8.GetBytes(message);
+							rtrn = Message(_buffer, WSOpcod.Close, WSFin.Last);
+							state = 5;
+						}
+					}
+				}
+				else
+				{
+					if (!___Close.Req)
+					{
+						___Close.Req = true;
+						___Close.ClientCode = numcode;
+						___Close.ClientData = message;
+						___Close.ClientHost = 
+						    Session.Address.ToString();
+
+						if (!___Close.Res)
+						{
+							___Close.Res = true;
+							___Close.ServerCode = numcode;
+							___Close.ServerData = message;
+							___Close.ServerHost = "Server";
+							byte[] _buffer = Encoding.UTF8.GetBytes(message);
+							rtrn = Message(_buffer, WSOpcod.Close, WSFin.Last);
+							state = 5;
+						}
+					}
+				}
+			}
+			return rtrn;
 		}
 		/// <summary>
 		/// 

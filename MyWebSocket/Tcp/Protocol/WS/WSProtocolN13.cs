@@ -234,8 +234,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 							message = string.Empty;
 						else
 							message = Encoding.UTF8.GetString(reader.Frame.DataBody, 2, (int)(reader.Frame.LengBody - 2));
-							close(__close, message);
-							Close(__close, message);
+							CloseServer(__close, message, false);
 						break;
 					case WSFrameN13.BINNARY:
 						if (Rchunk)
