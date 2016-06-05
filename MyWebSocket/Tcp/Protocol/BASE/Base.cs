@@ -80,8 +80,8 @@ namespace MyWebSocket.Tcp.Protocol
 			{
 				if (Reader.Clear < length)
 					error = SocketError.SocketError;
-					else
-						Reader.SetLength(length);
+				else
+							Reader.SetLength(length);
 			}
 			return error;
 		}

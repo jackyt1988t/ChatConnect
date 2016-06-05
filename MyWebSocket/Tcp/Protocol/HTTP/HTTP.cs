@@ -169,10 +169,9 @@ override
 				{
 					file(path, type);
 				}
-				catch (Exception exc)
+				catch (Exception err)
 				{
-					Error(exc.Message, exc.StackTrace);
-					Close();
+					exc(new HTTPException(err.Message, err));
 				}
 				finally
 				{
@@ -221,7 +220,7 @@ override
 						byte[] buffer = new byte[length];
 						while ((length - recive) > 0)
 						{
-							recive = sr.Read(buffer, 0, maxlen - length);
+							recive = sr.Read(buffer, 0, length - recive);
 						}
 						if ( !Message(buffer, 0, recive ))
 							return;
@@ -261,7 +260,10 @@ override
 						{
 							if (error != SocketError.Disconnecting && error != SocketError.ConnectionReset
 																   && error != SocketError.ConnectionAborted)
-								exc(new HTTPException("Ошибка записи http данных: " + error.ToString()));
+							{
+								exc( new HTTPException( "Ошибка записи http данных: " + error.ToString() ) );
+								Response.Close = true;
+							}
 							return false;
 						}
 					}
@@ -274,6 +276,10 @@ override
 			if (Response.SetRes())
 				return;
 
+			if (string.IsNullOrEmpty(stack))
+				stack = string.Empty;
+			if (string.IsNullOrEmpty(message))
+				message = string.Empty;
 			Response.StartString = "Http/1.1 503 BAD";
 			Response.Add("Content-Type", "text/html; charset=utf-8");
 			byte[] __body = Encoding.UTF8.GetBytes(
@@ -381,18 +387,14 @@ override
 		{
 			lock (Sync)
 			{
-				if (state < 4)
+				if (state < 7)
 				{
 					state = 4;
 					Error(err);
-					Close(string.Empty);
-				}
-				else if (state < 7)
-				{
-					state = 4;
-					Error(err);
-					state = 7;
-
+					if (Response.Close)
+						state = 7;
+					else
+						Error(err.Message, err.StackTrace);
 				}
 				Interlocked.CompareExchange(ref state, 7, 4);
 			}
@@ -410,7 +412,10 @@ override
 				{
 					if (error != SocketError.Disconnecting && error != SocketError.ConnectionReset
 														   && error != SocketError.ConnectionAborted)
+					{
 						exc( new HTTPException( "Ошибка записи http данных: " + error.ToString() ) );
+						Response.Close = true;
+					}
 				}
 			}
 		}
@@ -430,7 +435,10 @@ override
 				{
 					if (error != SocketError.Disconnecting && error != SocketError.ConnectionReset
 														   && error != SocketError.ConnectionAborted)
+					{
 						exc( new HTTPException( "Ошибка записи http данных: " + error.ToString() ) );
+						Response.Close = true;
+					}
 				}
 			}
 		}
