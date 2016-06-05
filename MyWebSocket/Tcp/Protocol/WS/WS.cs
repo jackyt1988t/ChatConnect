@@ -404,7 +404,8 @@ override
 					if (state == 4)
 					{
 							Error(___Error);
-						if (___Close.ServerCode != WSClose.ServerError)
+							Reader.Reset( );
+						if (___Close.ServerCode  !=  WSClose.ServerError)
 							Close(___Error.Close);
 							Interlocked.CompareExchange (ref state, 7, 4);
 					}
