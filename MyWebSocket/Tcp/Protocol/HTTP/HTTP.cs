@@ -201,24 +201,32 @@ override
 					return;
 				while (i++ < _count)
 				{
-					if (state > 3)
+					int recive = 0;
+					if ( state > 4 )
 						return;
 					byte[] buffer = new byte[maxlen];
-					int recive = sr.Read(buffer, 0, maxlen);
+					while ((maxlen - recive) > 0)
+					{
+						recive = sr.Read(buffer, 0, maxlen - recive);
+					}
 					if ( !Message(buffer, 0, recive ))
 						return;
 					Thread.Sleep(10);
 				}
-				if (length > 0)
-				{
-					if (state > 3)
-						return;
-					byte[] buffer = new byte[length];
-					int recive = sr.Read(buffer, 0, length);
-					if ( !Message(buffer, 0, recive ))
-						return;
-					Thread.Sleep(10);
-				}
+					if (length > 0)
+					{
+						int recive = 0;
+						if ( state > 4 )
+							return;
+						byte[] buffer = new byte[length];
+						while ((length - recive) > 0)
+						{
+							recive = sr.Read(buffer, 0, maxlen - length);
+						}
+						if ( !Message(buffer, 0, recive ))
+							return;
+						Thread.Sleep(10);
+					}
 			}
 		}
 		public bool Close(string message)
@@ -357,9 +365,7 @@ override
 			}
 			catch (HTTPException exc)
 			{
-				if (!SetError())
-					Error(exc);
-				Close();
+				Error(exc);
 			}
 			return TaskResult;
         }

@@ -508,9 +508,6 @@ override
 					state = 4;
 					Error(err);
 					state = 7;
-					___Close.ClientCode = err.Close;
-					___Close.ClientHost = "Server WebSocket Close";
-					
 				}
 				Interlocked.CompareExchange(ref state, 7, 4);
 			}
