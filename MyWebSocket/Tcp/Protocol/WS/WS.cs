@@ -72,12 +72,17 @@ override
 		{
 			get;
 			protected set;
-		}
+		}	
 		public WSException WSException
 		{
 			get;
 			protected set;
 		}
+			public WSException ___Error
+			{
+				get;
+				protected set;
+			}
 		public WSPingControl PingControl
 		{
 			get;
@@ -290,7 +295,7 @@ override
 					___Close.Req = true;
 					___Close.ServerCode = numcode;
 					___Close.ServerData = message;
-					___Close.ServerHost = "WebSocket Server Close";
+					___Close.ServerHost = "Server";
 					
 					if (!___Close.Res)
 					{
@@ -424,6 +429,7 @@ override
 					if (Interlocked.CompareExchange(ref state, 1, 0) != 0)
 						return TaskResult;
 					read();
+				if (state == 1)
 					Data();
 				/*==================================================================
 					Проверяет возможность отправки данных. Если данные можно 
@@ -433,6 +439,7 @@ override
 				==================================================================*/
 					if (Interlocked.CompareExchange(ref state, 2, 1) != 1)
 						return TaskResult;
+					
 					write();
 					if (Interlocked.CompareExchange(ref state, 0, 2) == 2)
 						return TaskResult;
@@ -440,7 +447,14 @@ override
 					if (state == 3)
 					{
 						Connection(Request, Response);
-						Interlocked.CompareExchange(ref state, 0, 3);
+							Interlocked.CompareExchange (ref state, 0, 3);
+					}
+					if (state == 4)
+					{
+						Error(___Error);
+						if (___Close.ServerCode != WSClose.ServerError)
+							Close(___Error.Close, string.Empty);
+							Interlocked.CompareExchange (ref state, 7, 4);
 					}
 				/*==================================================================
 					Если соединение было закрыто правильно пытается отправить
@@ -451,8 +465,8 @@ override
 				{
 					if (___Close.AwaitTime.Seconds < 1)
 					{
-						if ( !___Close.Req 
-							&&___Close.ServerCode == WSClose.Normal )
+						if (!___Close.Req 
+								&& ___Close.ServerCode == WSClose.Normal)
 						{
 							Read();
 							Data();
@@ -460,7 +474,7 @@ override
 							write();
 							return TaskResult;
 					}
-					Interlocked.CompareExchange(ref state, 7, 5);
+							Interlocked.CompareExchange(ref state, 7, 5);
 				}
 				/*==================================================================
 					Вызывает обраотчик закрытия соединения и освобождает занятые
@@ -469,7 +483,7 @@ override
 						if (state == 7)
 						{
 							Close(___Close);
-								TaskResult.Option = TaskOption.Delete;
+								TaskResult.Option   =   TaskOption.Delete;
 							Tcp.Close();
 							Dispose();
 						}
@@ -496,20 +510,16 @@ override
 		{
 			lock(Sync)
 			{
-				if (state < 4 
-						&& err.Close != WSClose.ServerError)
-				{
+				___Error = err;
+				if (state < 4)
 					state = 4;
-					Error(err);
-					Close(err.Close, string.Empty);
-				}
 				else if (state < 7)
 				{
 					state = 4;
-					Error(err);
-					state = 7;
+					___Close.ServerCode = WSClose.ServerError;
 				}
-				Interlocked.CompareExchange(ref state, 7, 4);
+
+				
 			}
 		}
 		/// <summary>

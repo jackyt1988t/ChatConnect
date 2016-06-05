@@ -322,6 +322,7 @@ override
 					if (!Request.IsReq)
 					{
 						read();
+					if (state == 1)
 						Data();
 					}
 					else
