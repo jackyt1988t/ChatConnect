@@ -392,11 +392,10 @@ override
 					state = 4;
 					Error(err);
 					
-					if (Response.IsReq)
-						state =-1;
-					else
+					if (Response.Close)
 						Close(string.Empty);
-					Error(err.Message, err.StackTrace);
+					else
+						Error(err.Message, err.StackTrace);
 				}
 				Interlocked.CompareExchange(ref state, 7, 4);
 			}
