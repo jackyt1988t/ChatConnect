@@ -403,7 +403,7 @@ override
 					}
 					if (state == 4)
 					{
-						Error(___Error);
+							Error(___Error);
 						if (___Close.ServerCode != WSClose.ServerError)
 							Close(___Error.Close);
 							Interlocked.CompareExchange (ref state, 7, 4);
@@ -417,8 +417,7 @@ override
 				{
 					if (___Close.AwaitTime.Seconds < 1)
 					{
-						if (!___Close.Req 
-								&& ___Close.ServerCode == WSClose.Normal)
+						if (!___Close.Req)
 						{
 							Read();
 							Data();
