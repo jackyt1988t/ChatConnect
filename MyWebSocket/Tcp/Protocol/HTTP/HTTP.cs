@@ -256,14 +256,10 @@ override
 					if ((error = Write(message, start, write)) != SocketError.Success)
 					{
 						if (error != SocketError.WouldBlock
-						&& error != SocketError.NoBufferSpaceAvailable)
+						    && error != SocketError.NoBufferSpaceAvailable)
 						{
-							if (error != SocketError.Disconnecting && error != SocketError.ConnectionReset
-																   && error != SocketError.ConnectionAborted)
-							{
-								exc( new HTTPException( "Ошибка записи http данных: " + error.ToString() ) );
-								Response.Close = true;
-							}
+							exc( new HTTPException( "Ошибка записи http данных: " + error.ToString() ) );
+							Response.Close = true;
 							return false;
 						}
 					}
@@ -409,16 +405,8 @@ override
 			SocketError error;
 			if ((error = Read()) != SocketError.Success)
 			{
-				if (error != SocketError.WouldBlock
-					&& error != SocketError.NoBufferSpaceAvailable)
-				{
-					if (error != SocketError.Disconnecting && error != SocketError.ConnectionReset
-														   && error != SocketError.ConnectionAborted)
-					{
-						exc( new HTTPException( "Ошибка записи http данных: " + error.ToString() ) );
-						Response.Close = true;
-					}
-				}
+				exc( new HTTPException( "Ошибка записи http данных: " + error.ToString() ) );
+				Response.Close = true;
 			}
 		}
 		/// <summary>
