@@ -41,7 +41,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		protected override void Work()
 		{
 			if ((__twaitconn + WAIT) < DateTime.Now.Ticks)
-				State = States.Close;
+				Close(string.Empty);
 			OnEventWork();
 		}
 		protected override void Data()
@@ -106,9 +106,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						Request.Close = true;
 						Response.Close = true;
 						Response.Add("Connection", "close");
-						}
-					else
-						Response.Add("Connection", "keep-alive");
+					}
 					if (Request.ContainsKey("content-length"))
 					{
 						if (int.TryParse(Request["content-length"], 

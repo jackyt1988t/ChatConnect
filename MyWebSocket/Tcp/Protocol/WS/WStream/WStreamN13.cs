@@ -221,7 +221,8 @@ namespace MyWebSocket.Tcp.Protocol.WS
                 if (Frame.PartHead == Frame.LengHead)
                 {
                     Frame.GetsHead = true;
-					Frame.DataBody = new byte[Frame.LengBody];
+					if (Frame.LengBody > 0)
+						Frame.DataBody = new byte[Frame.LengBody];
 					return read;
                 }
             }

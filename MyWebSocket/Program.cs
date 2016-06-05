@@ -13,7 +13,7 @@ namespace MyWebSocket
     {
         static void Main(string[] args)
         {
-			WS.Debug = true;
+			//WS.Debug = true;
 			WS.EventConnect += (object obj, PEventArgs a) =>
 			{
 				int i = 0;
@@ -32,6 +32,7 @@ namespace MyWebSocket
 					{
 						//Console.WriteLine(data.ToString());
 						// Отправляем текстовый фрейм
+						WebSocket.Message(data.ToString());
 					}
 				};
 				// Событие наступает если произошла ошибка данных
@@ -60,7 +61,7 @@ namespace MyWebSocket
 						break;
 				}
 			};
-			WServer Server = new WServer("0.0.0.0", 8081, 2);
+			WServer Server = new WServer("0.0.0.0", 8081, 1);
 			
         }
     }

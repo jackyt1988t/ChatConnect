@@ -146,7 +146,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 					throw new WSException("Неверный бит rcv3", WsError.HeaderFrameError, WSClose.PolicyViolation);
 				if (reader.Frame.BitRsv4 == 1)
 					throw new WSException("Неверный бит rcv4", WsError.HeaderFrameError, WSClose.PolicyViolation);
-				if (reader.Frame.LengBody > 32000 || reader.Frame.LengBody == 0)
+				if (reader.Frame.LengBody < 0 || reader.Frame.LengBody > 32000)
 				{
 					string length = reader.Frame.LengBody.ToString("X");
 					throw new WSException("Длинна: " + length, WsError.HeaderFrameError, WSClose.PolicyViolation);

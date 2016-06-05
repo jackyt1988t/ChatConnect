@@ -136,14 +136,14 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		{
 			OnEventWork();
 			
-			if (!PingControl.IsPong && PingControl.GetPong.Ticks < DateTime.Now.Ticks)
-				 throw new WSException("Нет ответа Понг", WsError.PingNotResponse, WSClose.ServerError);
+			/*if (!PingControl.IsPong && PingControl.GetPong.Ticks < DateTime.Now.Ticks)
+				 throw new WSException( "Нет ответа Понг", WsError.PingNotResponse, WSClose.PolicyViolation);
 
 			if (!PingControl.IsPing && PingControl.SetPing.Ticks < DateTime.Now.Ticks)
 			{	
-				 PingControl.SetPing  =  new TimeSpan(DateTime.Now.Ticks + TimeSpan.TicksPerSecond * 5);
+				 PingControl.SetPing  =  new TimeSpan(  DateTime.Now.Ticks  +  TimeSpan.TicksPerSecond * 5  );
 			Ping(PingControl.SetPing.ToString());
-			}			
+			}*/			
 		}
 
 		protected override void Data()
@@ -167,7 +167,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 						throw new WSException("Неверный бит rcv3", WsError.HeaderFrameError, WSClose.PolicyViolation);
 					if (reader.Frame.BitMask == 0)
 						throw new WSException("Неверный бит mask", WsError.HeaderFrameError, WSClose.PolicyViolation);
-					if (reader.Frame.LengBody > 32000)
+					if (reader.Frame.LengBody < 0 || reader.Frame.LengBody > 32000)
 					{
 						string length = reader.Frame.LengBody.ToString("X");
 						throw new WSException("Длинна: " + length, WsError.HeaderFrameError, WSClose.PolicyViolation);

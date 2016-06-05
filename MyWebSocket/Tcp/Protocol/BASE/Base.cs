@@ -65,8 +65,6 @@ namespace MyWebSocket.Tcp.Protocol
 		protected SocketError Read()
 		{
 			SocketError error = SocketError.Success;
-			if (Reader.Clear == 0)
-				return SocketError.NoData;
 			int count = 8000;
 			int start =
 			   (int)Reader.PointW;
@@ -76,9 +74,15 @@ namespace MyWebSocket.Tcp.Protocol
 			if (Reader.Count - start < count)
 				count =
 					  (int)(Reader.Count - start);
+			
 			int length = Tcp.Receive(buffer, start, count, SocketFlags.None, out error);
 			if (length > 0)
-				Reader.SetLength(length);
+			{
+				if (Reader.Clear < length)
+					error = SocketError.SocketError;
+					else
+						Reader.SetLength(length);
+			}
 			return error;
 		}
 		protected SocketError Send()
@@ -111,7 +115,7 @@ namespace MyWebSocket.Tcp.Protocol
 			if (length > 0)
 			{
 				if (Writer.Clear < length)
-					error = SocketError.NoData;
+					error = SocketError.SocketError;
 				else
 				{
 					Writer.Write(buffer, start, length);

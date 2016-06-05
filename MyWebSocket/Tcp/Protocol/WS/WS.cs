@@ -288,9 +288,10 @@ override
 				if (!___Close.Req)
 				{
 					___Close.Req = true;
-					___Close.ServerHost = "WebSocket Server Close";
 					___Close.ServerCode = numcode;
 					___Close.ServerData = message;
+					___Close.ServerHost = "WebSocket Server Close";
+					
 					if (!___Close.Res)
 					{
 
@@ -316,9 +317,10 @@ override
 				if (!___Close.Res)
 				{
 					___Close.Res = true;
-					___Close.ClientHost = Session.Address.ToString();
 					___Close.ClientCode = numcode;
 					___Close.ServerData = message;
+					___Close.ClientHost = Session.Address.ToString();
+					
 					if (!___Close.Req)
 					{
 						byte[] _buffer = Encoding.UTF8.GetBytes(message);
@@ -506,6 +508,9 @@ override
 					state = 4;
 					Error(err);
 					state = 7;
+					___Close.ClientCode = err.Close;
+					___Close.ClientHost = "Server WebSocket Close";
+					
 				}
 				Interlocked.CompareExchange(ref state, 7, 4);
 			}

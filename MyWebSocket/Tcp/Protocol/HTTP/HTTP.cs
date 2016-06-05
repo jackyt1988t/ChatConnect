@@ -223,9 +223,13 @@ override
 		}
 		public bool Close(string message)
 		{
-			if (SetClose())
-				return false;
-			return true;
+			lock (Sync)
+			{
+				if (state > 4)
+					return true;
+					state = 5;
+					return false;
+			}
 		}
 		/// <summary>
 		/// Отправляет данные текущему подключению
@@ -234,26 +238,24 @@ override
 		/// <returns>true в случае ечсли данные можно отправить</returns>
 		public bool Message(byte[] message, int start, int write)
 		{
-
-			if (state > 3)
-				return false;
-			
-			SocketError error;
-			lock (Writer)
+			lock (Sync)
 			{
-				if ((error = Write(message, start, write)) != SocketError.Success)
+				if (state > 4)
+					return false;
+
+				SocketError error;
+				lock (Writer)
 				{
-					if (error != SocketError.WouldBlock
-					&& error != SocketError.NoBufferSpaceAvailable)
+					if ((error = Write(message, start, write)) != SocketError.Success)
 					{
-						if (error != SocketError.Disconnecting && error != SocketError.ConnectionReset
-															   && error != SocketError.ConnectionAborted)
+						if (error != SocketError.WouldBlock
+						&& error != SocketError.NoBufferSpaceAvailable)
 						{
-							if (!SetError())
-								Error(new HTTPException("Ошибка записи http данных: " + error.ToString()));
+							if (error != SocketError.Disconnecting && error != SocketError.ConnectionReset
+																   && error != SocketError.ConnectionAborted)
+								exc(new HTTPException("Ошибка записи http данных: " + error.ToString()));
+							return false;
 						}
-						Close();
-						return false;
 					}
 				}
 			}
@@ -317,9 +319,7 @@ override
 				{
 					Connection(Request, Response);
 					if (Interlocked.CompareExchange(ref state,-1, 3) == 3)
-					{
 						return TaskResult;
-					}
 				}
 				if (state ==-1)
 				{
@@ -343,18 +343,17 @@ override
 						return TaskResult;
 				}
 				
-				if (state == 5)
-				{
-					state = 7;
-					Tcp.Close();
-					Close();
-				}
-					if (state == 7)
-					{
-						TaskResult.Option = TaskOption.Delete;
-						if (Tcp != null)
-							Tcp.Dispose();
-					}
+								if (state == 5)
+								{
+									Close();
+									state = 7;
+								}
+								if (state == 7)
+								{
+									TaskResult.Option = TaskOption.Delete;
+									Tcp.Close();
+									Dispose();
+								}
 			}
 			catch (HTTPException exc)
 			{
@@ -369,6 +368,30 @@ override
         	return "HTTP";
         }
 		/// <summary>
+		/// Обрабатывает происходящие ошибки и назначает оьраьотчики
+		/// </summary>
+		/// <param name="err">Ошибка WebSocket</param>
+		private void exc(HTTPException err)
+		{
+			lock (Sync)
+			{
+				if (state < 4)
+				{
+					state = 4;
+					Error(err);
+					Close(string.Empty);
+				}
+				else if (state < 7)
+				{
+					state = 4;
+					Error(err);
+					state = 7;
+
+				}
+				Interlocked.CompareExchange(ref state, 7, 4);
+			}
+		}
+		/// <summary>
 		/// 
 		/// </summary>
 		private void read()
@@ -381,11 +404,7 @@ override
 				{
 					if (error != SocketError.Disconnecting && error != SocketError.ConnectionReset
 														   && error != SocketError.ConnectionAborted)
-					{
-						if (!SetError())
-							Error(new HTTPException("Ошибка записи http данных: " + error.ToString()));
-					}
-					Close();
+						exc( new HTTPException( "Ошибка записи http данных: " + error.ToString() ) );
 				}
 			}
 		}
@@ -405,24 +424,9 @@ override
 				{
 					if (error != SocketError.Disconnecting && error != SocketError.ConnectionReset
 														   && error != SocketError.ConnectionAborted)
-					{
-						if (!SetError())
-							Error(new HTTPException("Ошибка записи http данных: " + error.ToString()));
-					}
-					Close();
+						exc( new HTTPException( "Ошибка записи http данных: " + error.ToString() ) );
 				}
 			}
-		}
-		protected bool SetClose()
-		{
-			lock (Sync)
-			{
-				if (state > 3)
-					return true;
-				state = 5;
-				return false;
-			}
-
 		}
 		protected bool SetError()
 		{
