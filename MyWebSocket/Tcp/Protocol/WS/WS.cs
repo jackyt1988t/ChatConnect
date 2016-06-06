@@ -422,13 +422,9 @@ override
 						{
 							Read();
 							Data();
-							return TaskResult;
 						}
-						if (  !Writer.Empty. )
-						{
 							write();
 							return TaskResult;
-						}
 					}
 							Interlocked.CompareExchange(ref state, 7, 5);
 				}
