@@ -37,13 +37,13 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			get;
 			protected set;
 		}
-		volatile int state;
-		
+		volatile 
+		int state;
 		/// <summary>
 		/// Текщий статус протокола
 		/// </summary>
-override
-		public  States State
+		override
+		public States State
 		{
 			protected set
 			{
