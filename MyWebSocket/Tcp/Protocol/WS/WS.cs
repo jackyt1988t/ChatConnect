@@ -409,9 +409,10 @@ override
 					{
 						Reader.Reset();
 							
-							Error(___Error.Error);
-						if (___Close.ServerCode != WSClose.ServerError)
-							Close(___Error.Error.Close);
+						Error(___Error.Error);
+						  if (___Error.Errors.Count == 1
+						      &&  ___Close.ServerCode != WSClose.ServerError)
+						    Close(___Error.Error.Close);
 							
 							Interlocked.CompareExchange (ref state, 7, 4);
 					}
@@ -469,15 +470,9 @@ override
 		{
 			lock(Sync)
 			{
-				
-				if (state < 4)
+				___Error._AddError_(err);
+				if (state < 7)
 					state = 4;
-				else if (state < 7)
-				{
-					state = 4;
-					___Close.ServerCode = WSClose.ServerError;
-				}
-					___Error._AddError_(err);
 			}
 		}
 		/// <summary>
