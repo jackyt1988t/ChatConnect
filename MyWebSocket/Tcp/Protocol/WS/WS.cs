@@ -416,15 +416,19 @@ override
 				==================================================================*/
 				if (state == 5)										 
 				{
-					if (___Close.AwaitTime.Seconds < 1)
+					if (___Close.AwaitTime.Seconds < 3)
 					{
 						if (!___Close.Req)
 						{
 							Read();
 							Data();
+							return TaskResult;
 						}
+						if (  !Writer.Empty. )
+						{
 							write();
 							return TaskResult;
+						}
 					}
 							Interlocked.CompareExchange(ref state, 7, 5);
 				}
