@@ -108,6 +108,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
     <Compile Include="Tcp\Protocol\WS\WS.cs" />
+    <Compile Include="Tcp\Protocol\WS\WSError\ErrorWS.cs" />
     <Compile Include="Tcp\Protocol\WS\WSData.cs" />
     <Compile Include="Tcp\Protocol\WS\WSClose\WSClose.cs" />
     <Compile Include="Tcp\Protocol\WS\WSDebug\WSDebug.cs" />
@@ -165,6 +166,7 @@
     <Content Include="TestBrowser\Html\index.html" />
     <Content Include="TestBrowser\Html\script\initws.js" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

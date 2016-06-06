@@ -62,6 +62,11 @@ override
 			get;
 			protected set;
 		}
+		public ErrorWS ___Error
+		{
+			get;
+			protected set;
+		}
 		public WSEssion Session
 		{
 			get;
@@ -78,11 +83,6 @@ override
 			get;
 			protected set;
 		}
-			public WSException ___Error
-			{
-				get;
-				protected set;
-			}
 		public WSPingControl PingControl
 		{
 			get;
@@ -463,7 +463,7 @@ override
 		{
 			lock(Sync)
 			{
-				___Error = err;
+				
 				if (state < 4)
 					state = 4;
 				else if (state < 7)
@@ -471,8 +471,7 @@ override
 					state = 4;
 					___Close.ServerCode = WSClose.ServerError;
 				}
-
-				
+					___Error.AddError(err);
 			}
 		}
 		/// <summary>
