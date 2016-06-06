@@ -240,6 +240,7 @@ override
 				States.Connection;
 			Response = new Header();
 			___Close = new CloseWS();
+			___Error = new ErrorWS();
 			TaskResult = new TaskResult();
 			PingControl = new WSPingControl();
 		}
@@ -399,14 +400,19 @@ override
 					if (state == 3)
 					{
 						Connection(Request, Response);
-							Interlocked.CompareExchange (ref state, 0, 3);
+
+					if (Interlocked.CompareExchange(ref state, 0, 3) == 5)
+						return TaskResult;
+
 					}
 					if (state == 4)
 					{
-							Error(___Error);
-							Reader.Reset( );
+						Reader.Reset();
+							
+							Error(___Error.Error);
 						if (___Close.ServerCode  !=  WSClose.ServerError)
-							Close(___Error.Close);
+							Close(___Error.Error.Close);
+							
 							Interlocked.CompareExchange (ref state, 7, 4);
 					}
 				/*==================================================================
@@ -471,7 +477,7 @@ override
 					state = 4;
 					___Close.ServerCode = WSClose.ServerError;
 				}
-					___Error.AddError(err);
+					___Error._AddError_(err);
 			}
 		}
 		/// <summary>

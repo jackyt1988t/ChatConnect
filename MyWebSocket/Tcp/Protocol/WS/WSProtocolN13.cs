@@ -99,8 +99,8 @@ namespace MyWebSocket.Tcp.Protocol.WS
 					break;
 				case WSOpcod.Close:
 					byte[] _buffer = new byte[2 + message.Length];
-						   _buffer[0] = (byte)((int)(___Close.ServerCode == 0 ? ___Close.ClientCode : ___Close.ServerCode) >> 08);
-						   _buffer[1] = (byte)((int)(___Close.ServerCode == 0 ? ___Close.ClientCode : ___Close.ServerCode) >> 00);
+						   _buffer[0] = (byte)((int)___Close.Other_Code >> 08);
+						   _buffer[1] = (byte)((int)___Close.Other_Code >> 00);
 				length = _buffer.Length;
 					message.CopyTo(_buffer, 2);
 							 message = _buffer;
@@ -185,7 +185,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 				{
 					
 					case WSFrameN13.TEXT:
-						if (Rchunk)
+						/*if (Rchunk)*/
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
 						if (reader.Frame.BitFin == 1)
 							OnEventData(new WSData(reader.Frame.DataBody, WSOpcod.Text, WSFin.Last));

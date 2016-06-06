@@ -36,7 +36,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		/// <summary>
 		/// Инициатор закрытия
 		/// </summary>
-		public string Initiator
+		public string Other_Host
 		{
 			get;
 			private set;
@@ -50,8 +50,8 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			}
 			set
 			{
-				if (string.IsNullOrEmpty(Initiator))
-					Initiator = serverhost = value;
+				if (string.IsNullOrEmpty(Other_Host))
+					Other_Host = serverhost = value;
 			}
 		}
 		string clienthost;
@@ -63,8 +63,8 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			}
 			set
 			{
-				if (string.IsNullOrEmpty(Initiator))
-					Initiator = clienthost = value;
+				if (string.IsNullOrEmpty(Other_Host))
+					Other_Host = clienthost = value;
 			}
 		}
 		/// <summary>
@@ -86,11 +86,27 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		/// <summary>
 		/// Код закрытия WebSocket
 		/// </summary>
+		public WSClose Other_Code
+		{
+			get
+			{
+				if (Other_Host == "Server")
+					return ServerCode;
+				else
+					return ClientCode;
+			}
+		}
+		/// <summary>
+		/// Код закрытия WebSocket
+		/// </summary>
 		public WSClose ServerCode
 		{
 			get;
 			set;
 		}
+		/// <summary>
+		/// Код закрытия WebSocket
+		/// </summary>
 		public WSClose ClientCode
 		{
 			get;
@@ -155,12 +171,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		/// <returns>строка с информацие о закрытом подключении</returns>
 		public override string ToString()
 		{
-			WSClose othercode;
-			if (ServerCode == 0)
-				othercode = ClientCode;
-			else
-				othercode = ServerCode;
-			return "Инициатор "  +  Initiator + ". " + othercode.ToString() + ": " + Message[othercode];
+			return "Инициатор "  +  Other_Host + ". " + Other_Code.ToString() + ": " + Message[Other_Code];
 		}
 	}
 }

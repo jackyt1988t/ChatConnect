@@ -14,7 +14,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 					if (Errors.Count == 0)
 						return null;
 					else
-						return Errors[Errors.Count];
+						return Errors[Errors.Count - 1];
 				}
 			}
 		}
@@ -25,7 +25,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			Sync = new object();
 			Errors = new List<WSException>(2);
 		}
-		public void AddError(  WSException error  )
+		public void _AddError_(  WSException error  )
 		{
 			lock (Sync)
 				Errors.Add(error);
