@@ -410,7 +410,7 @@ override
 						Reader.Reset();
 							
 							Error(___Error.Error);
-						if (___Close.ServerCode  !=  WSClose.ServerError)
+						if (___Close.ServerCode != WSClose.ServerError)
 							Close(___Error.Error.Close);
 							
 							Interlocked.CompareExchange (ref state, 7, 4);
