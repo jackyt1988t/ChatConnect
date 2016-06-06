@@ -422,7 +422,7 @@ override
 				==================================================================*/
 				if (state == 5)										 
 				{
-					if (___Close.AwaitTime.Seconds < 1)
+					if (___Close.AwaitTime.Seconds < 3)
 					{
 						if (!___Close.Req)
 						{
