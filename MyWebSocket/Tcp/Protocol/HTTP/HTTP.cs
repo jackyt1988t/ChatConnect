@@ -254,7 +254,7 @@ override
 				if ((error = Write(message, start, write)) != SocketError.Success)
 				{
 					if (error != SocketError.WouldBlock
-						   || error != SocketError.NoBufferSpaceAvailable)
+						   && error != SocketError.NoBufferSpaceAvailable)
 					{
 						exc( new HTTPException( "Ошибка записи http данных: " + error.ToString() ) );
 						Response.Close = true;
@@ -403,9 +403,9 @@ override
 			if ((error = Read()) != SocketError.Success)
 			{
 				if (error != SocketError.WouldBlock
-					|| error != SocketError.NoBufferSpaceAvailable)
+					&& error != SocketError.NoBufferSpaceAvailable)
 				{
-					exc( new HTTPException("Ошибка записи http данных: " + error.ToString()));
+					exc( new HTTPException("Ошибка чтения http данных: " + error.ToString()));
 					Response.Close = true;
 				}
 			}
@@ -422,7 +422,7 @@ override
 			if ((error = Send()) != SocketError.Success)
 			{
 				if (error != SocketError.WouldBlock
-					|| error != SocketError.NoBufferSpaceAvailable)
+					&& error != SocketError.NoBufferSpaceAvailable)
 				{
 						exc( new HTTPException("Ошибка записи http данных: " + error.ToString()));
 						Response.Close = true;

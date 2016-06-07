@@ -8,7 +8,7 @@ namespace MyWebSocket.Log
 	{
 		Info =1,
 		Debug = 2,
-		Fatail = 3
+		Fatal = 3
 	}
     static class Loging
     {

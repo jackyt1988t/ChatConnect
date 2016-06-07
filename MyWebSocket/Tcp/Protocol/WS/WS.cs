@@ -5,6 +5,7 @@ using System.Net.Sockets;
 
 using System.Threading;
 using System;
+using MyWebSocket.Log;
 
 namespace MyWebSocket.Tcp.Protocol.WS
 {
@@ -323,7 +324,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 				if ((error = Write(message, start, write)) != SocketError.Success)
 				{
 					if (error != SocketError.WouldBlock
-						|| error != SocketError.NoBufferSpaceAvailable)
+						&& error != SocketError.NoBufferSpaceAvailable)
 					{
 						/*        Текущее подключение было отключено сброшено или разорвано         */
 						if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
@@ -420,7 +421,7 @@ override
 				==================================================================*/
 				if (state == 5)										 
 				{
-					if (___Close.AwaitTime.Seconds < 3)
+					if (___Close.AwaitTime.Seconds < 2)
 					{
 						if (!___Close.Req)
 						{
@@ -438,17 +439,20 @@ override
 				==================================================================*/
 						if (state == 7)
 						{
-							Tcp.Close();
+							Dispose();
 							Close(___Close);
 								TaskResult.Option   =   TaskOption.Delete;
-							
-							Dispose();
 						}
 			}
 			catch (WSException err)
 			{
 				ExcServer(err);
 				Reader.Reset();
+			}
+			catch (Exception exc)
+			{
+				Loging.AddMessage(
+					exc.Message + Loging.NewLine + exc.StackTrace, "Log/log.log", Log.Log.Fatal);
 			}
 			return TaskResult;
 		}
@@ -469,7 +473,7 @@ override
 			if ((error = Read()) != SocketError.Success)
 			{
 				if (error != SocketError.WouldBlock
-					|| error != SocketError.NoBufferSpaceAvailable)
+					&& error != SocketError.NoBufferSpaceAvailable)
 				{
 					/*         Текущее подключение было закрыто сброшено или разорвано          */
 					if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
@@ -493,7 +497,7 @@ override
 			if ((error = Send()) != SocketError.Success)
 			{
 				if (error != SocketError.WouldBlock
-					|| error != SocketError.NoBufferSpaceAvailable)
+					&& error != SocketError.NoBufferSpaceAvailable)
 				{
 					Writer.Position = Writer.Length;
 					/*         Текущее подключение было закрыто сброшено или разорвано          */

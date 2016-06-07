@@ -41,7 +41,7 @@ namespace MyWebSocket.Tcp
 						if (loop++ > Container.Count)
 						{
 							loop = 0;
-							Thread.Sleep(15);
+							Thread.Sleep(10);
 						}
 					}
 				}
