@@ -406,12 +406,9 @@ override
 
 					}
 					if (state == 4)
-					{
-						Reader.Reset();
-							
-						Error(___Error.Error);
-						  if (___Error.Errors.Count == 1
-						      &&  ___Close.ServerCode != WSClose.ServerError)
+					{	
+					  Error(___Error.Error);
+						if (___Error.Errors.Count == 1)
 						    Close(___Error.Error.Close);
 							
 							Interlocked.CompareExchange (ref state, 7, 4);
@@ -451,6 +448,7 @@ override
 			catch (WSException err)
 			{
 				exc(err);
+				Reader.Reset();
 			}
 			return TaskResult;
 		}
@@ -596,31 +594,13 @@ override
 		/// </summary>
 		/// <param name="numcode"></param>
 		/// <returns></returns>
-		protected bool CloseServer(WSClose numcode, string message, bool initiator)
+		protected bool CloseServer(WSClose numcode, string message, bool server)
 		{
 			bool rtrn = false;
 
 			lock (Sync)
 			{
-				if (initiator)
-				{
-					if (!___Close.Res)
-					{
-						___Close.Res = true;
-						___Close.ServerCode = numcode;
-						___Close.ServerData = message;
-						___Close.ServerHost = "Server";
-
-						if (!___Close.Req)
-						{
-
-							byte[] _buffer = Encoding.UTF8.GetBytes(message);
-							rtrn = Message(_buffer, WSOpcod.Close, WSFin.Last);
-							state = 5;
-						}
-					}
-				}
-				else
+				if (!server)
 				{
 					if (!___Close.Req)
 					{
@@ -636,9 +616,36 @@ override
 							___Close.ServerCode = numcode;
 							___Close.ServerData = message;
 							___Close.ServerHost = "Server";
-							byte[] _buffer = Encoding.UTF8.GetBytes(message);
-							rtrn = Message(_buffer, WSOpcod.Close, WSFin.Last);
-							state = 5;
+							if (numcode == WSClose.Abnormal)
+								state = 7;
+							else
+							{
+								byte[] _buffer = Encoding.UTF8.GetBytes(message);
+								rtrn = Message(_buffer, WSOpcod.Close, WSFin.Last);
+								state = 5;
+							}
+						}
+					}
+				}
+				else
+				{
+					if (!___Close.Res)
+					{
+						___Close.Res = true;
+						___Close.ServerCode = numcode;
+						___Close.ServerData = message;
+						___Close.ServerHost = "Server";
+
+						if (!___Close.Req)
+						{
+							if (numcode == WSClose.ServerError)
+								state = 7;
+							else
+							{
+								byte[] _buffer = Encoding.UTF8.GetBytes(message);
+								rtrn = Message(_buffer, WSOpcod.Close, WSFin.Last);
+								state = 5;
+							}
 						}
 					}
 				}
