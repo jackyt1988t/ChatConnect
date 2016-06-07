@@ -254,7 +254,7 @@ override
 				if ((error = Write(message, start, write)) != SocketError.Success)
 				{
 					if (error != SocketError.WouldBlock
-						   && error != SocketError.NoBufferSpaceAvailable)
+						   || error != SocketError.NoBufferSpaceAvailable)
 					{
 						exc( new HTTPException( "Ошибка записи http данных: " + error.ToString() ) );
 						Response.Close = true;
@@ -358,9 +358,9 @@ override
 								}
 								if (state == 7)
 								{
-									TaskResult.Option = TaskOption.Delete;
-									Tcp.Close();
 									Dispose();
+									TaskResult.Option = TaskOption.Delete;
+									
 								}
 			}
 			catch (HTTPException exc)
@@ -402,8 +402,12 @@ override
 			SocketError error;
 			if ((error = Read()) != SocketError.Success)
 			{
-				exc( new HTTPException( "Ошибка записи http данных: " + error.ToString() ) );
-				Response.Close = true;
+				if (error != SocketError.WouldBlock
+					|| error != SocketError.NoBufferSpaceAvailable)
+				{
+					exc( new HTTPException("Ошибка записи http данных: " + error.ToString()));
+					Response.Close = true;
+				}
 			}
 		}
 		/// <summary>
@@ -418,14 +422,10 @@ override
 			if ((error = Send()) != SocketError.Success)
 			{
 				if (error != SocketError.WouldBlock
-					&& error != SocketError.NoBufferSpaceAvailable)
+					|| error != SocketError.NoBufferSpaceAvailable)
 				{
-					if (error != SocketError.Disconnecting && error != SocketError.ConnectionReset
-														   && error != SocketError.ConnectionAborted)
-					{
-						exc( new HTTPException( "Ошибка записи http данных: " + error.ToString() ) );
+						exc( new HTTPException("Ошибка записи http данных: " + error.ToString()));
 						Response.Close = true;
-					}
 				}
 			}
 		}

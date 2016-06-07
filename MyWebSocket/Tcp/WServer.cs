@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Net;
 using System.Net.Sockets;
-	using System.Threading;
+using System.Threading;
+using MyWebSocket.Log;
 
 namespace MyWebSocket.Tcp
 {
@@ -47,12 +48,18 @@ namespace MyWebSocket.Tcp
 					Agregator ObjectProtocol = new Agregator(socket);
 
 				}
+				catch (OutOfMemoryException exc)
+				{
+					GC.Collect();
+					GC.WaitForPendingFinalizers();
+					Loging.AddMessage(exc.Message + Loging.NewLine + exc.StackTrace, "Log/log.log", Log.Log.Fatail);
+				}
 				catch (Exception exc)
 				{
 					if (socket != null)
 						socket.Dispose();
 
-					Console.WriteLine(exc.Message);
+					Loging.AddMessage(exc.Message + Loging.NewLine + exc.StackTrace, "Log/log.log", Log.Log.Debug);
 				}
 
 			}

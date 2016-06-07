@@ -323,7 +323,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 				if ((error = Write(message, start, write)) != SocketError.Success)
 				{
 					if (error != SocketError.WouldBlock
-						&& error != SocketError.NoBufferSpaceAvailable)
+						|| error != SocketError.NoBufferSpaceAvailable)
 					{
 						/*        Текущее подключение было отключено сброшено или разорвано         */
 						if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
@@ -469,7 +469,7 @@ override
 			if ((error = Read()) != SocketError.Success)
 			{
 				if (error != SocketError.WouldBlock
-					&& error != SocketError.NoBufferSpaceAvailable)
+					|| error != SocketError.NoBufferSpaceAvailable)
 				{
 					/*         Текущее подключение было закрыто сброшено или разорвано          */
 					if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
@@ -493,7 +493,7 @@ override
 			if ((error = Send()) != SocketError.Success)
 			{
 				if (error != SocketError.WouldBlock
-					&& error != SocketError.NoBufferSpaceAvailable)
+					|| error != SocketError.NoBufferSpaceAvailable)
 				{
 					Writer.Position = Writer.Length;
 					/*         Текущее подключение было закрыто сброшено или разорвано          */

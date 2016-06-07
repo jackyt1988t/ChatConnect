@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Net.Sockets;
-	using System.Threading;
+using System.Threading;
 using System.Collections.Concurrent;
 
+using MyWebSocket.Log;
 using MyWebSocket.Tcp.Protocol;
 using MyWebSocket.Tcp.Protocol.WS;
 using MyWebSocket.Tcp.Protocol.HTTP;
@@ -44,9 +45,9 @@ namespace MyWebSocket.Tcp
 						}
 					}
 				}
-				catch ( FieldAccessException exc )
+				catch (Exception exc)
 				{
-					Console.WriteLine("Обработчик: " + exc.Message);
+					Loging.AddMessage(exc.Message + Loging.NewLine + exc.StackTrace, "Log/log.log", Log.Log.Debug);
 				}
 			}
 		}
@@ -74,20 +75,27 @@ namespace MyWebSocket.Tcp
 		}
 		private void TaskLoopThreading()
 		{
-					while (true)
+			try
+			{
+				while (true)
+				{
+					TaskResult TaskResult = Protocol.TaskLoopHandlerProtocol();
+					switch (TaskResult.Option)
 					{
-						TaskResult TaskResult = Protocol.TaskLoopHandlerProtocol();
-						switch (TaskResult.Option)
-						{
-							case TaskOption.Loop:
-								break;
-							case TaskOption.Delete:
-								return;
-							default:
-								throw new ArgumentException("TaskResult");
-						}
-						Thread.Sleep(1);
+						case TaskOption.Loop:
+						break;
+						case TaskOption.Delete:
+						return;
+						default:
+						throw new ArgumentException("TaskResult");
 					}
+					Thread.Sleep(1);
+				}
+			}
+			catch (Exception exc)
+			{
+				Loging.AddMessage(exc.Message + Loging.NewLine + exc.StackTrace, "Log/log.log", Log.Log.Debug);
+			}
 		} 
 	}
 }
