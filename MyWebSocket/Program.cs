@@ -13,10 +13,9 @@ namespace MyWebSocket
     {
         static void Main(string[] args)
         {
-			WS.Debug = true;
+			//WS.Debug = true;
 			WS.EventConnect += (object obj, PEventArgs a) =>
 			{
-				int i = 0;
 				// Объект WebSocket
 				WS WebSocket = obj as WS;
 				// Событие наступает когда приходят новые данные

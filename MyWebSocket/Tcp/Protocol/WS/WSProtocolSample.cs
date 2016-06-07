@@ -54,7 +54,14 @@ namespace MyWebSocket.Tcp.Protocol.WS
 				int length = (int)http.Reader.Length;
 				Reader.Write(http.Reader.Buffer, start, length);
 			}
-			Session = new WSEssion(((IPEndPoint)Tcp.RemoteEndPoint).Address);
+			try
+			{
+				Session = new WSEssion(((IPEndPoint)Tcp.RemoteEndPoint).Address);
+			}
+			catch (SocketException exc)
+			{
+				ExcServer(new WSException("Ошибка сокета", exc.SocketErrorCode, WSClose.ServerError));
+			}
 		}
 		static
 		public void Set101(IHeader header)

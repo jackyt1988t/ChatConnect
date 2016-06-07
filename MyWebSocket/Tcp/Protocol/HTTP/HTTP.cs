@@ -251,17 +251,14 @@ override
 					return false;
 
 				SocketError error;
-				lock (Writer)
+				if ((error = Write(message, start, write)) != SocketError.Success)
 				{
-					if ((error = Write(message, start, write)) != SocketError.Success)
+					if (error != SocketError.WouldBlock
+						   && error != SocketError.NoBufferSpaceAvailable)
 					{
-						if (error != SocketError.WouldBlock
-						    && error != SocketError.NoBufferSpaceAvailable)
-						{
-							exc( new HTTPException( "Ошибка записи http данных: " + error.ToString() ) );
-							Response.Close = true;
-							return false;
-						}
+						exc( new HTTPException( "Ошибка записи http данных: " + error.ToString() ) );
+						Response.Close = true;
+						return false;
 					}
 				}
 			}

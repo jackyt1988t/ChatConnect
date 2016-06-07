@@ -5,75 +5,43 @@ namespace MyWebSocket.Tcp.Protocol.WS
 {
 	class CloseWS
 	{
-		bool req;
 		public bool Req
-		{
-			get
-			{
-				return req;
-			}
-			set
-			{
-				req = value;
-				if (!res)
-					CloseTime = DateTime.Now;
-			}
-		}
-		bool res;
-		public bool Res
-		{
-			get
-			{
-				return res;
-			}
-			set
-			{
-				res = value;
-				if (!req)
-					CloseTime = DateTime.Now;
-			}
-		}
-		/// <summary>
-		/// Инициатор закрытия
-		/// </summary>
-		public string Other_Host
 		{
 			get;
 			private set;
 		}
-		string serverhost;
+		public bool Res
+		{
+			get;
+			private set;
+		}
+
+		/// <summary>
+		/// Инициатор закрытия
+		/// </summary>
+		public string Host
+		{
+			get;
+			private set;
+		}
 		public string ServerHost
 		{
-			get
-			{
-				return serverhost;
-			}
-			set
-			{
-				if (string.IsNullOrEmpty(Other_Host))
-					Other_Host = serverhost = value;
-			}
+			get;
+			private set;
 		}
-		string clienthost;
 		public string ClientHost
 		{
-			get
-			{
-				return clienthost;
-			}
-			set
-			{
-				if (string.IsNullOrEmpty(Other_Host))
-					Other_Host = clienthost = value;
-			}
+			get;
+			private set;
 		}
+
 		/// <summary>
 		/// Информация о закрытии
 		/// </summary>
 		public string ServerData
 		{
 			get;
-			set;
+			private set;
 		}
 		/// <summary>
 		/// Информация о закрытии
@@ -81,20 +49,16 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		public string ClientData
 		{
 			get;
-			set;
+			private set;
 		}
+
 		/// <summary>
 		/// Код закрытия WebSocket
 		/// </summary>
-		public WSClose Other_Code
+		public WSClose _InitCode
 		{
-			get
-			{
-				if (Other_Host == "Server")
-					return ServerCode;
-				else
-					return ClientCode;
-			}
+			get;
+			private set;
 		}
 		/// <summary>
 		/// Код закрытия WebSocket
@@ -102,7 +66,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		public WSClose ServerCode
 		{
 			get;
-			set;
+			private set;
 		}
 		/// <summary>
 		/// Код закрытия WebSocket
@@ -110,7 +74,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		public WSClose ClientCode
 		{
 			get;
-			set;
+			private set;
 		}
 		/// <summary>
 		/// Вермя закрытия соединения
@@ -118,7 +82,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		public DateTime CloseTime
 		{
 			get;
-			set;
+			private set;
 		}
 		/// <summary>
 		/// Вермя прошедшее после закрытия
@@ -165,13 +129,45 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			Message.Add(WSClose.ServerError, "Произошла ошибка сервера");
 			Message.Add(WSClose.TLSHandshake, "не удалось совершить рукопожатие");
 		}
+		public void Server(WSClose code, string data, string host)
+		{
+			if (Res)
+				return;
+			Res = true;
+			ServerCode = code;
+			ServerData = data;
+			ServerHost = host;
+			if (!Req)
+			{
+				
+				Host = host;
+				_InitCode = code;
+				CloseTime = DateTime.Now;
+			}
+		}
+		public void Client(WSClose code, string data, string host)
+		{
+			if (Req)
+				return;
+			Req = true;
+			ClientCode = code;
+			ClientData = data;
+			ClientHost = host;
+			if (!Res)
+			{
+				
+				Host = host;
+				_InitCode = code;
+				CloseTime = DateTime.Now;
+			}
+		}
 		/// <summary>
 		/// Возвращает информацию о том каким образом было закрыто соединение
 		/// </summary>
 		/// <returns>строка с информацие о закрытом подключении</returns>
 		public override string ToString()
 		{
-			return "Инициатор "  +  Other_Host + ". " + Other_Code.ToString() + ": " + Message[Other_Code];
+			return "Инициатор "  +  Host + ". " + _InitCode.ToString() + ": " + Message[_InitCode];
 		}
 	}
 }

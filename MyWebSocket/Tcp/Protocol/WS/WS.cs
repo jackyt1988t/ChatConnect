@@ -22,7 +22,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		/// <summary>
 		/// Размер приемного буффера
 		/// </summary>
-		public static int SizeRead = 1000 * 128;
+		public static int SizeRead = 1000 * 32;
 		/// <summary>
 		/// Размер отсылочного буффера
 		/// </summary>
@@ -330,7 +330,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 															   || error == SocketError.ConnectionAborted)
 							CloseServer( WSClose.Abnormal, string.Empty, false );
 						else
-							exc(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
+							ExcServer(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
 						return false;
 					}
 				}
@@ -447,7 +447,7 @@ override
 			}
 			catch (WSException err)
 			{
-				exc(err);
+				ExcServer(err);
 				Reader.Reset();
 			}
 			return TaskResult;
@@ -459,19 +459,6 @@ override
 		public override string ToString()
 		{
 			return "WS";
-		}
-		/// <summary>
-		/// Обрабатывает происходящие ошибки и назначает оьраьотчики
-		/// </summary>
-		/// <param name="err">Ошибка WebSocket</param>
-		private void exc(WSException err)
-		{
-			lock(Sync)
-			{
-				___Error._AddError_(err);
-				if (state < 7)
-					state = 4;
-			}
 		}
 		/// <summary>
 		/// Читает данные из Socket и записывает их в поток
@@ -489,7 +476,7 @@ override
 														   || error == SocketError.ConnectionAborted)
 						CloseServer( WSClose.Abnormal, string.Empty, false );
 					else
-						exc(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
+						ExcServer(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
 				}
 			}
 		}
@@ -514,7 +501,7 @@ override
 														   || error == SocketError.ConnectionAborted)
 						CloseServer( WSClose.Abnormal, string.Empty, false );
 					else
-						exc(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
+						ExcServer(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
 				}
 			}
 		}
@@ -590,6 +577,19 @@ override
 				e(this, new PEventArgs(S_CONNECT, string.Empty, null));
 		}
 		/// <summary>
+		/// Обрабатывает происходящие ошибки и назначает оьраьотчики
+		/// </summary>
+		/// <param name="err">Ошибка WebSocket</param>
+		protected void ExcServer(WSException err)
+		{
+			lock (Sync)
+			{
+				___Error._AddError_(err);
+				if (state < 7)
+					state = 4;
+			}
+		}
+		/// <summary>
 		/// закрывает текущее соединение от имени сервера
 		/// </summary>
 		/// <param name="numcode"></param>
@@ -604,18 +604,11 @@ override
 				{
 					if (!___Close.Req)
 					{
-						___Close.Req = true;
-						___Close.ClientCode = numcode;
-						___Close.ClientData = message;
-						___Close.ClientHost = 
-						    Session.Address.ToString();
-
+						___Close.Client(numcode, message, 
+										Session.Address.ToString());
 						if (!___Close.Res)
 						{
-							___Close.Res = true;
-							___Close.ServerCode = numcode;
-							___Close.ServerData = message;
-							___Close.ServerHost = "Server";
+							___Close.Server(numcode, message, "Server");
 							if (numcode == WSClose.Abnormal)
 								state = 7;
 							else
@@ -631,11 +624,7 @@ override
 				{
 					if (!___Close.Res)
 					{
-						___Close.Res = true;
-						___Close.ServerCode = numcode;
-						___Close.ServerData = message;
-						___Close.ServerHost = "Server";
-
+						___Close.Server(numcode, message, "Server");
 						if (!___Close.Req)
 						{
 							if (numcode == WSClose.ServerError)
