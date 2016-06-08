@@ -12,7 +12,7 @@ namespace MyWebSocket.Test
 
 			TimeSpan interval = 
 				new TimeSpan(DateTime.Now.Ticks + TimeSpan.TicksPerSecond * 2);
-			using (ProtocolN13 WebSocket = new ProtocolN13( "127.0.0.1", 8081 ))
+			using (wsProtocolN13 WebSocket = new wsProtocolN13( "127.0.0.1", 8081 ))
 			{
 				WebSocket.EventWork += (object sender, PEventArgs e) =>
 				{
