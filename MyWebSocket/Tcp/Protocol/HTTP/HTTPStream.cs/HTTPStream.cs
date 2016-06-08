@@ -156,16 +156,16 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							{
 								switch (frame.Hand)
 								{
-									case 0:
-										header.Method +=
-										   char.ToLower((char)_char);
-										break;
 									case 1:
 										header.Path +=
 										   char.ToLower((char)_char);
 										break;
 									case 2:
 										header.Http +=
+										   char.ToLower((char)_char);
+										break;
+									case 0:
+										header.Method +=
 										   char.ToLower((char)_char);
 										break;
 								}
@@ -176,7 +176,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						if (frame.param > PARAM)
 							throw new HTTPException("Длинна параметра заголовка");
 						if (_char == CN)
-                            frame.Handl = 2;
+                            				frame.Handl = 2;
 						else
 						{
 							frame.param++;
@@ -196,9 +196,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							string value =
 								frame.Value.Trim(new char[] { ' ' });
 							if (header.ContainsKey(param))
-								header[param] = header[param]  +  ";"  +  value;
-							else
 								header.Add(param, value);
+							else
+								header[param] += ";"  +  value;
 
 							frame.Param  =  string.Empty;
 							frame.Value  =  string.Empty;
@@ -211,37 +211,40 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						break;
 					case 3:
 						if (_char == CR)
-						{
 							frame.Handl = 5;
-							break;
-						}
 						else
 						{
 							frame.Handl = 1;
-							goto case 1;
+							if (_char == CN)
+                            					frame.Handl = 2;
+							else
+							{
+								frame.param++;
+								frame.Param += char.ToLower((char)_char);
+							}
 						}
+						break;
 					case 4:
 						if (_char == LF)
-						{
 							frame.Handl = 3;
 							break;
-						}
 						else
 							throw new HTTPException( "Отсутствует символ [LF]" );
+						break;
 					case 5:
 						if (_char == LF)
 						{
 							frame.Handl = 0;
 							frame.GetHead = true;
-							
-							return read;
 						}
 						else
 							throw new HTTPException( "Отсутствует символ [LF]" );
+						
+						return read;
 				}
 				frame.hleng++;
 			}
-            read = -1;
+            		read = -1;
 			return read;
 		}
 		public static  void  ParsePath(string strdata, IHeader header)
