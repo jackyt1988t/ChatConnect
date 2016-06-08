@@ -129,6 +129,7 @@
     </Compile>
     <Compile Include="Tcp\Protocol\WS\WSFrame\WSFrame.cs" />
     <Compile Include="Tcp\Protocol\WS\WSPingControl.cs" />
+    <Compile Include="Tcp\Protocol\WS\WSPolicy\WsPolicy.cs" />
     <Compile Include="Tcp\Protocol\WS\WSProtocolSample.cs" />
     <Compile Include="Tcp\Protocol\StateEnum.cs" />
     <Compile Include="Tcp\Protocol\WS\WSProtocolN13.cs">
@@ -143,7 +144,7 @@
     <Compile Include="Tcp\WServer.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
-    <Compile Include="Test\ClientWsProtocolN13.cs" />
+    <Compile Include="Test\WsProtocolN13.cs" />
     <Compile Include="Test\Program.cs" />
   </ItemGroup>
   <ItemGroup>

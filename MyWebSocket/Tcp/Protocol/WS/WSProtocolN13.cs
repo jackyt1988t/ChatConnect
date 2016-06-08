@@ -10,10 +10,16 @@ namespace MyWebSocket.Tcp.Protocol.WS
 	class WSProtocolN13 : WS
 	{
 		private const int PING = 5;
-		private const string CHECKKEY = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"; 
-			
-		bool Rchunk;
-		WStreamN13 reader;
+		private const string CHECKKEY = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+		
+		 
+		public WsPolicy Policy
+		{
+			get;
+			private set;
+		}
+		protected bool Rchunk;
+		protected WStreamN13 reader;
 		public override StreamS Reader
 		{
 			get
@@ -21,8 +27,8 @@ namespace MyWebSocket.Tcp.Protocol.WS
 				return (StreamS)reader;
 			}
 		}
-		bool Wchunk;
-		WStreamN13 writer;
+		protected bool Wchunk;
+		protected WStreamN13 writer;
 		public override StreamS Writer
 		{
 			get
@@ -36,8 +42,9 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		public WSProtocolN13() :
 			base()
 		{
-			reader = new WStreamN13(SizeRead);
-			writer = new WStreamN13(SizeWrite);
+			Policy = new WsPolicy();
+			reader = new WStreamN13( SizeRead );
+			writer = new WStreamN13( SizeWrite );
 			TaskResult.Protocol = TaskProtocol.WSN13;
 		}
 		/// <summary>
@@ -48,6 +55,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			this()
 		{
 			Tcp = http.Tcp;
+			Policy.SetPolicy(0, 1, 1, 1, 0, 32000);
 			Request = http.Request;
 			if (!http.Reader.Empty)
 			{
@@ -166,15 +174,15 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			{
 				if (reader.ReadHead() > 0)
 				{
-					if (reader.Frame.BitRsv1 == 1)
+					if (reader.Frame.BitRsv1 == Policy.Bit2)
 						throw new WSException("Неверный бит rcv1", WsError.HeaderFrameError, WSClose.PolicyViolation);
-					if (reader.Frame.BitRsv2 == 1)
+					if (reader.Frame.BitRsv2 == Policy.Bit3)
 						throw new WSException("Неверный бит rcv2", WsError.HeaderFrameError, WSClose.PolicyViolation);
-					if (reader.Frame.BitRsv3 == 1)
+					if (reader.Frame.BitRsv3 == Policy.Bit4)
 						throw new WSException("Неверный бит rcv3", WsError.HeaderFrameError, WSClose.PolicyViolation);
-					if (reader.Frame.BitMask == 0)
+					if (reader.Frame.BitMask == Policy.Mask)
 						throw new WSException("Неверный бит mask", WsError.HeaderFrameError, WSClose.PolicyViolation);
-					if (reader.Frame.LengBody < 0 || reader.Frame.LengBody > 32000)
+					if (reader.Frame.LengBody < 0 || reader.Frame.LengBody > Policy.MaxLeng)
 					{
 						string length = reader.Frame.LengBody.ToString("X");
 						throw new WSException("Длинна: " + length, WsError.HeaderFrameError, WSClose.PolicyViolation);
@@ -267,7 +275,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 						break;
 					default:
 						throw new WSException("Опкод не поддерживается " + 
-												    reader.Frame.BitPcod, WsError.PcodNotSuported, WSClose.UnsupportedData);
+												     reader.Frame.BitPcod, WsError.PcodNotSuported, WSClose.UnsupportedData);
 				}			
 			}
 		}

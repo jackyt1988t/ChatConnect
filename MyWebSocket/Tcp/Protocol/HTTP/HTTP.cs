@@ -124,6 +124,22 @@ override
 		/// <summary>
 		/// Событие которое наступает при открвтии соединения когда получены заголвоки
 		/// </summary>
+		public event PHandlerEvent EventOnOpen
+		{
+			add
+			{
+				__handconn = true;
+				__EventConnect += value;
+			}
+			remove
+			{
+				__handconn = false;
+				__EventConnect -= value;
+			}
+		}
+		/// <summary>
+		/// Событие которое наступает при открвтии соединения когда получены заголвоки
+		/// </summary>
 		static
 		public event PHandlerEvent EventConnect
 		{
@@ -145,6 +161,7 @@ override
 		private  event PHandlerEvent __EventError;
 		private  event PHandlerEvent __EventClose;
 		private  event PHandlerEvent __EventChunk;
+		private  event PHandlerEvent __EventOnOpen;
 		static 
 		private  event PHandlerEvent __EventConnect;
 		
@@ -155,7 +172,7 @@ override
 		public HTTP()
 		{
 			Sync = new object();
-			State = States.Work;
+			State = States.work;
 			Request = new Header();
 			Response = new Header();
 			TaskResult = new TaskResult();
@@ -307,6 +324,27 @@ override
         {
 			try
 			{
+				if (state ==-1)
+				{
+					Work();
+					if (Interlocked.CompareExchange(ref state, 2,-1) !=-1)
+						return TaskResult;
+					if (!Response.IsEnd || !Writer.Empty)
+						write();
+					else
+					{
+						if (Response.Close)
+							state = 5;
+						else
+						{
+							state = 0;
+							Request = new Header();
+							Response = new Header();
+						}
+					}
+					if (Interlocked.CompareExchange(ref state,-1, 2) == 2)
+						return TaskResult;
+				}
 				if (state == 0)
 				{
 					Work();
@@ -327,27 +365,6 @@ override
 				{
 					Connection(Request, Response);
 					if (Interlocked.CompareExchange(ref state,-1, 3) == 3)
-						return TaskResult;
-				}
-				if (state ==-1)
-				{
-					Work();
-					if (Interlocked.CompareExchange(ref state, 2,-1) !=-1)
-						return TaskResult;
-					if (!Response.IsEnd || !Writer.Empty)
-						write();	
-					else
-					{
-						if (Response.Close)
-							state = 5;
-						else
-						{
-							state = 0;
-							Request = new Header();
-							Response = new Header();
-						}
-					}
-					if (Interlocked.CompareExchange(ref state,-1, 2) == 2)
 						return TaskResult;
 				}
 				
@@ -486,11 +503,15 @@ override
 			string s = "connect";
 			string m = "Соединение было установлено, протокол ws";
 
-			PHandlerEvent e;
+			PHandlerEvent e;lock (SyncEvent)
+				e = __EventOnOpen;
+			if (e != null)
+				e(this, new PEventArgs(s, m, null));
 			lock (SyncEvent)
 				e = __EventConnect;
 			if (e != null)
 				e(this, new PEventArgs(s, m, null));
+			
 		}
 		/// <summary>
 		/// 
