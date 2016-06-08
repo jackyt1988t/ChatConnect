@@ -8,31 +8,31 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 	{
 		const long WAIT = 10 * 1000 * 1000 * 20;
 
-		HTTPStream reader;
+		HTTPStream _Reader;
 		public override StreamS Reader
 		{
 			get
 			{
-				return reader;
+				return _Reader;
 			}
 		}
-		HTTPStream writer;
+		HTTPStream _Writer;
 		public override StreamS Writer
 		{
 			get
 			{
-				return writer;
+				return _Writer;
 			}
 		}
 		public HTTPProtocol(Socket tcp) :
 			base()
         {
             Tcp = tcp;
-			reader = new HTTPStream(1000 * 32)
+			_Reader = new HTTPStream(1000 * 32)
 			{
 				header = Request
 			};
-			writer = new HTTPStream(1000 * 128)
+			_Writer = new HTTPStream(1000 * 128)
 			{
 				header = Response
 			};
@@ -46,10 +46,13 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		}
 		protected override void Data()
 		{
-			if (!reader.frame.GetHead)
+			if (_Reader.Empty)
+				return;
+			
+			if (!_Reader.frame.GetHead)
 			{
-				reader.header = Request;
-				if (reader.ReadHead() == -1)
+				_Reader.header = Request;
+				if (_Reader.ReadHead() == -1)
 					return;
 				
 				if (Request.ContainsKey("upgrade"))
@@ -90,8 +93,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 								break;
 							case "sample":
 								TaskResult.Jump = true;
-								reader.frame.Handl = 1;
-								reader.frame.bleng = 8;
+								_Reader.frame.Handl = 1;
+								_Reader.frame.bleng = 8;
 								TaskResult.Protocol = TaskProtocol.WSAMPLE;
 								break;
 							}
@@ -110,32 +113,32 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					if (Request.ContainsKey("content-length"))
 					{
 						if (int.TryParse(Request["content-length"], 
-													  out reader.frame.bleng))
-							if (reader.frame.bleng > 0)
-								reader.frame.Handl = 1;
+													  out _Reader.frame.bleng))
+							if (_Reader.frame.bleng > 0)
+								_Reader.frame.Handl = 1;
 							else
 								throw new HTTPException("Неверные заголовки");
 					}
 					if (Request.ContainsKey("transfer-encoding"))
 					{
-							if (reader.frame.bleng > 0)
+							if (_Reader.frame.bleng > 0)
 								throw new HTTPException("Неверные заголовки");
 							else
-								reader.frame.Handl = 2;
+								_Reader.frame.Handl = 2;
 					}	
 				}
-			if (!reader.frame.GetBody)
+			if (!_Reader.frame.GetBody)
 			{
-				writer.header = Response;
-				if (reader.ReadBody() == -1)
+				_Writer.header = Response;
+				if (_Reader.ReadBody() == -1)
 					return;
 
-			    if (reader.frame.Pcod == HTTPFrame.DATA)
+			    if (_Reader.frame.Pcod == HTTPFrame.DATA)
 				{
 					Request.SetReq();
 					if (TaskResult.Jump)
 						TaskResult.Option = TaskOption.Protocol;
-					reader.frame.Clear();
+					_Reader.frame.Clear();
 					return;
 				}
 			}

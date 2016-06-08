@@ -360,7 +360,6 @@ override
 								{
 									Dispose();
 									TaskResult.Option = TaskOption.Delete;
-									
 								}
 			}
 			catch (HTTPException exc)

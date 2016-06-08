@@ -60,7 +60,7 @@ namespace MyWebSocket
 						break;
 				}
 			};
-			WServer Server = new WServer("0.0.0.0", 8081, 1);
+			WServer Server = new WServer("0.0.0.0", 8081, 2);
 			
         }
     }

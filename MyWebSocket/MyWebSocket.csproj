@@ -143,6 +143,8 @@
     <Compile Include="Tcp\WServer.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
+    <Compile Include="Test\ClientWsProtocolN13.cs" />
+    <Compile Include="Test\Program.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

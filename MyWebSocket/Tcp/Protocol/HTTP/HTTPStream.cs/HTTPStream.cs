@@ -195,7 +195,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 								frame.Param.Trim(new char[] { ' ' });
 							string value =
 								frame.Value.Trim(new char[] { ' ' });
-							if (header.ContainsKey(param))
+							if (!header.ContainsKey(param))
 								header.Add(param, value);
 							else
 								header[param] += ";"  +  value;
@@ -227,7 +227,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					case 4:
 						if (_char == LF)
 							frame.Handl = 3;
-							break;
 						else
 							throw new HTTPException( "Отсутствует символ [LF]" );
 						break;

@@ -41,7 +41,7 @@ namespace MyWebSocket.Tcp
 						if (loop++ > Container.Count)
 						{
 							loop = 0;
-							Thread.Sleep(10);
+							Thread.Sleep(50);
 						}
 					}
 				}
@@ -75,27 +75,27 @@ namespace MyWebSocket.Tcp
 		}
 		private void TaskLoopThreading()
 		{
-			try
-			{
-				while (true)
-				{
-					TaskResult TaskResult = Protocol.TaskLoopHandlerProtocol();
-					switch (TaskResult.Option)
+					try
 					{
-						case TaskOption.Loop:
-						break;
-						case TaskOption.Delete:
-						return;
-						default:
-						throw new ArgumentException("TaskResult");
+						while (true)
+						{
+							TaskResult TaskResult = Protocol.TaskLoopHandlerProtocol();
+							switch (TaskResult.Option)
+							{
+								case TaskOption.Loop:
+								break;
+								case TaskOption.Delete:
+								return;
+								default:
+								throw new ArgumentException("TaskResult");
+							}
+							Thread.Sleep(1);
+						}
 					}
-					Thread.Sleep(1);
-				}
-			}
-			catch (Exception exc)
-			{
-				Loging.AddMessage(exc.Message + Loging.NewLine + exc.StackTrace, "Log/log.log", Log.Log.Debug);
-			}
+					catch (Exception exc)
+					{
+						Loging.AddMessage(exc.Message + Loging.NewLine + exc.StackTrace, "Log/log.log", Log.Log.Debug);
+					}
 		} 
 	}
 }
