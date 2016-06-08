@@ -42,9 +42,15 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		public WSProtocolN13() :
 			base()
 		{
-			Policy = new WsPolicy();
-			reader = new WStreamN13( SizeRead );
-			writer = new WStreamN13( SizeWrite );
+			Policy = 
+				new WsPolicy();
+			reader = 
+				new WStreamN13(
+						SizeRead);
+			writer = 
+				new WStreamN13( 
+						SizeWrite);
+			Request = new Header();
 			TaskResult.Protocol = TaskProtocol.WSN13;
 		}
 		/// <summary>
@@ -215,6 +221,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
 
 							OnEventPing(new WSData(reader.Frame.DataBody, WSOpcod.Ping, WSFin.Last));
+							Message(   reader.Frame.DataBody, 0, (int)reader.Frame.LengBody, WSOpcod.Pong, WSFin.Last   );
 						break;
 					case WSFrameN13.PONG:
 						if (reader.Frame.BitFin == 0)

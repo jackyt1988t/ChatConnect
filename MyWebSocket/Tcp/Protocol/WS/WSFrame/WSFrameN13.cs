@@ -66,10 +66,15 @@ namespace MyWebSocket.Tcp.Protocol.WS
             get;
             set;
         }
+		public int RecLeng
+		{
+			get;
+			set;
+		}
 		/// <summary>
 		/// Показывает установлена маска тела или нет
 		/// </summary>
-        public int BitMask
+		public int BitMask
         {
             get;
             set;
@@ -193,7 +198,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			GetsBody = false;
 			SetsHead = false;
 		}
-		public void InitializationHeader()
+		unsafe public void InitializationHeader()
 		{
 			if (SetsHead)
 				return;
@@ -264,14 +269,26 @@ namespace MyWebSocket.Tcp.Protocol.WS
 
 			if (BitMask == 1)
 			{
-				DataHead[length] = (byte)(MaskVal >> 24);
+				DataMask = new byte[4];
+				DataMask[0] = DataHead[length] = (byte)(MaskVal >> 24);
 				length++;
-				DataHead[length] = (byte)(MaskVal >> 16);
+				DataMask[1] = DataHead[length] = (byte)(MaskVal >> 16);
 				length++;
-				DataHead[length] = (byte)(MaskVal >> 08);
+				DataMask[2] = DataHead[length] = (byte)(MaskVal >> 08);
 				length++;
-				DataHead[length] = (byte)(MaskVal >> 00);
+				DataMask[3] = DataHead[length] = (byte)(MaskVal >> 00);
 				length++;
+
+				fixed (byte* target = DataBody)
+				{
+					byte* pt = target + PartBody;
+						while (RecLeng < LengBody)
+						{
+							*pt = (byte)(*pt ^ DataMask[PartBody % 4]);
+							pt++;
+							RecLeng++;
+						}
+				}
 			}
 		}
 		public override string ToString()

@@ -211,6 +211,21 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		/// <summary>
 		/// Событие которое наступает при открвтии соединения когда получены заголвоки
 		/// </summary>
+		public event PHandlerEvent EventOnOpen
+		{
+			add
+			{
+				__EventOnOpen += value;
+
+			}
+			remove
+			{
+				__EventOnOpen -= value;
+			}
+		}
+		/// <summary>
+		/// Событие которое наступает при открвтии соединения когда получены заголвоки
+		/// </summary>
 		static
 			  public event PHandlerEvent EventConnect
 		{
@@ -232,6 +247,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		private  event PHandlerEvent __EventError;
 		private  event PHandlerEvent __EventClose;
 		private  event PHandlerEvent __EventChunk;
+		private  event PHandlerEvent __EventOnOpen;
 		private static event PHandlerEvent __EventConnect;
 
 		public WS()
@@ -575,6 +591,10 @@ override
 		{
 			//string m = "Подключение было установлено";
 			PHandlerEvent e;
+			lock (SyncEvent)
+				e = __EventOnOpen;
+			if (e != null)
+				e(this, new PEventArgs(S_CONNECT, string.Empty, null));
 			lock (SyncEvent)
 				e = __EventConnect;
 			if (e != null)

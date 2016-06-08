@@ -144,7 +144,7 @@
     <Compile Include="Tcp\WServer.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
-    <Compile Include="Test\WsProtocolN13.cs" />
+    <Compile Include="Test\wsProtocolN13.cs" />
     <Compile Include="Test\Program.cs" />
   </ItemGroup>
   <ItemGroup>

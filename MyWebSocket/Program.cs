@@ -13,7 +13,7 @@ namespace MyWebSocket
     {
         static void Main(string[] args)
         {
-			//WS.Debug = true;
+			WS.Debug = true;
 			WS.EventConnect += (object obj, PEventArgs a) =>
 			{
 				// Объект WebSocket

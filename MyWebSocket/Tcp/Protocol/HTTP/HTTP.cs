@@ -173,8 +173,6 @@ override
 		{
 			Sync = new object();
 			State = States.work;
-			Request = new Header();
-			Response = new Header();
 			TaskResult = new TaskResult();
 		}
 		async 
@@ -329,11 +327,11 @@ override
 					Work();
 					if (Interlocked.CompareExchange(ref state, 2,-1) !=-1)
 						return TaskResult;
-					if (!Response.IsEnd || !Writer.Empty)
+					if (Response != null && (!Response.IsEnd || !Writer.Empty))
 						write();
 					else
 					{
-						if (Response.Close)
+						if (Response != null && Response.Close)
 							state = 5;
 						else
 						{
@@ -503,7 +501,8 @@ override
 			string s = "connect";
 			string m = "Соединение было установлено, протокол ws";
 
-			PHandlerEvent e;lock (SyncEvent)
+			PHandlerEvent e;
+			lock (SyncEvent)
 				e = __EventOnOpen;
 			if (e != null)
 				e(this, new PEventArgs(s, m, null));

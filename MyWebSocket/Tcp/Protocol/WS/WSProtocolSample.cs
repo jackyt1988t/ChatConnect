@@ -115,7 +115,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 				if (!Message(writer.Frame.DataHead, 0, (int)writer.Frame.LengHead))
 					return false;
 				else
-					return Message(writer.Frame.DataBody, (int)writer.Frame.PartBody, (int)writer.Frame.LengBody);
+					return Message(writer.Frame.DataBody, 0, (int)writer.Frame.LengBody);
 			}
 		}
 
