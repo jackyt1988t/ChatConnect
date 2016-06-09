@@ -28,12 +28,12 @@ namespace MyWebSocket.Test
 			base()
 		{
 			Policy.SetPolicy(1, 1, 1, 1, 0, 32000);
-			Request.StartString = 
-				"GET /chat/websocket HTTP/1.1\r\n";
-				Request.Add("Upgrade", "WebSocket");
-				Request.Add("Connection", "Upgrade");
-				Request.Add("Sec-WebSocket-Key", "");
-				Request.Add("Sec-WebSocket-Protocol", "13");
+			Request = new Header();
+			Request.StartString = "GET /chat/websocket HTTP/1.1";
+			Request.Add("Upgrade", "WebSocket");
+			Request.Add("Connection", "Upgrade");
+			Request.Add("Sec-WebSocket-Key", "");
+			Request.Add("Sec-WebSocket-Protocol", "13");
 													   
 			__Point = new IPEndPoint(IPAddress.Parse(adress), port);
 		}
@@ -55,6 +55,7 @@ namespace MyWebSocket.Test
 
 			if (open)
 			{
+				Request["Sec-WebSocket-Key"] = "";
 				HTTP http = new HTTPProtocol(Tcp);
 				http.__startconn = true;
 				for (int i = 0; i < 24; i++)
@@ -69,7 +70,7 @@ namespace MyWebSocket.Test
 				http.EventOnOpen += (object sender, PEventArgs e) =>
 				{
 					open = false;
-					
+					State == States.Connection;
 					if (!http.Reader.Empty)
 					{
 						int recive = (int)http.Reader.PointR;
