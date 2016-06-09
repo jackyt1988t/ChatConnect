@@ -32,32 +32,33 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		}
 		public override int ReadBody()
 		{
-			int read = 0;
-			int _char = 0;
-			
 			if (_Frame.Handl == 0)
 			{
 				_Frame.GetBody = true;
-				return read;
+				return 0;
 			}
-			while ((_char = ReadByte()) > -1)
+
+			int read = 0;
+			int @char = 0;
+			while (!Empty)
 			{
-				switch (_Frame.Handl)
+				@char = Buffer[PointR];
+				switch ( _Frame.Handl )
 				{
 					case 1:
-						_Frame.DataBody[_Frame.bpart] = (byte)_char;
+						_Frame.DataBody[_Frame.bpart] = (byte)@char;
 						break;
 					case 2:
-						if (_char == CR)
+						if (@char == CR)
 						{
 							_Frame.Handl = 3;
 							break;
 						}
 						else
-							_Frame.Param += char.ToLower((char)_char);
+							_Frame.Param += char.ToLower((char)@char);
 						break;
 					case 3:
-						if (_char != LF)
+						if (@char != LF)
 							throw new HTTPException("отсутсвует символ[LF]");
 						if (!int.TryParse(_Frame.Param, out _Frame.bleng))
 							throw new HTTPException("Неверная длинна тела.");
@@ -66,13 +67,13 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						_Frame.DataBody = new byte[_Frame.bleng];
 						break;
 					case 4:
-						if (_char == CR)
+						if (@char == CR)
 							_Frame.Handl = 5;
 						else
 							throw new HTTPException("отсутсвует символ[CR]");
 						break;
 					case 5:
-						if (_char == LF)
+						if (@char == LF)
 						{
 							_Frame.Pcod = 1;
 							_Frame.Handl = 6;
@@ -81,16 +82,16 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							throw new HTTPException("отсутсвует символ[LF]");
 						break;
 					case 6:
-						if (_char == CR)
+						if (@char == CR)
 							_Frame.Handl = 7;
 						else
 						{
-							_Frame.Param += char.ToLower((char)_char);
+							_Frame.Param += char.ToLower((char)@char);
 							return read;
 						}
 						break;
 					case 7:
-						if (_char == LF)
+						if (@char == LF)
 						{
 							_Frame.Pcod = 0;
 							return read;
@@ -100,6 +101,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 
 				}
 				read++;
+				PointR++;
 				_Frame.bpart++;
 
 				if (_Frame.bpart == _Frame.bleng)
@@ -125,12 +127,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			
 			while (!Empty)
 			{
-				@char = Buffer[PointR];
 				if ( _Frame.hleng > 36000 )
 					throw new HTTPException("Превышена длинна заголовков");
 
-				
-				switch (_Frame.Handl)
+				@char = Buffer[PointR];
+				switch ( _Frame.Handl )
 				{
 					case 0:
 						if (_Frame.ststr > STSTR)
@@ -231,6 +232,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						if (@char == LF)
 						{
 							_Frame.Handl = 0;
+							header.SetReq( );
 							_Frame.GetHead = true;
 						}
 						else
@@ -239,7 +241,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						if (header.Connection.ToLower() == "close")
 							header.Close = true;
 						
-							_Frame.Handl = 0;
 						if (header.ContentLength > 0)
 						{
 							_Frame.Handl = 1;
@@ -248,16 +249,15 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						}
 						if (!string.IsNullOrEmpty(header.TransferEncoding))
 						{
-							if (_Frame.bleng > 0)
-								throw new HTTPException("Transfer-Encoding не явно");
-							else
-								_Frame.Handl = 2;
+							_Frame.Handl = 2;
+							if (_Frame.bleng  >  0)
+								throw new HTTPException("Длинна тела задана не явно");
+							
 						}
 						break;
 				}
-				PointR++;
-				_Frame.hleng++;
-
+					PointR++;
+					_Frame.hleng++;
 				if (_Frame.GetHead)
 					return read;
 			}

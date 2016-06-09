@@ -186,6 +186,8 @@ namespace MyWebSocket.Tcp
 		}
 		public bool SearchHeader(string key, string value)
 		{
+			if (IsReq)
+				throw new HeadersException("заголовки были получены");
 			if (IsRes)
 				throw new HeadersException("заголовки были отправлены");
 			foreach (KeyValuePair<string, string> header in ContainerHeaders)
