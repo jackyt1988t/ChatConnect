@@ -18,6 +18,30 @@ namespace MyWebSocket.Tcp
 				ContainerHeaders.Add("Content-Length", value.ToString());
 			}
 		}
+		string upgrade;
+		public string Upgrade
+		{
+			get
+			{
+				return upgrade;
+			}
+			private set
+			{
+				ContainerHeaders.Add("Upgrade", value.ToString());
+			}
+		}
+		string connection;
+		public string Connection
+		{
+			get
+			{
+				return connection;
+			}
+			private set
+			{
+				ContainerHeaders.Add("Upgrade", value.ToString());
+			}
+		}
 		string transferencoding;
 		public string TransferEncoding
 		{
@@ -103,7 +127,11 @@ namespace MyWebSocket.Tcp
 			ContainerHeaders = new Dictionary<string, string>();
 
 		}
-		internal bool SetReq()
+		public void Clear()
+		{
+			ContainerHeaders.Clear();
+		}
+		public bool SetReq()
 		{
 			if (!IsReq)
 			{
@@ -133,18 +161,25 @@ namespace MyWebSocket.Tcp
 
 		public void AddHeader(string key, string value)
 		{
+			key = key.Trim(new char[] { ' ' });
+			value = value.TrimStart(new char[] { ' ' });
 			if (SearchHeader(key, value))
 				throw new HeadersException("Заголвок уже был добавлен");
 
 			switch (key.ToLower())
 			{
+				case "upgrade":
+					upgrade = value;
+					break;
+				case "connection":
+					connection = value;
+					break;
 				case "content-length":
-					if (!int.TryParse(key, out contentlength))
+					if (!int.TryParse(value, out contentlength))
 						throw new HeadersException("Неверный Content-Length");
-				
 				break;
 				case "transfer-encoding":
-					TransferEncoding = key;
+					transferencoding = value;
 				break;
 			}
 			
@@ -158,7 +193,7 @@ namespace MyWebSocket.Tcp
 				if (header.Key.ToLower() == key)
 					return true;
 			}
-			ContainerHeaders.Add(value, key);
+			ContainerHeaders.Add(key, value);
 			return false;
 		}
 		public bool ContainsKeys(string key, bool @case = true)
@@ -170,9 +205,23 @@ namespace MyWebSocket.Tcp
 			}
 			return false;
 		}
+		public bool ContainsKeys(string key, out string value, bool @case = true)
+		{
+			
+			foreach (KeyValuePair<string, string> header in ContainerHeaders)
+			{
+				if (header.Key.ToLower() == key)
+				{
+					value = header.Value;
+					return true;
+				}
+			}
+			value = string.Empty;
+			return false;
+		}
 
 
-			public virtual byte[] ToByte()
+		public virtual byte[] ToByte()
 			{	
 				return Encoding.UTF8.GetBytes(ToString());
 			}

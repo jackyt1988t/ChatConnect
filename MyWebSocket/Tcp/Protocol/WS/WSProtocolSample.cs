@@ -67,8 +67,8 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		public void Set101(IHeader header)
 		{
 			header.StartString = "HTTP/1.1 101 Web Socket Protocol Handshake";
-			header.Add("Upgrade", "WebSocket");
-			header.Add("Connection", "Upgrade");
+			header.AddHeader("Upgrade", "WebSocket");
+			header.AddHeader("Connection", "Upgrade");
 		}
 		public override bool Message(byte[] message, int recive, int length, WSOpcod opcod, WSFin fin)
 		{
@@ -242,16 +242,18 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			MD5 md5 = MD5.Create();
 			Regex regex = new Regex(@"\D");
 
-			if (!request.ContainsKey("sec-websocket-key1"))
+			string key1;
+			string key2;
+			if (!request.ContainsKeys("sec-websocket-key1", out key1, true))
 				throw new WSException("Отсутствует заголовок sec-webspcket-key1", WsError.PcodNotSuported, WSClose.UnsupportedData);
-			if (!request.ContainsKey("sec-websocket-key"))
+			if (!request.ContainsKeys("sec-websocket-key2", out key2, true))
 				throw new WSException("Отсутствует заголовок sec-webspcket-key2", WsError.PcodNotSuported, WSClose.UnsupportedData);
 			
-			long space_1 = Regex.Matches(request["sec-websocket-key1"], @" ").Count;
-			long space_2 = Regex.Matches(request["sec-websocket-key2"], @" ").Count;
+			long space_1 = Regex.Matches(key1, @" ").Count;
+			long space_2 = Regex.Matches(key2, @" ").Count;
 
-			byte[] key1_byte = BitConverter.GetBytes((int)(Convert.ToInt64(regex.Replace(request["sec-websocket-key1"], "")) / space_1));
-			byte[] key2_byte = BitConverter.GetBytes((int)(Convert.ToInt64(regex.Replace(request["sec-websocket-key2"], "")) / space_2));
+			byte[] key1_byte = BitConverter.GetBytes((int)(Convert.ToInt64(regex.Replace(key1, "")) / space_1));
+			byte[] key2_byte = BitConverter.GetBytes((int)(Convert.ToInt64(regex.Replace(key2, "")) / space_2));
 						   if (BitConverter.IsLittleEndian)
 						   {
 						       Array.Reverse(key1_byte);

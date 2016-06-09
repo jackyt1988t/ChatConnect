@@ -206,8 +206,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				stack = string.Empty;
 			if (string.IsNullOrEmpty(message))
 				message = string.Empty;
+			Response.Clear();
 			Response.StartString = "Http/1.400 BAD REQUEST";
-			Response.Add("Content-Type", "text/html; charset=utf-8");
+			Response.AddHeader("Content-Type", "text/html; charset=utf-8");
 			byte[] __body = Encoding.UTF8.GetBytes(
 			"<html>" +
 			"<head>" +
@@ -228,7 +229,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				"</body>" +
 			"</html>");
 
-			Response.Add("Content-Length", __body.Length.ToString());
+			Response.AddHeader("Content-Length", __body.Length.ToString());
 			byte[] header = Response.ToByte();
 
 			if (Message(header, 0, header.Length))
@@ -268,20 +269,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					return false;
 				
 				Message();
-				bool encoding = false;
-				if (Response.ContainsKey("Transfer-Encoding")
-					 && Response["Transfer-Encoding"] == "chunked")
-					 encoding = true;
-				
-				if (encoding)
-				{
-					byte[] count = Encoding.UTF8.GetBytes(write.ToString("X"));
-					if (!Message(count, 0, count.Length))
-						return false;
-						count = new byte[] { 0x0D, 0x0A };
-					if (!Message(count, 0, count.Length))
-						return false;
-				}
 
 				SocketError error;
 				if ((error = Write(message, start, write)) != SocketError.Success)
@@ -293,13 +280,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						Response.Close = true;
 						return false;
 					}
-				}
-
-				if (encoding)
-				{
-					byte[] count = new byte[] { 0x30, 0x0D, 0x0A, 0x0D, 0x0A };
-					if (!Message(count, 0, count.Length))
-						return false;
 				}
 			}
 			return true;
@@ -315,10 +295,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					using (FileStream sr = new FileStream(pathfile, FileMode.Open, FileAccess.Read))
 					{
 						Response.StartString = "HTTP/1.1 200 OK";
-						if (!Response.ContainsKey("Content-Type"))
-							Response.Add("Content-Type", "text/" + type);
-						if (!Response.ContainsKey("Content-Length"))
-							Response.Add("Content-Length", sr.Length.ToString());
+						Response.AddHeader("Content-Type", "text/" + type);
+						Response.AddHeader("Content-Length", sr.Length.ToString());
 						if (!Message())
 							return;
 						

@@ -9,6 +9,15 @@ namespace MyWebSocket.Tcp
 		{
 			get;
 		}
+
+		string Upgrade
+		{
+			get;
+		}
+		string Connection
+		{
+			get;
+		}
 		string TransferEncoding
 		{
 			get;
@@ -69,7 +78,7 @@ namespace MyWebSocket.Tcp
 		{
 			get;
 		}
-
+		void Clear();
 		bool SetReq();
 		bool SetRes();
 		bool SetEnd();
@@ -77,6 +86,7 @@ namespace MyWebSocket.Tcp
 		void AddHeader(string key, string value);
 		bool SearchHeader(string key, string value);
 		bool ContainsKeys(string key, bool @case = true);
+		bool ContainsKeys(string key, out string value, bool @case = true);
 	}
     interface IHeaders
     {
