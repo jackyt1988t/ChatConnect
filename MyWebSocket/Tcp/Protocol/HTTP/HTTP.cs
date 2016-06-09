@@ -167,12 +167,18 @@ override
 		
 		static
 		protected bool __handconn = false;
+		public bool __startconn = false;
 		protected long __twaitconn = DateTime.Now.Ticks;
 
 		public HTTP()
 		{
 			Sync = new object();
-			State = States.work;
+			if (__startconn)
+				State = States.work;
+			else
+				State = States.Work;
+			Request = new Header();
+			Response = new Header();
 			TaskResult = new TaskResult();
 		}
 		async 
@@ -327,11 +333,11 @@ override
 					Work();
 					if (Interlocked.CompareExchange(ref state, 2,-1) !=-1)
 						return TaskResult;
-					if (Response != null && (!Response.IsEnd || !Writer.Empty))
+					if (!Response.IsEnd || !Writer.Empty)
 						write();
 					else
 					{
-						if (Response != null && Response.Close)
+						if (Response.Close)
 							state = 5;
 						else
 						{
