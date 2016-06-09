@@ -19,7 +19,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			protected set;
 		}
 		volatile int state;
-override
+		override
 		public States State
 		{
 			protected set
@@ -30,6 +30,11 @@ override
 			{
 				return (States)state;
 			}
+		}
+		public Exception Exception
+		{
+			get;
+			protected set;
 		}
         public TaskResult TaskResult
         {
@@ -181,73 +186,9 @@ override
 			Response = new Header();
 			TaskResult = new TaskResult();
 		}
-		async 
-		public void File(string path, string type)
+		public void Flush()
 		{
-			await Task.Run(() =>
-			{
-				try
-				{
-					file(path, type);
-				}
-				catch (Exception err)
-				{
-					exc(new HTTPException(err.Message, err));
-				}
-				finally
-				{
-					Response.SetEnd();
-				}
-			});
-		}
-		public void file(string path, string type)
-		{
-			int i = 0;
-			int maxlen = 1000 * 16;
-			using (FileStream sr = new FileStream(
-							path, FileMode.Open, FileAccess.Read))
-			{
-				if (Response.SetRes())
-					return;
-				Response.StartString = "HTTP/1.1 200 OK";
-				if (!Response.ContainsKey("Content-Type"))
-					Response.Add("Content-Type", "text/" + type);
-				Response.Add("Content-Length", sr.Length.ToString());
-
-				int _count = (int)(sr.Length / maxlen);
-				int length = (int)(sr.Length - _count * maxlen);
-				byte[] header = Response.ToByte();
-				if (!Message(header, 0, header.Length))
-					return;
-				while (i++ < _count)
-				{
-					int recive = 0;
-					if ( state > 4 )
-						return;
-					byte[] buffer = new byte[maxlen];
-					while ((maxlen - recive) > 0)
-					{
-						recive = sr.Read(buffer, 0, maxlen - recive);
-					}
-					if ( !Message(buffer, 0, recive ))
-						return;
-					Thread.Sleep(10);
-				}
-					if (length > 0)
-					{
-						int recive = 0;
-						if ( state > 4 )
-							return;
-						byte[] buffer = new byte[length];
-						while ((length - recive) > 0)
-						{
-							recive = sr.Read(buffer, 0, length - recive);
-						}
-						if ( !Message(buffer, 0, recive ))
-							return;
-						Thread.Sleep(10);
-					}
-			}
+			Response.SetEnd();
 		}
 		public bool Close(string message)
 		{
@@ -255,66 +196,17 @@ override
 			{
 				if (state > 4)
 					return true;
-					state = 5;
-					return false;
+				state = 5;
+				return false;
 			}
-		}
-		/*
-		public bool Flush()
-		{
-			Response.SetEnd();
-		}
-		public bool Message()
-		{
-			if (!Response.SetRes())
-				return Message(  Response.ToString()  );
-		}
-		public bool Message(string message)
-		{
-			return Message(Encoding.UTF8.GetBytes(message));
-		}
-		public bool Message(byte[] message)
-		{
-			return Message(   message, 0, message.Length  );
-		}
-		*/
-		/// <summary>
-		/// Отправляет данные текущему подключению
-		/// </summary>
-		/// <param name="message">массив байт для отправки</param>
-		/// <returns>true в случае ечсли данные можно отправить</returns>
-		public bool Message(byte[] message, int start, int write)
-		{
-			lock (Sync)
-			{
-				if (state > 4)
-					return false;
-
-				/*Message();*/
-				SocketError error;
-				if ((error = Write(message, start, write)) != SocketError.Success)
-				{
-					if (error != SocketError.WouldBlock
-						   && error != SocketError.NoBufferSpaceAvailable)
-					{
-						exc( new HTTPException( "Ошибка записи http данных: " + error.ToString() ) );
-						Response.Close = true;
-						return false;
-					}
-				}
-			}
-			return true;
 		}
 		public void Error(string message, string stack)
 		{
-			if (Response.SetRes())
-				return;
-
 			if (string.IsNullOrEmpty(stack))
 				stack = string.Empty;
 			if (string.IsNullOrEmpty(message))
 				message = string.Empty;
-			Response.StartString = "Http/1.1 503 BAD";
+			Response.StartString = "Http/1.400 BAD REQUEST";
 			Response.Add("Content-Type", "text/html; charset=utf-8");
 			byte[] __body = Encoding.UTF8.GetBytes(
 			"<html>" +
@@ -342,9 +234,106 @@ override
 			if (Message(header, 0, header.Length))
 				Message(__body, 0, __body.Length);
 			Response.SetEnd();
-			
 		}
-        public override TaskResult TaskLoopHandlerProtocol()
+		public bool Message()
+		{
+			if (Response.SetRes())
+				return false;
+			else
+				return Message(  Response.ToString()  );
+		}
+		public bool Message(string message)
+		{
+			return Message(Encoding.UTF8.GetBytes(message));
+		}
+		public bool Message(byte[] message)
+		{
+			return Message(   message, 0, message.Length  );
+		}
+		/// <summary>
+		/// Отправляет данные текущему подключению
+		/// </summary>
+		/// <param name="message">массив байт для отправки</param>
+		/// <returns>true в случае ечсли данные можно отправить</returns>
+		public bool Message(byte[] message, int start, int write)
+		{
+			lock (Sync)
+			{
+				if (state > 4)
+					return false;
+
+				Message();
+				SocketError error;
+				if ((error = Write(message, start, write)) != SocketError.Success)
+				{
+					if (error != SocketError.WouldBlock
+						   && error != SocketError.NoBufferSpaceAvailable)
+					{
+						exc( new HTTPException( "Ошибка записи http данных: " + error.ToString() ) );
+						Response.Close = true;
+						return false;
+					}
+				}
+			}
+			return true;
+		}
+		async
+		public void MessageFile(string pathfile, string type, int maxlen = 1000 * 16)
+		{
+			await Task.Run(() =>
+			{
+				int i = 0;
+				try
+				{
+					using (FileStream sr = new FileStream(pathfile, FileMode.Open, FileAccess.Read))
+					{
+						Response.StartString = "HTTP/1.1 200 OK";
+						if (!Response.ContainsKey("Content-Type"))
+							Response.Add("Content-Type", "text/" + type);
+						if (!Response.ContainsKey("Content-Length"))
+							Response.Add("Content-Length", sr.Length.ToString());
+						if (!Message())
+							return;
+						
+						int _count = (int)(sr.Length / maxlen);
+						int length = (int)(sr.Length - _count * maxlen);
+						while (i++ < _count)
+						{
+							int recive = 0;
+							byte[] buffer = new byte[maxlen];
+							while ((maxlen - recive) > 0)
+							{
+								recive = sr.Read(buffer, 0, maxlen - recive);
+							}
+							if (!Message(buffer, 0, recive))
+								return;
+							Thread.Sleep(10);
+						}
+						if (length > 0)
+						{
+							int recive = 0;
+							byte[] buffer = new byte[length];
+							while ((length - recive) > 0)
+							{
+								recive = sr.Read(buffer, 0, length - recive);
+							}
+							if (!Message(buffer, 0, recive))
+								return;
+							Thread.Sleep(10);
+						}
+					}
+				}
+				catch (Exception err)
+				{
+					exc(new HTTPException(err.Message, err));
+				}
+				finally
+				{
+					Response.SetEnd();
+				}
+			});
+		}
+		public override TaskResult TaskLoopHandlerProtocol()
         {
 			try
 			{
@@ -391,7 +380,16 @@ override
 					if (Interlocked.CompareExchange(ref state,-1, 3) == 3)
 						return TaskResult;
 				}
-				
+					if (state == 4)
+					{
+						if (Response.IsRes || Response.Close)
+							Close(string.Empty);
+						else
+						{
+							state = 3;
+							Error(Exception.Message, Exception.StackTrace);
+						}
+					}
 								if (state == 5)
 								{
 									Close();
@@ -416,22 +414,16 @@ override
 		/// <summary>
 		/// Обрабатывает происходящие ошибки и назначает оьраьотчики
 		/// </summary>
-		/// <param name="err">Ошибка WebSocket</param>
-		private void exc(HTTPException err)
+		/// <param name="err">Ошибка</param>
+		private void exc(Exception err)
 		{
 			lock (Sync)
 			{
-				if (state < 7)
-				{
+				if (state < 4)
 					state = 4;
-					Error(err);
-					
-					if (Response.Close)
-						Close(string.Empty);
-					else
-						Error(err.Message, err.StackTrace);
-				}
-				Interlocked.CompareExchange(ref state, 7, 4);
+				else if (state < 7)
+					state = 7;
+					Exception = err;
 			}
 		}
 		/// <summary>
@@ -467,16 +459,6 @@ override
 						exc( new HTTPException("Ошибка записи http данных: " + error.ToString()));
 						Response.Close = true;
 				}
-			}
-		}
-		protected bool SetError()
-		{
-			lock (Sync)
-			{
-				if (state > 3)
-					return true;
-				state = 4;
-				return false;
 			}
 		}
 		protected void OnEventWork()

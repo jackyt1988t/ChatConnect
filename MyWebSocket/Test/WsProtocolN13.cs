@@ -27,7 +27,7 @@ namespace MyWebSocket.Test
 		public wsProtocolN13(string adress, int port) :
 			base()
 		{
-			Policy.SetPolicy(1, 1, 1, 1, 0, 32000);
+			Policy.SetPolicy(0, 1, 1, 1, 1, 32000);
 			Request = new Header();
 			Request.StartString = "GET /chat/websocket HTTP/1.1";
 			Request.Add("Upgrade", "WebSocket");
@@ -40,7 +40,7 @@ namespace MyWebSocket.Test
 		public void Connection()
 		{
 			bool open = true;
-			Tcp = new Socket(_Point.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+			Tcp = new Socket(__Point.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 			try
 			{
 				Tcp.Connect(__Point);
@@ -70,7 +70,7 @@ namespace MyWebSocket.Test
 				http.EventOnOpen += (object sender, PEventArgs e) =>
 				{
 					open = false;
-					State == States.Connection;
+					State = States.Connection;
 					if (!http.Reader.Empty)
 					{
 						int recive = (int)http.Reader.PointR;

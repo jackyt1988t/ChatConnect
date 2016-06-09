@@ -53,10 +53,10 @@ namespace MyWebSocket
 				switch (Http.Request.Path)
 				{
 					case "/":
-						Http.File("Html/index.html", "html");
+						Http.MessageFile("Html/index.html", "html");
 						break;
 					default:
-						Http.File("Html" + Http.Request.Path, Http.Request.File);
+						Http.MessageFile("Html" + Http.Request.Path, Http.Request.File);
 						break;
 				}
 			};

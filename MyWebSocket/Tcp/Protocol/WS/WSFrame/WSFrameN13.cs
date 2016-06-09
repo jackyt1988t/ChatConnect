@@ -186,6 +186,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			BitPcod = 0;
 			BitMask = 0;
 			BitLeng = 0;
+			RecLeng = 0;
 			MaskVal = 0;
 			PartBody = 0;
 			PartHead = 0;
@@ -284,7 +285,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 					byte* pt = target + PartBody;
 						while (RecLeng < LengBody)
 						{
-							*pt = (byte)(*pt ^ DataMask[PartBody % 4]);
+							*pt = (byte)(*pt ^ DataMask[RecLeng % 4]);
 							pt++;
 							RecLeng++;
 						}

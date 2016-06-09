@@ -113,9 +113,13 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					if (Request.ContainsKey("content-length"))
 					{
 						if (int.TryParse(Request["content-length"], 
-													  out _Reader.frame.bleng))
+													 out _Reader.frame.bleng))
 							if (_Reader.frame.bleng > 0)
+							{
 								_Reader.frame.Handl = 1;
+								_Reader.frame.DataBody = 
+												new byte[_Reader.frame.bleng];
+							}
 							else
 								throw new HTTPException("Неверные заголовки");
 					}

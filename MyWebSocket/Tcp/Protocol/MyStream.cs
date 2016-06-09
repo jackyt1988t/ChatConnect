@@ -106,7 +106,15 @@ namespace MyWebSocket.Tcp.Protocol
 
 			set
 			{
-				Seek(value, SeekOrigin.Begin);
+				if (value > 0)
+				{
+					if (value > Length)
+						throw new IOException();
+					if (value + PointR < Count)
+						PointR = PointR + value;
+					else
+						PointR = value - (Count - PointR);
+				}
 			}
 		}
 		protected long _len;
@@ -142,29 +150,10 @@ namespace MyWebSocket.Tcp.Protocol
 				return -1;
 			return _buffer[_p_r++];
 		}
-		public override long Seek(long offset,
-							 SeekOrigin origin)
+		
+		public override long Seek(long offset, SeekOrigin origin)
 		{
-			if (offset > 0)
-			{
-				if (offset > Length)
-					throw new IOException();
-				if (offset + PointR < Count)
-					PointR = PointR + offset;
-				else
-					PointR = offset - (Count - PointR);
-				return offset;
-			}
-			else
-			{
-				if (offset > Clear)
-					throw new IOException();
-				if (PointR - offset > 0)
-					PointR = PointR - offset;
-				else
-					PointR = Count - (offset - PointR);
-				return offset * -1;
-			}
+			throw new NotImplementedException();
 		}
 		public override void SetLength(long value)
 		{
