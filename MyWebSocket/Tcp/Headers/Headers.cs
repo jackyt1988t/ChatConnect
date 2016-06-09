@@ -130,6 +130,7 @@ namespace MyWebSocket.Tcp
 			}
 			return true;
 		}
+
 		public void AddHeader(string key, string value)
 		{
 			if (SearchHeader(key, value))
