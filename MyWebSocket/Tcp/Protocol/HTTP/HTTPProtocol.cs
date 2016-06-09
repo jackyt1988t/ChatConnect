@@ -49,35 +49,26 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			if (_Reader.Empty)
 				return;
 			
-			if (!_Reader.frame.GetHead)
+			if (!_Reader._Frame.GetHead)
 			{
 				_Reader.header = Request;
 				if (_Reader.ReadHead() == -1)
 					return;
-				
-				if (Request.ContainsKey("upgrade"))
+		
+				if (!string.IsNullOrEmpty(Request.Upgrade))
 				{
 					TaskResult.Jump = true;
-					if (Request["upgrade"].ToLower() == "websocket")
+					if (Request.Upgrade == "websocket")
 					{
-						string version = string.Empty;
-						string protocol	= string.Empty;
-						if (Request.ContainsKey("websocket-protocol"))
-						{
-							version = Request["websocket-protocol"].ToLower();
+						string version;
+						string protocol = string.Empty;
+						if (Request.ContainsKeys("websocket-protocol", out version, true))
 							protocol = "websocket-protocol";
-						}
-						else if (Request.ContainsKey("sec-websocket-version"))
-						{
-							version = Request["sec-websocket-version"].ToLower();
+						else if (Request.ContainsKeys("sec-websocket-version", out version, true))
 							protocol = "sec-websocket-version";
-						}
-						else if (Request.ContainsKey("sec-websocket-protocol"))
-						{
-							version = Request["sec-websocket-protocol"].ToLower();
+						else if (Request.ContainsKeys("sec-websocket-protocol", out version, true))
 							protocol = "sec-websocket-protocol"; 
-						}
-						switch (version)
+						switch (version.ToLower())
 						{
 							case "7":
 								TaskResult.Jump = true;
@@ -93,8 +84,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 								break;
 							case "sample":
 								TaskResult.Jump = true;
-								_Reader.frame.Handl = 1;
-								_Reader.frame.bleng = 8;
+								_Reader._Frame.Handl = 1;
+								_Reader._Frame.bleng = 8;
 								TaskResult.Protocol = TaskProtocol.WSAMPLE;
 								break;
 							}
@@ -102,47 +93,19 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					}
 							else if (!__handconn)
 								throw new HTTPException("Неверные заголовки");
-
-					if (Request.ContainsKey("connection")
-					    && Request["connection"] == "close")
-					{
-						Request.Close = true;
-						Response.Close = true;
-						Response.Add("Connection", "close");
-					}
-					if (Request.ContainsKey("content-length"))
-					{
-						if (int.TryParse(Request["content-length"], 
-													 out _Reader.frame.bleng))
-							if (_Reader.frame.bleng > 0)
-							{
-								_Reader.frame.Handl = 1;
-								_Reader.frame.DataBody = 
-												new byte[_Reader.frame.bleng];
-							}
-							else
-								throw new HTTPException("Неверные заголовки");
-					}
-					if (Request.ContainsKey("transfer-encoding"))
-					{
-							if (_Reader.frame.bleng > 0)
-								throw new HTTPException("Неверные заголовки");
-							else
-								_Reader.frame.Handl = 2;
-					}	
-				}
-			if (!_Reader.frame.GetBody)
+			}
+			if (!_Reader._Frame.GetBody)
 			{
 				_Writer.header = Response;
 				if (_Reader.ReadBody() == -1)
 					return;
 
-			    if (_Reader.frame.Pcod == HTTPFrame.DATA)
+			    if (_Reader._Frame.Pcod == HTTPFrame.DATA)
 				{
 					Request.SetReq();
 					if (TaskResult.Jump)
 						TaskResult.Option = TaskOption.Protocol;
-					_Reader.frame.Clear();
+					_Reader._Frame.Clear();
 					return;
 				}
 			}

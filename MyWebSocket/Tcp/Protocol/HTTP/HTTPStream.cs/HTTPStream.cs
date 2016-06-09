@@ -16,7 +16,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		public static readonly byte[] EOFCHUNCK;
 
 		public IHeader header;
-		public HTTPFrame frame;
+		public HTTPFrame _Frame;
 
 		static HTTPStream()
 		{
@@ -28,71 +28,71 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		public HTTPStream(int length) :
 			base(length)
 		{
-			frame = new HTTPFrame();
+			_Frame = new HTTPFrame();
 		}
 		public override int ReadBody()
 		{
 			int read = 0;
 			int _char = 0;
 			
-			if (frame.Handl == 0)
+			if (_Frame.Handl == 0)
 			{
-				frame.GetBody = true;
+				_Frame.GetBody = true;
 				return read;
 			}
 			while ((_char = ReadByte()) > -1)
 			{
-				switch (frame.Handl)
+				switch (_Frame.Handl)
 				{
 					case 1:
-						frame.DataBody[frame.bpart] = (byte)_char;
+						_Frame.DataBody[_Frame.bpart] = (byte)_char;
 						break;
 					case 2:
 						if (_char == CR)
 						{
-							frame.Handl = 3;
+							_Frame.Handl = 3;
 							break;
 						}
 						else
-							frame.Param += char.ToLower((char)_char);
+							_Frame.Param += char.ToLower((char)_char);
 						break;
 					case 3:
 						if (_char != LF)
 							throw new HTTPException("отсутсвует символ[LF]");
-						if (!int.TryParse(frame.Param, out frame.bleng))
+						if (!int.TryParse(_Frame.Param, out _Frame.bleng))
 							throw new HTTPException("Неверная длинна тела.");
 						
-						frame.Handl = 1;
-						frame.DataBody = new byte[frame.bleng];
+						_Frame.Handl = 1;
+						_Frame.DataBody = new byte[_Frame.bleng];
 						break;
 					case 4:
 						if (_char == CR)
-							frame.Handl = 5;
+							_Frame.Handl = 5;
 						else
 							throw new HTTPException("отсутсвует символ[CR]");
 						break;
 					case 5:
 						if (_char == LF)
 						{
-							frame.Pcod = 1;
-							frame.Handl = 6;
+							_Frame.Pcod = 1;
+							_Frame.Handl = 6;
 						}
 						else
 							throw new HTTPException("отсутсвует символ[LF]");
 						break;
 					case 6:
 						if (_char == CR)
-							frame.Handl = 7;
+							_Frame.Handl = 7;
 						else
 						{
-							frame.Param += char.ToLower((char)_char);
+							_Frame.Param += char.ToLower((char)_char);
 							return read;
 						}
 						break;
 					case 7:
 						if (_char == LF)
 						{
-							frame.Pcod = 0;
+							_Frame.Pcod = 0;
 							return read;
 						}
 						else
@@ -100,17 +100,17 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 
 				}
 				read++;
-				frame.bpart++;
+				_Frame.bpart++;
 
-				if (frame.bpart == frame.bleng)
+				if (_Frame.bpart == _Frame.bleng)
 				{
 					header.SegmentsBuffer.Enqueue(
-							       frame.DataBody);
-					if (!string.IsNullOrEmpty(frame.Param))
-						frame.Handl = 4;
+							       _Frame.DataBody);
+					if (!string.IsNullOrEmpty(_Frame.Param))
+						_Frame.Handl = 4;
 					else
 					{
-						frame.GetBody = true;
+						_Frame.GetBody = true;
 						return read;
 					}
 				}
@@ -121,134 +121,148 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		public override int ReadHead()
 		{
 			int read = 0;
-			int _char = 0;
+			int @char = 0;
 			
-			while ( (_char = ReadByte() ) > -1)
+			while (!Empty)
 			{
-				if ( frame.hleng > 36000 )
+				@char = Buffer[PointR];
+				if ( _Frame.hleng > 36000 )
 					throw new HTTPException("Превышена длинна заголовков");
-					
-				switch (frame.Handl)
+
+				
+				switch (_Frame.Handl)
 				{
 					case 0:
-						if (frame.ststr > STSTR)
+						if (_Frame.ststr > STSTR)
 							throw new HTTPException( "Длинна стартовой строки" );
-						if (_char == CR)
+						if (@char == CR)
 						{
-							frame.Handl = 4;
-							header.StartString = frame.StStr;
-								   frame.StStr = string.Empty;
+							_Frame.Handl = 4;
+							header.StartString = _Frame.StStr;
+								   _Frame.StStr = string.Empty;
 						}
 						else
 						{
-							frame.ststr++;
-							frame.StStr += char.ToLower((char)_char);
-							if (_char == SPACE)
+							_Frame.ststr++;
+							_Frame.StStr += char.ToLower((char)@char);
+							if (@char == SPACE)
 							{
-								frame.Hand++;
-								if (frame.Hand == 2)
+								_Frame.Hand++;
+								if (_Frame.Hand == 2)
 									ParsePath( header.Path, header );
-									if (frame.Hand > 2)
+									if (_Frame.Hand > 2)
 										header.Http +=
-										   char.ToLower((char)_char);
+										   char.ToLower((char)@char);
 						}
 							else
 							{
-								switch (frame.Hand)
+								switch (_Frame.Hand)
 								{
 									case 1:
 										header.Path +=
-										   char.ToLower((char)_char);
+										   char.ToLower((char)@char);
 										break;
 									case 2:
 										header.Http +=
-										   char.ToLower((char)_char);
+										   char.ToLower((char)@char);
 										break;
 									case 0:
 										header.Method +=
-										   char.ToLower((char)_char);
+										   char.ToLower((char)@char);
 										break;
 								}
 							}
 						}
 						break;
 					case 1:
-						if (frame.param > PARAM)
+						if (_Frame.param > PARAM)
 							throw new HTTPException("Длинна параметра заголовка");
-						if (_char == CN)
-                            				frame.Handl = 2;
+						if (@char == CN)
+						{
+							PointR++;
+                            _Frame.Handl = 2;
+						}
 						else
 						{
-							frame.param++;
-							frame.Param += char.ToLower((char)_char);
+							_Frame.param++;
+							_Frame.Param += char.ToLower((char)@char);
 						}
 						break;
 					case 2:
-						if (frame.value > VALUE)
+						if (_Frame.value > VALUE)
 							throw new HTTPException("Длинна значения заголовка");
-						if (_char == CR)
+						if (@char == CR)
 						{
-							frame.param = 0;
-							frame.value = 0;
-							frame.Handl = 4;
-							string param = 
-								frame.Param.Trim(new char[] { ' ' });
-							string value =
-								frame.Value.Trim(new char[] { ' ' });
-							if (!header.ContainsKey(param))
-								header.Add(param, value);
-							else
-								header[param] += ";"  +  value;
-
-							frame.Param  =  string.Empty;
-							frame.Value  =  string.Empty;
+							_Frame.param = 0;
+							_Frame.value = 0;
+							_Frame.Handl = 4;
+							header.AddHeader(_Frame.Param, _Frame.Value);
+							_Frame.Param = string.Empty;
+							_Frame.Value = string.Empty;
 						}
 						else
 						{
-							frame.value++;
-							frame.Value += ( char )_char;
+							_Frame.value++;
+							_Frame.Value += ( char )@char;
 						}
 						break;
 					case 3:
-						if (_char == CR)
-							frame.Handl = 5;
+						if (@char == CR)
+							_Frame.Handl = 5;
 						else
 						{
-							frame.Handl = 1;
-							if (_char == CN)
-                            					frame.Handl = 2;
+							_Frame.Handl = 1;
+							if (@char == CN)
+                            	_Frame.Handl = 2;
 							else
 							{
-								frame.param++;
-								frame.Param += char.ToLower((char)_char);
+								_Frame.param++;
+								_Frame.Param += char.ToLower((char)@char);
 							}
 						}
 						break;
 					case 4:
-						if (_char == LF)
-							frame.Handl = 3;
+						if (@char == LF)
+							_Frame.Handl = 3;
 						else
 							throw new HTTPException( "Отсутствует символ [LF]" );
 						break;
 					case 5:
-						if (_char == LF)
+						if (@char == LF)
 						{
-							frame.Handl = 0;
-							frame.GetHead = true;
+							_Frame.Handl = 0;
+							_Frame.GetHead = true;
 						}
 						else
 							throw new HTTPException( "Отсутствует символ [LF]" );
 						
-						return read;
+						if (header.Connection.ToLower() == "close")
+							header.Close = true;
+						
+							_Frame.Handl = 0;
+						if (header.ContentLength > 0)
+						{
+							_Frame.Handl = 1;
+							_Frame.bleng = header.ContentLength;
+							_Frame.DataBody = new byte[header.ContentLength];
+						}
+						if (!string.IsNullOrEmpty(header.TransferEncoding))
+						{
+							if (_Frame.bleng > 0)
+								throw new HTTPException("Transfer-Encoding не явно");
+							else
+								_Frame.Handl = 2;
+						}
+						break;
 				}
-				frame.hleng++;
+				PointR++;
+				_Frame.hleng++;
+
+				if (_Frame.GetHead)
+					return read;
 			}
-            		read = -1;
+            read = -1;
 			return read;
-		}
-		public int WriteBody(byte[] buffer, int start, int length)
-		{
-			
 		}
 		public static void ParsePath(string strdata, IHeader header)
 		{
