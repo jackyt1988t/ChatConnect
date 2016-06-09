@@ -56,7 +56,7 @@ namespace MyWebSocket.Test
 			if (open)
 			{
 				HTTP http = new HTTPProtocol(Tcp);
-				
+				http.__startconn = true;
 				for (int i = 0; i < 24; i++)
 				{
 					Request["Sec-WebSocket-Key"] += (char)new Random().Next(0x30, 0x79);
@@ -93,6 +93,7 @@ namespace MyWebSocket.Test
 
 				byte[] buffer = Request.ToByte();
 				http.Message(buffer, 0, buffer.Length);
+				http.Response.SetEnd();
 
 				while (true)
 				{
