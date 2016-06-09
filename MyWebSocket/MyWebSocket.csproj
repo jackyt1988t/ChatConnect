@@ -103,7 +103,6 @@
     <Compile Include="Tcp\Protocol\MyStream.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
-    <Compile Include="Tcp\Protocol\WS\Headers\WSHeaders.cs" />
     <Compile Include="Tcp\Protocol\WS\WSClose\CloseWS.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
