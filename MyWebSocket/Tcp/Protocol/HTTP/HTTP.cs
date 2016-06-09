@@ -237,10 +237,15 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		}
 		public bool Message()
 		{
-			if (Response.SetRes())
-				return false;
-			else
-				return Message(  Response.ToString()  );
+			lock (Sync)
+			{
+				if (Response.SetRes())
+					return false;
+				else
+				{
+					return Message(Response.ToString());
+				}
+			}
 		}
 		public bool Message(string message)
 		{
@@ -261,8 +266,23 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			{
 				if (state > 4)
 					return false;
-
+				
 				Message();
+				bool encoding = false;
+				if (Response.ContainsKey("Transfer-Encoding")
+					 && Response["Transfer-Encoding"] == "chunked")
+					 encoding = true;
+				
+				if (encoding)
+				{
+					byte[] count = Encoding.UTF8.GetBytes(write.ToString("X"));
+					if (!Message(count, 0, count.Length))
+						return false;
+						count = new byte[] { 0x0D, 0x0A };
+					if (!Message(count, 0, count.Length))
+						return false;
+				}
+
 				SocketError error;
 				if ((error = Write(message, start, write)) != SocketError.Success)
 				{
@@ -273,6 +293,13 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						Response.Close = true;
 						return false;
 					}
+				}
+
+				if (encoding)
+				{
+					byte[] count = new byte[] { 0x30, 0x0D, 0x0A, 0x0D, 0x0A };
+					if (!Message(count, 0, count.Length))
+						return false;
 				}
 			}
 			return true;

@@ -246,7 +246,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             		read = -1;
 			return read;
 		}
-		public static  void  ParsePath(string strdata, IHeader header)
+		public int WriteBody(byte[] buffer, int start, int length)
+		{
+			
+		}
+		public static void ParsePath(string strdata, IHeader header)
 		{
 			int index = strdata.LastIndexOf('.');
 			if (index == -1)

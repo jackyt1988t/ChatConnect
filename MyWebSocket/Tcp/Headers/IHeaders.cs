@@ -3,8 +3,17 @@ using System.Collections.Generic;
 
 namespace MyWebSocket.Tcp
 {
-    interface IHeader : IDictionary<string, string>
+    interface IHeader
     {
+		int ContentLength
+		{
+			get;
+		}
+		string TransferEncoding
+		{
+			get;
+		}
+
 		bool IsEnd
 		{
 			get;
@@ -65,6 +74,9 @@ namespace MyWebSocket.Tcp
 		bool SetRes();
 		bool SetEnd();
 		byte[] ToByte();
+		void AddHeader(string key, string value);
+		bool SearchHeader(string key, string value);
+		bool ContainsKeys(string key, bool @case = true);
 	}
     interface IHeaders
     {

@@ -4,8 +4,32 @@ using System.Collections.Generic;
 
 namespace MyWebSocket.Tcp
 {
-    class Header : Dictionary<string, string>, IHeader
+    class Header : IHeader
     {
+		int contentlength;
+		public int ContentLength
+		{
+			get
+			{
+				return contentlength;
+			}
+			private set
+			{
+				ContainerHeaders.Add("Content-Length", value.ToString());
+			}
+		}
+		string transferencoding;
+		public string TransferEncoding
+		{
+			get
+			{
+				return transferencoding;
+			}
+			private set
+			{
+				ContainerHeaders.Add("TransferEncoding", value.ToString());
+			}
+		}
 		public bool IsEnd
 		{
 			get;
@@ -27,10 +51,10 @@ namespace MyWebSocket.Tcp
 			set;
 		}
 		public byte[] Body
-        	{
-            		get;
-            		set;
-        	}
+        {
+            get;
+            set;
+        }
 		public object Sync
 		{
 			get;
@@ -70,57 +94,91 @@ namespace MyWebSocket.Tcp
 			get;
 			private set;
 		}
- 
-        public Header()
+		private Dictionary<string, string> ContainerHeaders;
+		public Header()
         {
 			Sync = new object();
 			TimeConnection = DateTime.Now;
 			SegmentsBuffer = new Queue<byte[]>(50);
-        }
-		public bool SetReq()
+			ContainerHeaders = new Dictionary<string, string>();
+
+		}
+		internal bool SetReq()
 		{
-			lock (Sync)
+			if (!IsReq)
 			{
-				if (!IsReq)
-				{
-					IsReq = true;
-					return false;
-				}
+				IsReq = true;
+				return false;
 			}
 			return true;
 		}
 		public bool SetRes()
 		{
-			lock (Sync)
+			if (!IsRes)
 			{
-				if (!IsRes)
-				{
-					IsRes = true;
-					return false;
-				}
+				IsRes = true;
+				return false;
 			}
 			return true;
 		}
 		public bool SetEnd()
 		{
-			lock (Sync)
+			if (!IsEnd)
 			{
-				if (!IsEnd)
-				{
-					IsEnd = true;
-					return false;
-				}
+				IsEnd = true;
+				return false;
 			}
 			return true;
 		}
-		public virtual byte[] ToByte()
+		public void AddHeader(string key, string value)
+		{
+			if (SearchHeader(key, value))
+				throw new HeadersException("Заголвок уже был добавлен");
+
+			switch (key.ToLower())
+			{
+				case "content-length":
+					if (!int.TryParse(key, out contentlength))
+						throw new HeadersException("Неверный Content-Length");
+				
+				break;
+				case "transfer-encoding":
+					TransferEncoding = key;
+				break;
+			}
+			
+		}
+		public bool SearchHeader(string key, string value)
+		{
+			if (IsRes)
+				throw new HeadersException("заголовки были отправлены");
+			foreach (KeyValuePair<string, string> header in ContainerHeaders)
+			{
+				if (header.Key.ToLower() == key)
+					return true;
+			}
+			ContainerHeaders.Add(value, key);
+			return false;
+		}
+		public bool ContainsKeys(string key, bool @case = true)
+		{
+			foreach (KeyValuePair<string, string> header in ContainerHeaders)
+			{
+				if (header.Key.ToLower() == key)
+					return true;
+			}
+			return false;
+		}
+
+
+			public virtual byte[] ToByte()
 			{	
 				return Encoding.UTF8.GetBytes(ToString());
 			}
 			public override string ToString()
 			{				
 				string request = StartString + "\r\n";
-				foreach (KeyValuePair<string, string> keyvalue in this)
+				foreach (KeyValuePair<string, string> keyvalue in ContainerHeaders)
 				{
 					request += keyvalue.Key + ": " + keyvalue.Value + "\r\n";
 				}
@@ -128,47 +186,4 @@ namespace MyWebSocket.Tcp
 				return request;
 			}
 	}
-    class Headers : IHeaders
-    {
-        public IHeader ResHeaders
-        {
-            get;
-            set;
-        }
-        public IHeader ReqHeaders
-        {
-            get;
-            set;
-        }
-
-        public Headers()
-        {
-            ResHeaders = new Header();
-            ReqHeaders = new Header();
-        }
-        public string ToRequest()
-        {
-            string request = ReqHeaders.StartString + "\r\n";
-            foreach (KeyValuePair<string, string> keyvalue in ReqHeaders)
-            {
-                request += keyvalue.Key + ": " + keyvalue.Value + "\r\n";
-            }
-            request += "\r\n";
-            if (ReqHeaders.Body != null)
-                request += ReqHeaders.Body;
-            return request;
-        }
-        public string ToResponse()
-        {
-            string response = ResHeaders.StartString + "\r\n";
-            foreach (KeyValuePair<string, string> keyvalue in ResHeaders)
-            {
-                response += keyvalue.Key + ": " + keyvalue.Value + "\r\n";
-            }
-            response += "\r\n";
-            if (ResHeaders.Body != null)
-                response += ResHeaders.Body;
-            return response;
-        }
-    }
 }
