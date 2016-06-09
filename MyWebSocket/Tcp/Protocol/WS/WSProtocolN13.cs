@@ -141,9 +141,11 @@ namespace MyWebSocket.Tcp.Protocol.WS
 				writer.Frame.Null();
 				writer.Frame.BitFin   = Fin;
 				writer.Frame.BitPcod  = Opcod;
+				writer.Frame.BitMask  = Policy.BitMask;
 				writer.Frame.PartBody = recive;
 				writer.Frame.LengBody = length;
 				writer.Frame.DataBody = message;
+				
 				writer.Frame.InitializationHeader();
 				if (Debug)
 					WSDebug.DebugN13( writer.Frame );
