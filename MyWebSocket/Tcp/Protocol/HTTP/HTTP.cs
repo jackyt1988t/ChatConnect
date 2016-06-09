@@ -259,6 +259,29 @@ override
 					return false;
 			}
 		}
+		/*
+		public bool Cancel()
+		{
+			Response.SetEnd();
+		}
+		public bool Message()
+		{
+			lock (Sync)
+			{
+				if (!Response.SetRes())
+					return Message(
+						Response.ToString());
+			}
+		}
+		public bool Message(string message)
+		{
+			return Message(Encoding.UTF8.GetBytes(message));
+		}
+		public bool Message(byte[] message)
+		{
+			return Message(   message, 0, message.Length  );
+		}
+		*/
 		/// <summary>
 		/// Отправляет данные текущему подключению
 		/// </summary>
@@ -271,6 +294,7 @@ override
 				if (state > 4)
 					return false;
 
+				/*Message();*/
 				SocketError error;
 				if ((error = Write(message, start, write)) != SocketError.Success)
 				{
