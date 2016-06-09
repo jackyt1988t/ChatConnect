@@ -260,18 +260,14 @@ override
 			}
 		}
 		/*
-		public bool Cancel()
+		public bool Flush()
 		{
 			Response.SetEnd();
 		}
 		public bool Message()
 		{
-			lock (Sync)
-			{
-				if (!Response.SetRes())
-					return Message(
-						Response.ToString());
-			}
+			if (!Response.SetRes())
+				return Message(  Response.ToString()  );
 		}
 		public bool Message(string message)
 		{
