@@ -19,7 +19,7 @@ namespace MyWebSocket.Test
 	{
 		static string CHECKKEY = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
-		public IPEndPoint _Point
+		public IPEndPoint __Point
 		{
 			get;
 		}		
@@ -27,44 +27,39 @@ namespace MyWebSocket.Test
 		public wsProtocolN13(string adress, int port) :
 			base()
 		{
-			Policy.SetPolicy(0, 1, 1, 1, 0, 32000);
-													   
-			_Point = new IPEndPoint(IPAddress.Parse(adress), port);
-		}
-		public void Connection()
-		{
-			bool open = true;
-			Tcp = new Socket(_Point.AddressFamily, 
-								SocketType.Stream, 
-									ProtocolType.Tcp);
-			try
-			{
-				Tcp.Connect(_Point);
-				Session = new WSEssion(((IPEndPoint)Tcp.RemoteEndPoint).Address);
-
-			}
-			catch (SocketException err)
-			{	
-				open = false;
-				Error(new WSException(
-						"Ошибка при подключении", 
-								err.SocketErrorCode, 
-									WSClose.ServerError));
-			}
-
-			if (open)
-			{
-				HTTP http = new HTTPProtocol(Tcp);
-				Request.StartString = 
+			Policy.SetPolicy(1, 1, 1, 1, 0, 32000);
+			Request.StartString = 
 				"GET /chat/websocket HTTP/1.1\r\n";
 				Request.Add("Upgrade", "WebSocket");
 				Request.Add("Connection", "Upgrade");
 				Request.Add("Sec-WebSocket-Key", "");
 				Request.Add("Sec-WebSocket-Protocol", "13");
+													   
+			__Point = new IPEndPoint(IPAddress.Parse(adress), port);
+		}
+		public void Connection()
+		{
+			bool open = true;
+			Tcp = new Socket(_Point.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+			try
+			{
+				Tcp.Connect(__Point);
+					Session = new WSEssion(((IPEndPoint)Tcp.RemoteEndPoint).Address);
+
+			}
+			catch (SocketException err)
+			{	
+				open = false;
+				Error(new WSException("Ошибка при подключении", err.SocketErrorCode, WSClose.ServerError));
+			}
+
+			if (open)
+			{
+				HTTP http = new HTTPProtocol(Tcp);
+				
 				for (int i = 0; i < 24; i++)
 				{
-					Request["Sec-WebSocket-Key"] += 
-						(char)new Random().Next(0x30, 0x79);
+					Request["Sec-WebSocket-Key"] += (char)new Random().Next(0x30, 0x79);
 				}
 				http.EventClose += (object sender, PEventArgs e) =>
 				{
