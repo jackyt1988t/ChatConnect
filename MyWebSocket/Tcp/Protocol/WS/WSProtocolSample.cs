@@ -137,8 +137,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			if (Reader.Empty)
 				return;
 
-			if (reader.Frame.GetsHead 
-			 && reader.Frame.GetsBody)
+			if (reader.Frame.GetsHead && reader.Frame.GetsBody)
 				reader.Frame.Null();
 
 			if (!reader.Frame.GetsHead)

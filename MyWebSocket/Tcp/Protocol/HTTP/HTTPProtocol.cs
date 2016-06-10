@@ -44,30 +44,58 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				Close(string.Empty);
 			OnEventWork();
 		}
+		protected override void data()
+		{	
+			if (!_Reader._Frame.GetBody)
+			{
+				_Writer.header = Response;
+				if (_Reader.ReadBody() == -1)
+					return;
+
+				switch (_Reader._Frame.Pcod)
+				{
+					case HTTPFrame.DATA:
+					if (TaskResult.Jump)
+						TaskResult.Option = TaskOption.Protocol;
+					else
+						OnEventData();
+					break;
+					case HTTPFrame.CHUNK:
+					break;
+				}
+			}
+		}
 		protected override void Data()
 		{
+			
 			if (_Reader.Empty)
 				return;
-			
+
+			if (_Reader._Frame.GetHead && _Reader._Frame.GetBody)
+			{
+				_Reader._Frame.Clear();
+				_Reader.header = Request;
+				_Writer.header = Response;
+			}
 			if (!_Reader._Frame.GetHead)
 			{
 				_Reader.header = Request;
 				if (_Reader.ReadHead() == -1)
 					return;
 				
-				switch (_Reader.Method)
+				switch (Request.Method)
 				{
 					case "GET":
 						if (_Reader._Frame.bleng > 0)
 							throw new HTTPException("Неверная длина запроса");
 						break;
-					case default:
+					default:
 							throw new HTTPException("Метод не поддерживается");
 				}
 				if (!string.IsNullOrEmpty(Request.Upgrade))
 				{
 					TaskResult.Jump = true;
-					if (Request.Upgrade == "websocket")
+					if (Request.Upgrade.ToLower() == "websocket")
 					{
 						string version;
 						string protocol = string.Empty;
@@ -97,24 +125,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 								_Reader._Frame.bleng = 8;
 								TaskResult.Protocol = TaskProtocol.WSAMPLE;
 								break;
-							}
 						}
 					}
-							else if (!__handconn)
-								throw new HTTPException("Неверные заголовки");
-			}
-			if (!_Reader._Frame.GetBody)
-			{
-				_Writer.header = Response;
-				if (_Reader.ReadBody() == -1)
-					return;
-
-			    if (_Reader._Frame.Pcod == HTTPFrame.DATA)
-				{
-					if (TaskResult.Jump)
-						TaskResult.Option = TaskOption.Protocol;
-					_Reader._Frame.Clear();
-					return;
 				}
 			}
 		}

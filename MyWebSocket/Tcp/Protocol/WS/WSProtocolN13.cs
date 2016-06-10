@@ -159,14 +159,14 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		{
 			OnEventWork();
 			
-			if (!PingControl.IsPong && PingControl.GetPong.Ticks < DateTime.Now.Ticks)
+			/*if (!PingControl.IsPong && PingControl.GetPong.Ticks < DateTime.Now.Ticks)
 				 throw new WSException( "Нет ответа Понг", WsError.PingNotResponse, WSClose.PolicyViolation);
 
 			if (!PingControl.IsPing && PingControl.SetPing.Ticks < DateTime.Now.Ticks)
 			{	
 				 PingControl.SetPing  =  new TimeSpan(  DateTime.Now.Ticks  +  TimeSpan.TicksPerSecond * 5  );
 			Ping(PingControl.SetPing.ToString());
-			}			
+			}*/			
 		}
 
 		protected override void Data()
@@ -174,8 +174,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			if (Reader.Empty)
 				return;
 			
-			if (reader._Frame.GetsHead 
-			 && reader._Frame.GetsBody)
+			if (reader._Frame.GetsHead && reader._Frame.GetsBody)
 				reader._Frame.Null();
 
 			if (!reader._Frame.GetsHead)

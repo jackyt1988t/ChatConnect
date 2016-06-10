@@ -3,6 +3,9 @@ using System.IO;
 
 namespace MyWebSocket.Tcp.Protocol
 {
+	/// <summary>
+	/// Кольцевой поток данных
+	/// </summary>
 	class StreamS : Stream
 	{
 		public long Count
@@ -127,17 +130,23 @@ namespace MyWebSocket.Tcp.Protocol
 			_buffer = new byte[length];
 		}
 #region virtual
+		/// <summary>
+		/// сбрасывает поток в начальное положение
+		/// </summary>
 		public virtual void Reset()
 		{
 			_p_r = 0;
 			_p_w = 0;
 		}
-		
-		public virtual void Resize(Int length)
+		/// <summary>
+		/// увеличивает вместимость кольцевого потока
+		/// </summary>
+		/// <param name="length"></param>
+		public virtual void Resize(int length)
 		{
-			int recive;
-			byte[] buffer = new byte[ length ];
-			Read(buffer, 0, (recive = Length));
+			int recive = (int)Length;
+			byte[] buffer = new byte[  length  ];
+			Read(  buffer, 0, recive  );
 			_p_r = 0;
 			_p_w = recive;
 			_len = length;
@@ -150,7 +159,13 @@ namespace MyWebSocket.Tcp.Protocol
 		public override void Flush()
 		{
 			throw new NotImplementedException();
-		}		
+		}
+		/// <summary>
+		/// увеличивает текущую длинну кольцевого потока, 
+		/// не может выходить за рамки длинны буффера потока
+		/// </summary>
+		/// <param name="value">количетво на которое необходимо увеличить длинну потока</param>
+						
 		public override void SetLength(long value)
 		{
 			if (value > Clear)
@@ -160,23 +175,39 @@ namespace MyWebSocket.Tcp.Protocol
 			else
 				PointW = value - (Count - PointW);
 		}
-#endregion
+		#endregion
 
-#region read write
-		public virtual int ReadHead()
-		{
-			throw new NotImplementedException();
-		}
+#region read write 
+		/// <summary>
+		/// считывает тело сообщения
+		/// </summary>
+		/// <returns>количество прочитанных байт</returns>
 		public virtual int ReadBody()
 		{
 			throw new NotImplementedException();
 		}
+		/// <summary>
+		/// считывает заголовки сообщения
+		/// </summary>
+		/// <returns>количество прочитанных байт</returns>
+		public virtual int ReadHead()
+		{
+			throw new NotImplementedException();
+		}
+		
 		public override  int ReadByte()
 		{
 			if (Empty)
 				return -1;
 			return _buffer[_p_r++];
 		}
+		/// <summary>
+		/// Записывает данные в поток
+		/// </summary>
+		/// <param name="buffer">буффер данных для записи</param>
+		/// <param name="pos">начальная позиция</param>
+		/// <param name="len">количество которое необходимо записать</param>
+		/// <returns></returns>
 		unsafe public override int Read(byte[] buffer, int pos, int len)
 		{
 			int i;
@@ -199,10 +230,22 @@ namespace MyWebSocket.Tcp.Protocol
 			}
 			return i;
 		}
+		/// <summary>
+		/// Не поодерживается данной реализацией
+		/// </summary>
+		/// <param name="offset"></param>
+		/// <param name="origin"></param>
+		/// <returns></returns>
 		unsafe public override long Seek(long offset, SeekOrigin origin)
 		{
 			throw new NotImplementedException();
 		}
+		/// <summary>
+		/// Читает данные из потока
+		/// </summary>
+		/// <param name="buffer">буффер в который будут записаны данные</param>
+		/// <param name="pos">начальная позиция</param>
+		/// <param name="len">количество которое необходимо прочитать</param>
 		unsafe public override void Write(byte[] buffer, int pos, int len)
 		{
 			int i;
