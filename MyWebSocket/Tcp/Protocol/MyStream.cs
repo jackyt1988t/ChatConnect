@@ -133,7 +133,7 @@ namespace MyWebSocket.Tcp.Protocol
 			_p_w = 0;
 		}
 		
-		publuc virtual void Resize(Int length)
+		public virtual void Resize(Int length)
 		{
 			int recive;
 			byte[] buffer = new byte[ length ];
