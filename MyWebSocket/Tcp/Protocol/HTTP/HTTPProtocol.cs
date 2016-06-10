@@ -104,7 +104,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 
 			    if (_Reader._Frame.Pcod == HTTPFrame.DATA)
 				{
-					Request.SetReq();
 					if (TaskResult.Jump)
 						TaskResult.Option = TaskOption.Protocol;
 					_Reader._Frame.Clear();
