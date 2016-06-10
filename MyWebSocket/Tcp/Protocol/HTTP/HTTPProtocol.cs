@@ -54,7 +54,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				_Reader.header = Request;
 				if (_Reader.ReadHead() == -1)
 					return;
-		
+				
+				if (_Reader.Method != "GET")
+					throw new HTTPException("Метод не поддерживается");
 				if (!string.IsNullOrEmpty(Request.Upgrade))
 				{
 					TaskResult.Jump = true;
