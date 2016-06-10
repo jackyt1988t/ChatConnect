@@ -252,7 +252,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							throw new HTTPException( "Отсутствует символ [LF]" );
 						
 						// Закрыть соединение
-						if (header.Connection.ToLower() == "close")
+						if (header.Connection == "close")
 							header.Close = true;
 						
 						// длинна тела запроса
