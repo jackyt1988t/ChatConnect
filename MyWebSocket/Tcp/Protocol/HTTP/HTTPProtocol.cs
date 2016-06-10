@@ -55,8 +55,15 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				if (_Reader.ReadHead() == -1)
 					return;
 				
-				if (_Reader.Method != "GET")
-					throw new HTTPException("Метод не поддерживается");
+				switch (_Reader.Method)
+				{
+					case "GET":
+						if (_Reader._Frame.bleng > 0)
+							throw new HTTPException("Неверная длина запроса");
+						break;
+					case default:
+							throw new HTTPException("Метод не поддерживается");
+				}
 				if (!string.IsNullOrEmpty(Request.Upgrade))
 				{
 					TaskResult.Jump = true;
