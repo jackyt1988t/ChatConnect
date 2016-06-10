@@ -206,8 +206,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				stack = string.Empty;
 			if (string.IsNullOrEmpty(message))
 				message = string.Empty;
-			Response.Clear();
-			Response.StartString = "Http/1.400 BAD REQUEST";
+			Response.StartString = "HTTP/1.1 400 BAD REQUEST";
 			Response.AddHeader("Content-Type", "text/html; charset=utf-8");
 			byte[] __body = Encoding.UTF8.GetBytes(
 			"<html>" +
@@ -230,10 +229,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			"</html>");
 
 			Response.AddHeader("Content-Length", __body.Length.ToString());
-			byte[] header = Response.ToByte();
-
-			if (Message(header, 0, header.Length))
-				Message(__body, 0, __body.Length);
+			Message( __body );
 			Response.SetEnd();
 		}
 		public bool Message()
@@ -399,7 +395,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							Close(string.Empty);
 						else
 						{
-							state = 3;
+							state =-1;
 							Error(Exception.Message, Exception.StackTrace);
 						}
 					}
@@ -414,9 +410,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 									TaskResult.Option = TaskOption.Delete;
 								}
 			}
-			catch (HTTPException exc)
+			catch (HTTPException err)
 			{
-				Error(exc);
+				exc(err);
 			}
 			return TaskResult;
         }

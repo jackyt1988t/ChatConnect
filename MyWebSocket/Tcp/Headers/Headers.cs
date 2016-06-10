@@ -205,10 +205,10 @@ namespace MyWebSocket.Tcp
 			switch (key.ToLower())
 			{
 				case "upgrade":
-					upgrade = value;
+					upgrade = value.ToLower();
 					break;
 				case "connection":
-					connection = value;
+					connection = value.ToLower();
 					break;
 				case "content-length":
 					if (!int.TryParse(value, out contentlength))
