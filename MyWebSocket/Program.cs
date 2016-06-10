@@ -13,7 +13,7 @@ namespace MyWebSocket
     {
         static void Main(string[] args)
         {
-			WS.Debug = true;
+			//WS.Debug = true;
 			WS.EventConnect += (object obj, PEventArgs a) =>
 			{
 				// Объект WebSocket
@@ -50,15 +50,19 @@ namespace MyWebSocket
 			{
 				// Объект Http
 				HTTP Http = obj as HTTP;
-				switch (Http.Request.Path)
+				// Событие наступает когда приходят новые данные
+				Http.EventData += (object sender, PEventArgs e) =>
 				{
-					case "/":
-						Http.MessageFile("Html/index.html", "html");
-						break;
-					default:
-						Http.MessageFile("Html" + Http.Request.Path, Http.Request.File);
-						break;
-				}
+					switch (Http.Request.Path)
+					{
+						case "/":
+							Http.MessageFile("Html/index.html", "html");
+							break;
+						default:
+							Http.MessageFile("Html" + Http.Request.Path, Http.Request.File);
+							break;
+					}
+				};
 			};
 			WServer Server = new WServer("0.0.0.0", 8081, 2);
 			

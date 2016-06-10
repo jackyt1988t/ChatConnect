@@ -368,21 +368,29 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					Work();
 					if (Interlocked.CompareExchange(ref state, 1, 0) != 0)
 						return TaskResult;
-					if (!Request.IsReq)
+					if (!Request.IsEnd)
 					{
 						read();
-					if (state == 1)
-						Data();
+						if (!Request.IsReq)
+							Data();
+						else if (!Request.IsRes)
+						{
+							Request.SetRes();
+							Interlocked.CompareExchange (ref state, 3, 1);
+						}
+						else
+							data();
+							
 					}
-					else
-						state = 3;
+						else
+							Interlocked.CompareExchange (ref state,-1, 1);
 					if (Interlocked.CompareExchange(ref state, 0, 1) == 1)
 						return TaskResult;
 				}
 				if (state == 3)
 				{
 					Connection(Request, Response);
-					if (Interlocked.CompareExchange(ref state,-1, 3) == 3)
+					if (Interlocked.CompareExchange(ref state, 0, 3) == 3)
 						return TaskResult;
 				}
 					if (state == 4)
@@ -533,10 +541,14 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         /// 
         /// </summary>
         protected abstract void Data();
-        /// <summary>
-        /// 
-        /// </summary>
-        protected abstract void Close();
+		/// <summary>
+		/// получить тело
+		/// </summary>
+		protected abstract void data();
+		/// <summary>
+		/// получить заголовки
+		/// </summary>
+		protected abstract void Close();
 		/// <summary>
 		/// 
 		/// </summary>

@@ -21,7 +21,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         public string StStr;
         public string Param;
         public string Value;
-		public byte[] DataBody;
 
 		public void Clear()
 		{
@@ -39,7 +38,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			Value = null;
 			GetBody = false;
 			GetHead = false;
-			DataBody = null;
 		}
 	}
 }

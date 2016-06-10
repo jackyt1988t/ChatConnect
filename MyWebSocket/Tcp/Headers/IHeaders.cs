@@ -40,7 +40,7 @@ namespace MyWebSocket.Tcp
 			get;
 			set;
 		}
-		byte[] Body
+		byte[] _Body
         {
             get;
             set;
@@ -84,7 +84,6 @@ namespace MyWebSocket.Tcp
 		bool SetEnd();
 		byte[] ToByte();
 		void AddHeader(string key, string value);
-		bool SearchHeader(string key, string value);
 		bool ContainsKeys(string key, bool @case = true);
 		bool ContainsKeys(string key, out string value, bool @case = true);
 	}
