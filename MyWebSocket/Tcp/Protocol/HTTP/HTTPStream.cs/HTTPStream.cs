@@ -169,7 +169,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 										break;
 									case 0:
 										header.Method +=
-										   char.ToLower((char)@char);
+										   char.ToUpper((char)@char);
 										break;
 								}
 							}
