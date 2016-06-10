@@ -126,35 +126,31 @@ namespace MyWebSocket.Tcp.Protocol
 			_len = length;
 			_buffer = new byte[length];
 		}
+#region virtual
+		public virtual void Reset()
+		{
+			_p_r = 0;
+			_p_w = 0;
+		}
+		
+		publuc virtual void Resize(Int length)
+		{
+			int recive;
+			byte[] buffer = new byte[ length ];
+			Read(buffer, 0, (recive = Length));
+			_p_r = 0;
+			_p_w = recive;
+			_len = length;
+			_buffer = buffer;
+			
+		}
+#endregion
+
+#region ovveride
 		public override void Flush()
 		{
 			throw new NotImplementedException();
-		}
-		public  virtual void Reset()
-		{
-			PointR = 0;
-			PointW = 0;
-		}
-		public  virtual  int ReadHead()
-		{
-			throw new NotImplementedException();
-		}
-		public  virtual  int ReadBody()
-		{
-			throw new NotImplementedException();
-		}
-		
-		public override  int ReadByte()
-		{
-			if (Empty)
-				return -1;
-			return _buffer[_p_r++];
-		}
-		
-		public override long Seek(long offset, SeekOrigin origin)
-		{
-			throw new NotImplementedException();
-		}
+		}		
 		public override void SetLength(long value)
 		{
 			if (value > Clear)
@@ -163,6 +159,23 @@ namespace MyWebSocket.Tcp.Protocol
 				PointW = value + PointW;
 			else
 				PointW = value - (Count - PointW);
+		}
+#endregion
+
+#region read write
+		public virtual int ReadHead()
+		{
+			throw new NotImplementedException();
+		}
+		public virtual int ReadBody()
+		{
+			throw new NotImplementedException();
+		}
+		public override  int ReadByte()
+		{
+			if (Empty)
+				return -1;
+			return _buffer[_p_r++];
 		}
 		unsafe public override int Read(byte[] buffer, int pos, int len)
 		{
@@ -186,6 +199,10 @@ namespace MyWebSocket.Tcp.Protocol
 			}
 			return i;
 		}
+		unsafe public override long Seek(long offset, SeekOrigin origin)
+		{
+			throw new NotImplementedException();
+		}
 		unsafe public override void Write(byte[] buffer, int pos, int len)
 		{
 			int i;
@@ -204,5 +221,6 @@ namespace MyWebSocket.Tcp.Protocol
 				}
 			}
 		}
+#endregion
 	}
 }
