@@ -60,9 +60,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						break;
 					case 3:
 						if (@char != LF)
-							throw new HTTPException("отсутсвует символ[LF]");
+							throw new HTTPException("отсутсвует символ[LF]", HTTPCode._400_);
 						if (!int.TryParse(_Frame.Param, out _Frame.bleng))
-							throw new HTTPException("Неверная длинна тела.");
+							throw new HTTPException("Неверная длинна тела.", HTTPCode._400_);
 						
 						_Frame.Handl = 1;
 						header._Body = new byte[_Frame.bleng];
@@ -71,7 +71,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						if (@char == CR)
 							_Frame.Handl = 5;
 						else
-							throw new HTTPException("отсутсвует символ[CR]");
+							throw new HTTPException("отсутсвует символ[CR]", HTTPCode._400_);
 						break;
 					case 5:
 						if (@char == LF)
@@ -80,7 +80,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							_Frame.Handl = 6;
 						}
 						else
-							throw new HTTPException("отсутсвует символ[LF]");
+							throw new HTTPException("отсутсвует символ[LF]", HTTPCode._400_);
 						break;
 					case 6:
 						if (@char == CR)
@@ -98,7 +98,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							return read;
 						}
 						else
-							throw new HTTPException("отсутсвует символ[LF]");
+							throw new HTTPException("отсутсвует символ[LF]", HTTPCode._400_);
 
 				}
 				read++;
@@ -135,7 +135,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			while (!Empty)
 			{
 				if ( _Frame.hleng > 36000 )
-					throw new HTTPException("Превышена длинна заголовков");
+					throw new HTTPException( "Превышена длинна заголовков", HTTPCode._400_ );
 
 				@char = Buffer[PointR];
 				switch ( _Frame.Handl )
@@ -143,7 +143,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					// получает стартовую строку
 					case 0:
 						if (_Frame.ststr > STSTR)
-							throw new HTTPException( "Длинна стартовой строки" );
+							throw new HTTPException( "Длинна стартовой строки", HTTPCode._400_ );
 						if (@char == CR)
 						{
 							_Frame.Handl = 4;
@@ -186,7 +186,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					// получает параметр заголовка
 					case 1:
 						if (_Frame.param > PARAM)
-							throw new HTTPException("Длинна параметра заголовка");
+							throw new HTTPException( "Длинна параметра заголовка", HTTPCode._400_ );
 						if (@char == CN)
 						{
 							PointR++;
@@ -201,7 +201,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					// получает значение заголовка
 					case 2:
 						if (_Frame.value > VALUE)
-							throw new HTTPException("Длинна значения заголовка");
+							throw new HTTPException( "Длинна значения заголовка", HTTPCode._400_ );
 						if (@char == CR)
 						{
 							_Frame.param = 0;
@@ -238,7 +238,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						if (@char == LF)
 							_Frame.Handl = 3;
 						else
-							throw new HTTPException( "Отсутствует символ [LF]" );
+							throw new HTTPException( "Отсутствует символ [LF]", HTTPCode._400_ );
 						break;
 					// проверяет правильность окончания заголовков
 					case 5:
@@ -249,7 +249,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							_Frame.GetHead = true;
 						}
 						else
-							throw new HTTPException( "Отсутствует символ [LF]" );
+							throw new HTTPException( "Отсутствует символ [LF]", HTTPCode._400_ );
 						
 						// Закрыть соединение
 						if (header.Connection == "close")
@@ -268,7 +268,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						{
 							_Frame.Handl = 2;
 							if (_Frame.bleng  >  0)
-								throw new HTTPException("Длинна тела задана не явно");
+								throw new HTTPException( "Длинна тела задана не явно", HTTPCode._400_ );
 							
 						}
 						break;
