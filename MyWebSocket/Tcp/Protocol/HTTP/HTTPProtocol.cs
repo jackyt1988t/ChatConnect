@@ -6,7 +6,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 	
 	class HTTPProtocol : HTTP
 	{
-		const long WAIT = 10 * 1000 * 1000 * 20;
+		const long WAIT = (long)10 * 1000 * 1000 * 10000;
 
 		HTTPStream _Reader;
 		public override StreamS Reader
@@ -32,31 +32,31 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			{
 				header = Request
 			};
-			_Writer = new HTTPStream(1000 * 128)
+			_Writer = new HTTPStream(1000 * 18)
 			{
 				header = Response
 			};
-			TaskResult.Protocol   =   TaskProtocol.HTTP;
+			Result.Protocol   =   TaskProtocol.HTTP;
 		}
 		protected override void Work()
 		{
-			if ((__twaitconn + WAIT) < DateTime.Now.Ticks)
-				Close(string.Empty);
 			OnEventWork();
+			if ((__twaitconn + WAIT) < DateTime.Now.Ticks)
+				close();
+			
 		}
 		protected override void data()
 		{	
 			if (!_Reader._Frame.GetBody)
 			{
-				_Writer.header = Response;
 				if (_Reader.ReadBody() == -1)
 					return;
 
 				switch (_Reader._Frame.Pcod)
 				{
 					case HTTPFrame.DATA:
-					if (TaskResult.Jump)
-						TaskResult.Option = TaskOption.Protocol;
+					if (Result.Jump)
+						Result.Option = TaskOption.Protocol;
 					else
 						OnEventData();
 					break;
@@ -71,7 +71,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			if (_Reader.Empty)
 				return;
 
-			if (_Reader._Frame.GetHead && _Reader._Frame.GetBody)
+			if ( _Reader._Frame.GetHead && _Reader._Frame.GetBody )
 			{
 				_Reader._Frame.Clear();
 				_Reader.header = Request;
@@ -79,7 +79,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			}
 			if (!_Reader._Frame.GetHead)
 			{
-				_Reader.header = Request;
 				if (_Reader.ReadHead() == -1)
 					return;
 				
@@ -87,14 +86,14 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				{
 					case "GET":
 						if (_Reader._Frame.bleng > 0)
-							throw new HTTPException("Неверная длина запроса");
+							throw new HTTPException("Неверная длина запроса", HTTPCode._400_);
 						break;
 					default:
-							throw new HTTPException("Метод не поддерживается");
+							throw new HTTPException("Метод не поддерживается", HTTPCode._501_);
 				}
 				if (!string.IsNullOrEmpty(Request.Upgrade))
 				{
-					TaskResult.Jump = true;
+					Result.Jump = true;
 					if (Request.Upgrade.ToLower() == "websocket")
 					{
 						string version;
@@ -108,22 +107,22 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						switch (version.ToLower())
 						{
 							case "7":
-								TaskResult.Jump = true;
-								TaskResult.Protocol = TaskProtocol.WSN13;
+								Result.Jump = true;
+								Result.Protocol = TaskProtocol.WSN13;
 								break;
 							case "8":
-								TaskResult.Jump = true;
-								TaskResult.Protocol = TaskProtocol.WSN13;
+								Result.Jump = true;
+								Result.Protocol = TaskProtocol.WSN13;
 								break;
 							case "13":
-								TaskResult.Jump = true;
-								TaskResult.Protocol = TaskProtocol.WSN13;
+								Result.Jump = true;
+								Result.Protocol = TaskProtocol.WSN13;
 								break;
 							case "sample":
-								TaskResult.Jump = true;
+								Result.Jump = true;
 								_Reader._Frame.Handl = 1;
 								_Reader._Frame.bleng = 8;
-								TaskResult.Protocol = TaskProtocol.WSAMPLE;
+								Result.Protocol = TaskProtocol.WSAMPLE;
 								break;
 						}
 					}

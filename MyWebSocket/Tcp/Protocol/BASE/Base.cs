@@ -1,10 +1,21 @@
 ﻿using System;
+using System.IO;
 using System.Net.Sockets;
 
 namespace MyWebSocket.Tcp.Protocol
 {
 	class BaseProtocol : IProtocol, IDisposable
 	{
+		/// <summary>
+		/// минимальный размер потока
+		/// </summary>
+		public static int MINLENGTHBUFFER = 1000 * 64;
+		/// <summary>
+		/// максимальный размер потока
+		/// </summary>
+		public static int MAXLENGTHBUFFER = 1000 * 25600;
+		int i = 0;
+		private TimeSpan __INTERVALRESIZE;
 		/// <summary>
 		/// tcp/ip соединение
 		/// </summary>
@@ -65,6 +76,7 @@ namespace MyWebSocket.Tcp.Protocol
 		protected SocketError Read()
 		{
 			SocketError error = SocketError.Success;
+			
 			int count = 8000;
 			int start =
 			   (int)Reader.PointW;
@@ -78,51 +90,75 @@ namespace MyWebSocket.Tcp.Protocol
 			int length = Tcp.Receive(buffer, start, count, SocketFlags.None, out error);
 			if (length > 0)
 			{
-				if (Reader.Clear < length)
-					error = SocketError.SocketError;
+				if (length < Reader.Clear)
+					Reader.SetLength(length);
 				else
-							Reader.SetLength(length);
+					error = SocketError.SocketError;	
 			}
 			return error;
 		}
 		protected SocketError Send()
 		{
 			SocketError error = SocketError.Success;
-			int start =
-				(int)Writer.PointR;
-			int write =
-				(int)Writer.Length;
-			if (write > 16000)
-				write = 16000;
-			byte[] buffer =
-					Writer.Buffer;
-			
-			if (Writer.Count - start < write)
-				write =
-				  (int)(Writer.Count - start);
-			int length  =  Tcp.Send(buffer, start, write, SocketFlags.None, out error);
-			if (length > 0)
-				Writer.Position = length;
-			return error;
-		}
-		protected SocketError Write(byte[] buffer, int start, int write)
-		{
-			SocketError error = SocketError.Success;
-			if (Writer.Empty)
-				start  =  Tcp.Send(buffer, start, write, SocketFlags.None, out error);
 
-			int length = write - start;
-			if (length > 0)
+			lock (Writer.__Sync)
 			{
-				if (Writer.Clear < length)
-					error = SocketError.SocketError;
-				else
+				int start =
+					(int)Writer.PointR;
+				int write =
+					(int)Writer.Length;
+				if (write > 16000)
+					write = 16000;
+				byte[] buffer =
+						Writer.Buffer;
+
+				if (Writer.Count - start < write)
+					write =
+					  (int)(Writer.Count - start);
+				int length = Tcp.Send(buffer, start, write, SocketFlags.None, out error);
+				if (length > 0)
+					Writer.Position = length;
+				if (MINLENGTHBUFFER < Writer.Count)
 				{
-					Writer.Write(buffer, start, length);
-							   Reader.SetLength(length);
+					int resize = (int)Writer.Count / 2;
+					if (resize > Writer.Length 
+							&& __INTERVALRESIZE.Ticks < DateTime.Now.Ticks)
+						Writer.Resize(resize);
 				}
 			}
 			return error;
+		}
+			protected SocketError Write(byte[] buffer, int start, int write)
+			{
+				SocketError error = SocketError.Success;
+				if (Writer.Empty)
+					start  =  Tcp.Send(buffer, start, write, SocketFlags.None, out error);
+
+				int length = write - start;
+				if (length > 0)
+				{
+					lock (Writer.__Sync)
+					{
+						if (Writer.Clear - 1 < length)
+						{
+							int resize = (int)Writer.Count * 2;
+							if (resize < length)
+								resize = length;
+							if (Writer.Count > MAXLENGTHBUFFER)
+								error = SocketError.SocketError;
+							else 
+							{
+								Writer.Resize(resize);
+								Writer.Write(buffer, start, length);
+								__INTERVALRESIZE = new TimeSpan(DateTime.Now.Ticks + TimeSpan.TicksPerSecond * 8);
+							}
+							
+						}
+							else
+								Writer.Write(buffer, start, length);
+					}	
+				}
+				return error;
 		}
 	}
 }

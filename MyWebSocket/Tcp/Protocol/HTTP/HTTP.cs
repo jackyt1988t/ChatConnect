@@ -31,16 +31,17 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				return (States)state;
 			}
 		}
-		public Exception Exception
+		public TaskResult Result
+		{
+        	get;
+			protected set;
+		}
+		public HTTPException Exception
 		{
 			get;
 			protected set;
 		}
-        public TaskResult TaskResult
-        {
-        	get;
-            protected set;
-		}
+			
 		/// <summary>
 		/// Событие которое наступает при проходе по циклу
 		/// </summary>
@@ -184,13 +185,13 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				State = States.Work;
 			Request = new Header();
 			Response = new Header();
-			TaskResult = new TaskResult();
+			Result = new TaskResult();
 		}
 		public void Flush()
 		{
 			Response.SetEnd();
 		}
-		public bool Close(string message)
+		public bool close()
 		{
 			lock (Sync)
 			{
@@ -200,13 +201,13 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				return false;
 			}
 		}
-		public void Error(string message, string stack)
+		public void Error(string message, string stack, codexxx status)
 		{
 			if (string.IsNullOrEmpty(stack))
 				stack = string.Empty;
 			if (string.IsNullOrEmpty(message))
 				message = string.Empty;
-			Response.StartString = "HTTP/1.1 400 BAD REQUEST";
+			Response.StartString = "HTTP/1.1 " + status.value + " " + status.ToString();
 			Response.AddHeader("Content-Type", "text/html; charset=utf-8");
 			byte[] __body = Encoding.UTF8.GetBytes(
 			"<html>" +
@@ -236,11 +237,15 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		{
 			lock (Sync)
 			{
-				if (Response.SetRes())
+				if (Response.IsRes)
 					return false;
 				else
 				{
+					Response.AddHeader("Date", DateTimeOffset.Now.ToString());
+					Response.AddHeader("Server", "MyWebSocket Server Alpha/1.0");
+					Response.SetRes();
 					return Message(Response.ToString());
+					
 				}
 			}
 		}
@@ -272,8 +277,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					if (error != SocketError.WouldBlock
 						   && error != SocketError.NoBufferSpaceAvailable)
 					{
-						exc( new HTTPException( "Ошибка записи http данных: " + error.ToString() ) );
 						Response.Close = true;
+						exc(new HTTPException("Ошибка записи http данных: " + error.ToString(), HTTPCode._500_));
 						return false;
 					}
 				}
@@ -304,9 +309,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							byte[] buffer = new byte[maxlen];
 							while ((maxlen - recive) > 0)
 							{
-								recive = sr.Read(buffer, 0, maxlen - recive);
+								recive = sr.Read(buffer, recive, maxlen - recive);
 							}
-							if (!Message(buffer, 0, recive))
+							if (!Message(buffer, 0, maxlen))
 								return;
 							Thread.Sleep(10);
 						}
@@ -316,9 +321,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							byte[] buffer = new byte[length];
 							while ((length - recive) > 0)
 							{
-								recive = sr.Read(buffer, 0, length - recive);
+								recive = sr.Read(buffer, recive, length - recive);
 							}
-							if (!Message(buffer, 0, recive))
+							if (!Message(buffer, 0, length))
 								return;
 							Thread.Sleep(10);
 						}
@@ -326,7 +331,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				}
 				catch (Exception err)
 				{
-					exc(new HTTPException(err.Message, err));
+						exc(new HTTPException( "Ошибка при четнии файла. " + err.Message, HTTPCode._503_, err ));
 				}
 				finally
 				{
@@ -338,32 +343,66 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         {
 			try
 			{
+/*======================================================================================================
+										Обработчик отправки данных
+	Запускает функцию обработки пользоватлеьских данных, в случае если статус не был изменен переходим
+	к следующему обработчику, обработчику отправки пользовательских данных.						   
+========================================================================================================*/
 				if (state ==-1)
 				{
 					Work();
+/*======================================================================================================
+	Происходит отправка данных из буффера и проверка окончания отправки всех данных, если отправка
+	данных была закончена и все данные были отправлены проверяем необходимость закрытия текушего
+	соединения если это так, закрываем соединения, если нет обновляем заголвоки и продолжаем 
+	обрабатывать входящие запросы.						   
+=======================================================================================================*/
 					if (Interlocked.CompareExchange(ref state, 2,-1) !=-1)
-						return TaskResult;
+						return Result;
 					if (!Response.IsEnd || !Writer.Empty)
 						write();
 					else
 					{
 						if (Response.Close)
-							state = 5;
+							close();
 						else
 						{
-							state = 0;
 							Request = new Header();
 							Response = new Header();
+
+							__EventData = null;
+							__EventError = null;
+							__EventChunk = null;
+
+							Interlocked.CompareExchange (ref state, 0, 2);
+							
 						}
 					}
+/*======================================================================================================
+	Если во время отправки соединение не было закрыто и не произошло никаких ошибок возвращаемся к
+	предыдущему обработчику						   
+=======================================================================================================*/
 					if (Interlocked.CompareExchange(ref state,-1, 2) == 2)
-						return TaskResult;
+						return Result;
 				}
+/*======================================================================================================
+	Запускает функцию обработки пользоватлеьских данных, в случае если статус не был изменен переходим
+	к следующему обработчику, обработчику чтения полученных и обраблтки пользовательских данных.						   
+=======================================================================================================*/
 				if (state == 0)
 				{
 					Work();
+/*======================================================================================================
+										Обработчик получения данных
+	Пока данные не были получены продолжаем читать данные и обрабатывать их. Пока заголвоки не
+	получены запускаем функцию обработки заголвоков, если не происходит ошибок в обработчике повоторяем
+	до тех пор пока заголовки не будут получены. Когда заголвоки будут переходим к обработчику 
+	полученных заголвоков, если не происходит ошибок в обработчике повторяем до тех пор пока данные
+	не будут получены. Когда заголвоки и тело сообщения будут прочитаны переходим к следующему
+	обработчику, обработчику отправки пользовательских данных.						   
+=======================================================================================================*/
 					if (Interlocked.CompareExchange(ref state, 1, 0) != 0)
-						return TaskResult;
+						return Result;
 					if (!Request.IsEnd)
 					{
 						read();
@@ -372,6 +411,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						else if (!Request.IsRes)
 						{
 							Request.SetRes();
+/*======================================================================================================
+				Заголвоки получены переходим к обработчику полученных заголвков.					   
+=======================================================================================================*/
 							Interlocked.CompareExchange (ref state, 3, 1);
 						}
 						else
@@ -379,42 +421,65 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							
 					}
 						else
+/*======================================================================================================
+				Тело сообщения получено переходим к обработчику отправки дынных.					   
+=======================================================================================================*/
 							Interlocked.CompareExchange (ref state,-1, 1);
 					if (Interlocked.CompareExchange(ref state, 0, 1) == 1)
-						return TaskResult;
+						return Result;
 				}
+/*======================================================================================================
+										Заголвоки получены
+	Запускаем обработчик полученных заголвоков, если статус не будет изменен в обработчике и не 
+	произойдет никаких ошибок, продолжаем получать пользовательские данные(тело сообщения).						   
+=======================================================================================================*/
 				if (state == 3)
 				{
 					Connection(Request, Response);
 					if (Interlocked.CompareExchange(ref state, 0, 3) == 3)
-						return TaskResult;
+						return Result;
 				}
-					if (state == 4)
-					{
-						if (Response.IsRes || Response.Close)
-							Close(string.Empty);
-						else
+/*======================================================================================================
+										Обработчик ошибок
+	Запускам функцию обработки ошибок. Если заголвоки были отправлены закрываем соединение, если нет
+	отправляем информацию о произошедшей ошибки. При ошибке клиента 400 или ошибке сервера 500
+	указываем серверу после отправки данных закрыть моединение. 					   
+=======================================================================================================*/
+						if (state == 4)
 						{
-							state =-1;
-							Error(Exception.Message, Exception.StackTrace);
+							Error(Exception);
+							if (Response.IsRes)
+								close();
+							else
+							{
+								state =-1;
+								Error(Exception.Message, 
+											Exception.StackTrace, 
+													Exception.Status);
+							}
+							if (Exception.Status == HTTPCode._500_
+									|| Exception.Status == HTTPCode._400_)
+									Response.Close = true;
 						}
-					}
-								if (state == 5)
-								{
-									Close();
-									state = 7;
-								}
-								if (state == 7)
-								{
-									Dispose();
-									TaskResult.Option = TaskOption.Delete;
-								}
+/*======================================================================================================
+										Закрываем соединеие						   
+=======================================================================================================*/
+									if (state == 5)
+									{
+										Close();
+										state = 7;
+									}
+									if (state == 7)
+									{
+										Dispose();
+										Result.Option = TaskOption.Delete;
+									}
 			}
 			catch (HTTPException err)
 			{
 				exc(err);
 			}
-			return TaskResult;
+			return Result;
         }
         public override string ToString()
         {
@@ -424,7 +489,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// Обрабатывает происходящие ошибки и назначает оьраьотчики
 		/// </summary>
 		/// <param name="err">Ошибка</param>
-		private void exc(Exception err)
+		private void exc(HTTPException err)
 		{
 			lock (Sync)
 			{
@@ -436,7 +501,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			}
 		}
 		/// <summary>
-		/// 
+		/// получает данные
 		/// </summary>
 		private void read()
 		{
@@ -446,8 +511,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				if (error != SocketError.WouldBlock
 					&& error != SocketError.NoBufferSpaceAvailable)
 				{
-					exc( new HTTPException("Ошибка чтения http данных: " + error.ToString()));
 					Response.Close = true;
+					exc( new HTTPException("Ошибка чтения http данных: " + error.ToString(), HTTPCode._500_));
+					
 				}
 			}
 		}
@@ -465,11 +531,16 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				if (error != SocketError.WouldBlock
 					&& error != SocketError.NoBufferSpaceAvailable)
 				{
-						exc( new HTTPException("Ошибка записи http данных: " + error.ToString()));
 						Response.Close = true;
+						exc( new HTTPException("Ошибка записи http данных: " + error.ToString(), HTTPCode._500_));
+						
 				}
 			}
 		}
+		/// <summary>
+		/// Потокобезопасный запуск события Work
+		/// желательно запускать в обработчике Work
+		/// </summary>
 		protected void OnEventWork()
 		{
 			string s = "work";
@@ -480,6 +551,10 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			if (e != null)
 				e(this, new PEventArgs(m, s));
 		}
+		/// <summary>
+		/// Потокобезопасный запуск события Data
+		/// желательно запускать в обработчике Data
+		/// </summary>
 		protected void OnEventData()
 		{
 			string s = "data";
@@ -491,6 +566,10 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			if (e != null)
 				e(this, new PEventArgs(s, m, null));
 		}
+		/// <summary>
+		/// Потокобезопасный запуск события Close
+		/// желательно запускать в обработчике Close
+		/// </summary>
 		protected void OnEventClose()
 		{
 			string s = "close";
@@ -502,6 +581,10 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			if (e != null)
 				e(this, new PEventArgs(s, m, null));
 		}
+		/// <summary>
+		/// Потокобезопасный запуск события Error
+		/// желательно запускать в обработчике Error
+		/// </summary>
 		protected void OnEventError(HTTPException _error)
 		{
 			string s = "error";
@@ -513,6 +596,10 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			if (e != null)
 				e(this, new PEventArgs(s, m, _error));
 		}
+		/// <summary>
+		/// Потокобезопасный запуск события Connection
+		/// желательно запускать в обработчике Connection
+		/// </summary>
 		protected void OnEventConnect(IHeader request, IHeader response)
 		{
 			string s = "connect";
@@ -534,24 +621,29 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// </summary>
 		protected abstract void Work();
         /// <summary>
-        /// 
+		/// работаем
+        /// в случае ошибок необходимо бросать HTTPException с указанным статусом http
         /// </summary>
         protected abstract void Data();
 		/// <summary>
 		/// получить тело
+		/// в случае ошибок необходимо бросать HTTPException с указанным статусом http
 		/// </summary>
 		protected abstract void data();
 		/// <summary>
 		/// получить заголовки
+		/// в случае ошибок необходимо бросать HTTPException с указанным статусом http
 		/// </summary>
 		protected abstract void Close();
 		/// <summary>
-		/// 
+		/// произошло закрытие
+		/// в случае ошибок необходимо бросать HTTPException с указанным статусом http 
 		/// </summary>
 		protected abstract void Error(HTTPException error);
 		/// <summary>
-		/// 
+		/// обработать ошибку
+		/// в случае ошибок необходимо бросать HTTPException с указанным статусом http
 		/// </summary>
-        protected abstract void Connection(IHeader reauest, IHeader response);
+		protected abstract void Connection(IHeader reauest, IHeader response);
     }
 }

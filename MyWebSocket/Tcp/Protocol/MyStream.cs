@@ -27,7 +27,7 @@ namespace MyWebSocket.Tcp.Protocol
 			get
 			{
 				if (_p_w < _p_r)
-					return (_p_r - _p_w);
+					return (_p_r - _p_w - 1);
 				else
 					return (_len - _p_w) + _p_r;
 			}
@@ -61,6 +61,11 @@ namespace MyWebSocket.Tcp.Protocol
 				else
 					_p_w = 0;
 			}
+		}
+		public object __Sync
+		{
+			get;
+			private set;
 		}
 		public byte[] Buffer
 		{
@@ -113,10 +118,10 @@ namespace MyWebSocket.Tcp.Protocol
 				{
 					if (value > Length)
 						throw new IOException();
-					if (value + PointR < Count)
-						PointR = PointR + value;
+					if (value + _p_r < Count)
+						_p_r = value + _p_r;
 					else
-						PointR = value - (Count - PointR);
+						_p_r = value - (Count - _p_r);
 				}
 			}
 		}
@@ -127,6 +132,7 @@ namespace MyWebSocket.Tcp.Protocol
 			base()
 		{
 			_len = length;
+			__Sync = new object();
 			_buffer = new byte[length];
 		}
 #region virtual
@@ -145,13 +151,17 @@ namespace MyWebSocket.Tcp.Protocol
 		public virtual void Resize(int length)
 		{
 			int recive = (int)Length;
+			if (recive == 0)
+				;
 			byte[] buffer = new byte[  length  ];
 			Read(  buffer, 0, recive  );
 			_p_r = 0;
 			_p_w = recive;
 			_len = length;
 			_buffer = buffer;
-			
+			if (_p_r == _p_w)
+				;
+
 		}
 #endregion
 
@@ -220,10 +230,12 @@ namespace MyWebSocket.Tcp.Protocol
 				for (  i = 0; i < len; i++  )
 				{
 					byte* pt = target + PointR;
-
+					
 					*ps = *pt;
 					ps++;
 					PointR++;
+					if (_p_r == _p_w)
+						;
 					if (Empty)
 						return i;
 				}

@@ -93,12 +93,15 @@
     <Compile Include="Tcp\Protocol\BASE\Base.cs" />
     <Compile Include="Tcp\Protocol\EventArg.cs" />
     <Compile Include="Tcp\Protocol\HTTP\HTTP.cs" />
+    <Compile Include="Tcp\Protocol\HTTP\HTTPCode\HTTPCode.cs" />
+    <Compile Include="Tcp\Protocol\HTTP\HTTPCode\HTTPCodeXXX.cs" />
+    <Compile Include="Tcp\Protocol\HTTP\HTTPCode\HTTPICodeXXX.cs" />
     <Compile Include="Tcp\Protocol\HTTP\HTTPFrame\HTTPFrame.cs" />
     <Compile Include="Tcp\Protocol\HTTP\HTTPProtocol.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
     <Compile Include="Tcp\Protocol\HTTP\HTTPStream.cs\HTTPStream.cs" />
-    <Compile Include="Tcp\Protocol\HTTP\HTTPExcept.cs" />
+    <Compile Include="Tcp\Protocol\HTTP\HTTPError.cs" />
     <Compile Include="Tcp\Protocol\IProtocol.cs" />
     <Compile Include="Tcp\Protocol\MyStream.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
