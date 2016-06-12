@@ -278,57 +278,58 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             }
             return true;
         }
-        async
-        public void MessageFile(string pathfile, string type, int maxlen = 1000 * 16)
-        {
-            await Task.Run(() =>
-            {
-                int i = 0;
-                try
-                {
-                    using (FileStream sr = new FileStream(pathfile, FileMode.Open, FileAccess.Read))
-                    {
-                        Response.StartString = "HTTP/1.1 200 OK";
-                        Response.AddHeader("Content-Type", "text/" + type);
-                        Response.AddHeader("Content-Length", sr.Length.ToString());
-                        
-                        int _count = (int)(sr.Length / maxlen);
-                        int length = (int)(sr.Length - _count * maxlen);
-                        while (i++ < _count)
-                        {
-                            int recive = 0;
-                            byte[] buffer = new byte[maxlen];
-                            while ((maxlen - recive) > 0)
-                            {
-                                recive = sr.Read(buffer, recive, maxlen - recive);
-                            }
-                            if (!Message(buffer, 0, maxlen))
-                                return;
-                            Thread.Sleep(10);
-                        }
-                        if (length > 0)
-                        {
-                            int recive = 0;
-                            byte[] buffer = new byte[length];
-                            while ((length - recive) > 0)
-                            {
-                                recive = sr.Read(buffer, recive, length - recive);
-                            }
-                            if (!Message(buffer, 0, length))
-                                return;
-                            Thread.Sleep(10);
-                        }
-                    }
-                }
-                catch (Exception err)
-                {
-                        exc(new HTTPException( "Ошибка при четнии файла. " + err.Message, HTTPCode._503_, err ));
-                }
-                finally
-                {
-                    Response.SetEnd();
-                }
-            });
+		async
+		public void MessageFile(string pathfile, string type, int maxlen = 1000 * 16)
+		{
+			await Task.Run(() =>
+			{
+				int i = 0;
+				try
+				{
+					using (FileStream sr = new FileStream(pathfile, FileMode.Open, FileAccess.Read))
+					{
+						Response.StartString = "HTTP/1.1 200 OK";
+						Response.AddHeader("Content-Type", "text/" + type);
+						Response.AddHeader("Content-Length", sr.Length.ToString());
+						Response.AddHeader("Cache-Control:", "no-cache,no-store,max-age=0,must-revalidate");
+
+						int _count = (int)(sr.Length / maxlen);
+						int length = (int)(sr.Length - _count * maxlen);
+						while (i++ < _count)
+						{
+							int recive = 0;
+							byte[] buffer = new byte[maxlen];
+							while ((maxlen - recive) > 0)
+							{
+								recive = sr.Read(buffer, recive, maxlen - recive);
+							}
+							if (!Message(buffer, 0, maxlen))
+								return;
+							Thread.Sleep(10);
+						}
+						if (length > 0)
+						{
+							int recive = 0;
+							byte[] buffer = new byte[length];
+							while ((length - recive) > 0)
+							{
+								recive = sr.Read(buffer, recive, length - recive);
+							}
+							if (!Message(buffer, 0, length))
+								return;
+							Thread.Sleep(10);
+						}
+					}
+				}
+				catch (Exception err)
+				{
+					exc(new HTTPException("Ошибка при четнии файла. " + err.Message, HTTPCode._503_, err));
+				}
+				finally
+				{
+					Response.SetEnd();
+				}
+			});
         }
         public override TaskResult TaskLoopHandlerProtocol()
         {
@@ -429,17 +430,19 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                             Error(Exception);
                             if (Response.IsRes)
                                 close();
-                            else
-                            {
+                            else if (Exception.Status == HTTPCode._500_)
+                            	close();
+							else if (Exception.Status == HTTPCode._400_)
+							{
                                 state =-1;
-                                Error(Exception.Message, 
+								Response.Close = true;
+                                Error(   Exception.Message, 
                                             Exception.StackTrace, 
-                                                    Exception.Status);
-                            }
-                            if (Exception.Status == HTTPCode._500_
-                                    || Exception.Status == HTTPCode._400_)
-                                    Response.Close = true;
-                        }
+                                                    Exception.Status   );
+                            }	
+							else
+								state = 7;
+				}
                 /*============================================================
                                         Закрываем соединеие						   
                 ==============================================================*/

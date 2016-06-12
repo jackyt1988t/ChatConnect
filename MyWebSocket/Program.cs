@@ -50,7 +50,7 @@ namespace MyWebSocket
 			{
 				// Объект Http
 				HTTP Http = obj as HTTP;
-				
+				Console.WriteLine("Connect");
 				// Событие наступает когда приходят новые данные
 				Http.EventData += (object sender, PEventArgs e) =>
 				{
@@ -69,9 +69,14 @@ namespace MyWebSocket
 					HTTPException err = e.sender as HTTPException;
 					Console.WriteLine(err.Message);
 				};
+				Http.EventClose += (object sender, PEventArgs e) =>
+				{
+					Console.WriteLine("CLOSE");
+				};
 				// События наступает когда приходят заголовки
 				Http.EventOnOpen += (object sender, PEventArgs e) =>
 				{
+					Console.WriteLine("OPEN");
 				};
 			};
 			WServer Server = new WServer("0.0.0.0", 8081, 2);

@@ -27,7 +27,7 @@ namespace MyWebSocket.Tcp.Protocol
 			get
 			{
 				if (_p_w < _p_r)
-					return (_p_r - _p_w - 1);
+					return (_p_r - _p_w) - 1;
 				else
 					return (_len - _p_w) + _p_r;
 			}
@@ -150,17 +150,13 @@ namespace MyWebSocket.Tcp.Protocol
 		/// <param name="length"></param>
 		public virtual void Resize(int length)
 		{
-			int recive = (int)Length;
-			if (recive == 0)
-				;
-			byte[] buffer = new byte[  length  ];
-			Read(  buffer, 0, recive  );
-			_p_r = 0;
-			_p_w = recive;
-			_len = length;
+			byte[] buffer = new byte[length];
+			Read(buffer, 0, (int)_len);
+
+			_p_r    = 0;
+			_p_w    = (int)_len;
+			_len    = length;
 			_buffer = buffer;
-			if (_p_r == _p_w)
-				;
 
 		}
 #endregion
