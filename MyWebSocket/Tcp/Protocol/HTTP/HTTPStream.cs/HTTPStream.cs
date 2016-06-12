@@ -30,6 +30,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		{
 			_Frame = new HTTPFrame();
 		}
+
 		public override int ReadBody()
 		{
 			if (_Frame.Handl == 0)

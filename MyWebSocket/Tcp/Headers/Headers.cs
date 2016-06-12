@@ -215,7 +215,7 @@ namespace MyWebSocket.Tcp
 						throw new HeadersException("Неверный Content-Length");
 				break;
 				case "transfer-encoding":
-					transferencoding = value;
+					transferencoding = value.ToLower();
 				break;
 			}
 			
