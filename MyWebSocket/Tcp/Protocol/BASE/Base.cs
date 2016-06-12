@@ -9,11 +9,11 @@ namespace MyWebSocket.Tcp.Protocol
 		/// <summary>
 		/// минимальный размер потока
 		/// </summary>
-		public static int MINLENGTHBUFFER = 1000 * 64;
+		public static int MINLENGTHBUFFER = 1000 * 32;
 		/// <summary>
 		/// максимальный размер потока
 		/// </summary>
-		public static int MAXLENGTHBUFFER = 1000 * 25600;
+		public static int MAXLENGTHBUFFER = 1000 * 1024;
 		private TimeSpan __INTERVALRESIZE;
 		/// <summary>
 		/// tcp/ip соединение
