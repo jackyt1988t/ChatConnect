@@ -6,7 +6,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 	
 	class HTTPProtocol : HTTP
 	{
-		const long WAIT = (long)10 * 1000 * 1000 * 15;
+		const long WAIT = (long)10 * 1000 * 1000 * 10000;
 
 		HTTPStream _Reader;
 		public override StreamS Reader
