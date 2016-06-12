@@ -10,15 +10,19 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 {
     abstract class HTTP : BaseProtocol
     {
-        /// <summary>
-        /// Объект синхронизации
-        /// </summary>
-        public object Sync
+
+		public static readonly byte[] ENDCHUNCK = { 0x0D, 0x0A };
+		public static readonly byte[] EOFCHUNCK = { 0x30, 0x0D, 0x0A, 0x0D, 0x0A };
+		/// <summary>
+		/// Объект синхронизации
+		/// </summary>
+		public object Sync
         {
             get;
             protected set;
         }
-        volatile int state;
+        volatile 
+		int state;
         override
         public States State
         {
@@ -226,56 +230,82 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             Message( __body );
             Response.SetEnd();
         }
-        public bool Message()
-        {
-            lock (Sync)
-            {
-                if (Response.IsRes)
-                    return false;
-                else
-                {
-                    Response.AddHeader("Date", DateTimeOffset.Now.ToString());
-                    Response.AddHeader("Server", "MyWebSocket Server Alpha/1.0");
-                    Response.SetRes();
-                    return Message(Response.ToString());
-                    
-                }
-            }
-        }
-        public bool Message(string message)
+		public bool Message(string message)
         {
             return Message(Encoding.UTF8.GetBytes(message));
         }
-        public bool Message(byte[] message)
+		public bool Message(byte[] message)
         {
             return Message(   message, 0, message.Length  );
         }
-        /// <summary>
-        /// Отправляет данные текущему подключению
-        /// </summary>
-        /// <param name="message">массив байт для отправки</param>
-        /// <returns>true в случае ечсли данные можно отправить</returns>
-        public bool Message(byte[] message, int start, int write)
+		public bool MESSAGE(byte[] message, int start, int write)
+		{
+			lock (Sync)
+			{
+				if (state > 4)
+					return false;
+				SocketError error;
+				if ((error = Write(message, start, write)) != SocketError.Success)
+				{
+					if (error != SocketError.WouldBlock
+						   && error != SocketError.NoBufferSpaceAvailable)
+					{
+						Response.Close = true;
+						exc(new HTTPException("Ошибка записи http данных: " + error.ToString(), HTTPCode._500_));
+						return false;
+					}
+				}
+			}
+			return true;
+		}
+		/// <summary>
+		/// Отправляет данные текущему подключению
+		/// </summary>
+		/// <param name="message">массив байт для отправки</param>
+		/// <returns>true в случае ечсли данные можно отправить</returns>
+		public bool Message(byte[] message, int start, int write)
         {
             lock (Sync)
             {
-                if (state > 4)
-                    return false;
-                
-                Message();
+				if (!Response.IsRes)
+				{
+					// Заголвоки будут перезаписаны
+					Response.AddHeader("Date", DateTimeOffset.Now.ToString());
+					Response.AddHeader("Server", "MyWebSocket Server Alpha/1.0");
 
-                SocketError error;
-                if ((error = Write(message, start, write)) != SocketError.Success)
-                {
-                    if (error != SocketError.WouldBlock
-                           && error != SocketError.NoBufferSpaceAvailable)
-                    {
-                        Response.Close = true;
-                        exc(new HTTPException("Ошибка записи http данных: " + error.ToString(), HTTPCode._500_));
-                        return false;
-                    }
-                }
-            }
+					byte[] respone = Response.ToByte();
+					if (!MESSAGE(respone, 0, respone.Length))
+						return false;
+					Response.SetRes();
+				}
+				// данные надо отправлять по частям
+				if (Response.TransferEncoding == "chunked")
+				{
+
+					// hex длинна
+					byte[] respone = Encoding.UTF8.GetBytes(
+									message.Length.ToString("X"));
+					// длинна данных
+					if (!MESSAGE(respone, 0, respone.Length))
+						return false;
+					// блок данный CRLF
+					if (!MESSAGE(ENDCHUNCK, 0, ENDCHUNCK.Length))
+						return false;
+
+				}
+				// отправка данных
+				if (!MESSAGE(message, 0, message.Length))
+					return false;
+				// данные надо отправлять по частям
+				if (Response.TransferEncoding == "chunked")
+				{
+
+					// блок данный CRLF
+					if (!MESSAGE(ENDCHUNCK, 0, ENDCHUNCK.Length))
+						return false;
+
+				}
+			}
             return true;
         }
         async
@@ -290,9 +320,10 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                     {
                         Response.StartString = "HTTP/1.1 200 OK";
                         Response.AddHeader("Content-Type", "text/" + type);
-                        Response.AddHeader("Content-Length", sr.Length.ToString());
-                        
-                        int _count = (int)(sr.Length / maxlen);
+						Response.AddHeader("Transfer-Encoding", "chunked");
+						//Response.AddHeader("Content-Length", sr.Length.ToString());
+
+						int _count = (int)(sr.Length / maxlen);
                         int length = (int)(sr.Length - _count * maxlen);
                         while (i++ < _count)
                         {
@@ -358,7 +389,12 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                         write();
                     else
                     {
-                        if (Response.Close)
+						if (Response.TransferEncoding == "chunked")
+						{
+							if (!MESSAGE(EOFCHUNCK, 0, EOFCHUNCK.Length))
+								;
+						}
+						if (Response.Close)
                             close();
                         else
                         {
@@ -427,24 +463,27 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                         if (state == 4)
                         {
                             Error(Exception);
-                            if (Response.IsRes)
+							close();
+                            /*if (Response.IsRes
+								  || Exception.Status == HTTPCode._400_)
                                 close();
-                            else
+							else if (Exception.Status == HTTPCode._500_)
+						        state = 7;
+							else
                             {
                                 state =-1;
                                 Error(Exception.Message, 
-                                            Exception.StackTrace, 
-                                                    Exception.Status);
-                            }
-                            if (Exception.Status == HTTPCode._500_
-                                    || Exception.Status == HTTPCode._400_)
-                                    Response.Close = true;
-                        }
+								                Exception.StackTrace, 
+														Exception.Status);
+							}*/
+                            
+						}
                 /*============================================================
                                         Закрываем соединеие						   
                 ==============================================================*/
                                     if (state == 5)
                                     {
+										Tcp.Close();
                                         Close();
                                         state = 7;
                                     }
@@ -474,9 +513,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             {
                 if (state < 4)
                     state = 4;
-                else if (state < 7)
-                    state = 7;
-                    Exception = err;
+                Exception = err;
             }
         }
         /// <summary>
