@@ -134,12 +134,10 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         {
             add
             {
-                __handconn = true;
                 __EventOnOpen += value;
             }
             remove
             {
-                __handconn = false;
                 __EventOnOpen -= value;
             }
         }
@@ -151,12 +149,10 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         {
             add
             {
-                __handconn = true;
                 __EventConnect += value;
             }
             remove
             {
-                __handconn = false;
                 __EventConnect -= value;
             }
         }
@@ -171,7 +167,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         static 
         private  event PHandlerEvent __EventConnect;
         static
-        protected bool __handconn = false;
         protected long __twaitconn = DateTime.Now.Ticks;
 
         public HTTP()
