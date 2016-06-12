@@ -14,7 +14,6 @@ namespace MyWebSocket.Tcp.Protocol
 		/// максимальный размер потока
 		/// </summary>
 		public static int MAXLENGTHBUFFER = 1000 * 25600;
-		int i = 0;
 		private TimeSpan __INTERVALRESIZE;
 		/// <summary>
 		/// tcp/ip соединение
