@@ -45,26 +45,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				close();
 			
 		}
-		protected override void data()
-		{	
-			if (!_Reader._Frame.GetBody)
-			{
-				if (_Reader.ReadBody() == -1)
-					return;
-
-				switch (_Reader._Frame.Pcod)
-				{
-					case HTTPFrame.DATA:
-					if (Result.Jump)
-						Result.Option = TaskOption.Protocol;
-					else
-						OnEventData();
-					break;
-					case HTTPFrame.CHUNK:
-					break;
-				}
-			}
-		}
 		protected override void Data()
 		{
 			
@@ -126,6 +106,25 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 								break;
 						}
 					}
+				}
+				if (!Result.Jump)
+					OnEventOpen(Request, Response);
+			}
+			if (!_Reader._Frame.GetBody)
+			{
+				if (_Reader.ReadBody() == -1)
+					return;
+
+				switch (_Reader._Frame.Pcod)
+				{
+					case HTTPFrame.DATA:
+						if (Result.Jump)
+							Result.Option = TaskOption.Protocol;
+						else
+							OnEventData();
+						break;
+					case HTTPFrame.CHUNK:
+						break;
 				}
 			}
 		}
