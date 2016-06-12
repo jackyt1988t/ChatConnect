@@ -29,6 +29,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         {
             Tcp = tcp;
 			Result.Protocol = TaskProtocol.HTTP;
+			__twaitconn = DateTime.Now.Ticks;
 			_Reader = new HTTPStream(MINLENGTHBUFFER)
 			{
 				header = Request
