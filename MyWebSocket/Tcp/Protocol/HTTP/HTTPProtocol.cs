@@ -28,15 +28,15 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			base()
         {
             Tcp = tcp;
-			_Reader = new HTTPStream(1000 * 32)
+			Result.Protocol = TaskProtocol.HTTP;
+			_Reader = new HTTPStream(MINLENGTHBUFFER)
 			{
 				header = Request
 			};
-			_Writer = new HTTPStream(1000 * 18)
+			_Writer = new HTTPStream(MINLENGTHBUFFER)
 			{
 				header = Response
 			};
-			Result.Protocol   =   TaskProtocol.HTTP;
 		}
 		protected override void Work()
 		{
@@ -138,9 +138,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			OnEventError(error);
 
 		}
-		protected override void Connection(IHeader request, IHeader response)
+		protected override void Connection()
 		{
-			OnEventConnect(request, response);
+			OnEventConnect();
 		}
     }
 }

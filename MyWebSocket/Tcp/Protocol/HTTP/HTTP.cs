@@ -412,7 +412,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 ==============================================================*/
                 if (state == 3)
                 {
-                    Connection(Request, Response);
+                    Connection();
                     if (Interlocked.CompareExchange(ref state, 0, 3) == 3)
                         return Result;
                 }
@@ -594,7 +594,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         /// Потокобезопасный запуск события Connection
         /// желательно запускать в обработчике Connection
         /// </summary>
-        protected void OnEventConnect(IHeader request, IHeader response)
+        protected void OnEventConnect()
         {
             string s = "connect";
             string m = "Соединение было установлено, протокол ws";
@@ -629,6 +629,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         /// обработать ошибку
         /// в случае ошибок необходимо бросать HTTPException с указанным статусом http
         /// </summary>
-        protected abstract void Connection(IHeader reauest, IHeader response);
+        protected abstract void Connection();
     }
 }

@@ -50,13 +50,9 @@ namespace MyWebSocket
 			{
 				// Объект Http
 				HTTP Http = obj as HTTP;
-				Http.EventError += (object sender, PEventArgs e) =>
-				{
-					HTTPException err = e.sender as HTTPException;
-					Console.WriteLine(err.Message);
-				};
+				
 				// Событие наступает когда приходят новые данные
-				Http.EventOnOpen += (object sender, PEventArgs e) =>
+				Http.EventData += (object sender, PEventArgs e) =>
 				{
 					switch (Http.Request.Path)
 					{
@@ -67,6 +63,15 @@ namespace MyWebSocket
 							Http.MessageFile("Html" + Http.Request.Path, Http.Request.File);
 							break;
 					}
+				};
+				Http.EventError += (object sender, PEventArgs e) =>
+				{
+					HTTPException err = e.sender as HTTPException;
+					Console.WriteLine(err.Message);
+				};
+				// События наступает когда приходят заголовки
+				Http.EventOnOpen += (object sender, PEventArgs e) =>
+				{
 				};
 			};
 			WServer Server = new WServer("0.0.0.0", 8081, 2);
