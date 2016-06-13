@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.IO.Compression;
 using System.Net.Sockets;
 using System.Text;
 
@@ -14,15 +15,15 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		public static readonly byte[] EOFCHUNCK;
 
 		HTTPStream _Reader;
-		public override StreamS Reader
+		public override Mytream Reader
 		{
 			get
 			{
 				return _Reader;
 			}
 		}
-		HTTPStream _Writer;
-		public override StreamS Writer
+		HTTPWriter _Writer;
+		public override Mytream Writer
 		{
 			get
 			{
@@ -47,7 +48,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			{
 				header = Request
 			};
-			_Writer = new HTTPStream(MINLENGTHBUFFER)
+			_Writer = new HTTPWriter(MINLENGTHBUFFER)
 			{
 				header = Response
 			};
@@ -69,7 +70,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			{
 				using (FileStream sr = fileinfo.OpenRead())
 				{
-					int _count = (int)(sr.Length / chunk);
+					/*int _count = (int)(sr.Length / chunk);
 					int length = (int)(sr.Length - _count * chunk);
 					while (i++ < _count)
 					{
@@ -92,6 +93,16 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						}
 						if (!Message(buffer, 0, length))
 							return;
+					}*/
+					lock (Sync)
+					{
+						Response.AddHeader("Content-Encoding", "gzip");
+						using (GZipStream compress = new GZipStream(_Writer, CompressionMode.Compress))
+						{
+							sr.CopyTo(compress);
+
+						}
+						_Writer.Eof();
 					}
 				}
 			}
@@ -99,49 +110,20 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		public override bool Message(byte[] buffer, int start, int write)
 		{
 			bool result = true;
-		/*==============================================================
-			Отправляем заголвоки если они еще не были отправлены.
-			Если указан заголвок Content-Length равен 0 устанавливаем
-			заголовок Transfer-Encoding равным chunked.
-			Отправляем данные, если заголвок Content-Length больше 0
-			отправляем данные как есть, иначе отправляем данные 
-			в формате chunked.
-		================================================================*/
+			/*==============================================================
+				Отправляем заголвоки если они еще не были отправлены.
+				Если указан заголвок Content-Length равен 0 устанавливаем
+				заголовок Transfer-Encoding равным chunked.
+				Отправляем данные, если заголвок Content-Length больше 0
+				отправляем данные как есть, иначе отправляем данные 
+				в формате chunked.
+			================================================================*/
 			lock (Sync)
 			{
-				// Заголвоки HTTP
-				if (!Response.IsRes)
-				{
-					if (Response.ContentLength == 0)
-						Response.TransferEncoding = "chunked";
-					// отправить HTTP заголвоки запроса
-					result = Message(Response.ToByte());
-									 Response.SetRes();
-
-					if (!result)
-						return false;
-				}
-					// оптравить форматированные данные запроса
-					if (Response.TransferEncoding != "chunked")
-						result = message(  buffer, start, write  );
-					else
-					{
-						byte[] lenCHUNCK = Encoding.UTF8.GetBytes(
-											  write.ToString("X"));
-						
-						result = Message(lenCHUNCK);
-						if (!result)
-							return false;
-						result = Message(ENDCHUNCK);
-						if (!result)
-							return false;
-						result = message(  buffer, start, write  );
-						if (!result)
-							return false;
-						result = Message(ENDCHUNCK);
-					}
+				if (Response.ContentLength == 0)
+					Response.TransferEncoding = "chuncked";
+				_Writer.Write(buffer, start, write);
 			}
-
 			return result;
 		}
 
@@ -150,9 +132,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			bool result = true;
 			lock (Sync)
 			{
-					// Отправить блок данных chunked 0CRLFCRLF
-					if (Response.TransferEncoding == "chunked")
-						result = Message(EOFCHUNCK);
+				// Отправить блок данных chunked 0CRLFCRLF
+				if (Response.TransferEncoding == "chunked")
+					_Writer.End();
 			}
 			if (result)
 				Console.WriteLine("Успешно");

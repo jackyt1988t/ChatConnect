@@ -20,20 +20,20 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		}
 		protected bool Rchunk;
 		protected WStreamN13 reader;
-		public override StreamS Reader
+		public override Mytream Reader
 		{
 			get
 			{
-				return (StreamS)reader;
+				return (Mytream)reader;
 			}
 		}
 		protected bool Wchunk;
 		protected WStreamN13 writer;
-		public override StreamS Writer
+		public override Mytream Writer
 		{
 			get
 			{
-				return (StreamS)writer;
+				return (Mytream)writer;
 			}
 		}
 		/// <summary>

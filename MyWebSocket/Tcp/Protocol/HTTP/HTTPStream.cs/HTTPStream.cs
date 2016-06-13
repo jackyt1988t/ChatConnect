@@ -2,7 +2,7 @@
 
 namespace MyWebSocket.Tcp.Protocol.HTTP
 {
-	class HTTPStream : StreamS
+	class HTTPStream : Mytream
 	{
 		const int LF = 0x0A;
 		const int CR = 0x0D;

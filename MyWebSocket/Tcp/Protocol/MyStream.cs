@@ -6,7 +6,7 @@ namespace MyWebSocket.Tcp.Protocol
 	/// <summary>
 	/// Кольцевой поток данных
 	/// </summary>
-	class StreamS : Stream
+	class Mytream : Stream
 	{
 		public long Count
 		{
@@ -128,7 +128,7 @@ namespace MyWebSocket.Tcp.Protocol
 		protected long _len;
 		protected byte[] _buffer;
 		
-		public StreamS(int length) : 
+		public Mytream(int length) : 
 			base()
 		{
 			_len = length;

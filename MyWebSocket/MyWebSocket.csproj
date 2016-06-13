@@ -102,6 +102,7 @@
     </Compile>
     <Compile Include="Tcp\Protocol\HTTP\HTTPStream.cs\HTTPStream.cs" />
     <Compile Include="Tcp\Protocol\HTTP\HTTPError.cs" />
+    <Compile Include="Tcp\Protocol\HTTP\HTTPStream.cs\HTTPWriter.cs" />
     <Compile Include="Tcp\Protocol\IProtocol.cs" />
     <Compile Include="Tcp\Protocol\MyStream.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
