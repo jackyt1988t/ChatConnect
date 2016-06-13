@@ -179,7 +179,32 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             Response = new Header();
             
         }
-        public bool close()
+		async public void File(string path, int chunk = 1000 * 64)
+		{
+			await Task.Run(() =>
+			{
+				try
+				{
+					file(path, chunk);
+				}
+				catch (HTTPException err)
+				{
+					exc(err);
+				}
+				catch (Exception err)
+				{
+					exc(new HTTPException("Ошибка при чтении файла " + path, HTTPCode._500_, err));
+				}
+				finally
+				{
+					lock (Sync)
+						Response.SetEnd();
+				}
+			});
+        }
+		public abstract void file(string path, int chunk);
+
+		public bool close()
         {
             lock (Sync)
             {
@@ -189,76 +214,26 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 return false;
             }
         }
-        public void Error(string message, string stack, codexxx status)
-        {
-            if (string.IsNullOrEmpty(stack))
-                stack = string.Empty;
-            if (string.IsNullOrEmpty(message))
-                message = string.Empty;
-            Response.StartString = "HTTP/1.1 " + status.value + " " + status.ToString();
-            Response.AddHeader("Content-Type", "text/html; charset=utf-8");
-            byte[] __body = Encoding.UTF8.GetBytes(
-            "<html>" +
-            "<head>" +
-                "<style>" +
-                    ".head {margin: auto; color: red; text-align: center; width: 300px}" +
-                    ".body {display: block; color: blue; text-align: center; width: 600px}" +
-                "</style>" +
-                "</head>" +
-                "<body>" +
-                    "<div class=\"head\">" +
-                        message +
-                    "</div>" +
-                    "<div class=\"body\">" +
-                        "<pre>" +
-                            stack +
-                        "</pre>" +
-                    "</div>" +
-                "</body>" +
-            "</html>");
-
-            Response.AddHeader("Content-Length", __body.Length.ToString());
-            Message( __body );
-            Response.SetEnd();
-        }
-        public bool Message()
-        {
-            lock (Sync)
-            {
-                if (Response.IsRes)
-                    return false;
-                else
-                {
-                    Response.AddHeader("Date", DateTimeOffset.Now.ToString());
-                    Response.AddHeader("Server", "MyWebSocket Server Alpha/1.0");
-                    Response.SetRes();
-                    return Message(Response.ToString());
-                    
-                }
-            }
-        }
         public bool Message(string message)
         {
             return Message(Encoding.UTF8.GetBytes(message));
         }
         public bool Message(byte[] message)
         {
-            return Message(   message, 0, message.Length  );
+            return this.message(   message, 0, message.Length  );
         }
-        /// <summary>
-        /// Отправляет данные текущему подключению
-        /// </summary>
-        /// <param name="message">массив байт для отправки</param>
-        /// <returns>true в случае ечсли данные можно отправить</returns>
-        public bool Message(byte[] message, int start, int write)
+		/// <summary>
+		/// Отправляет данные текущему подключению
+		/// </summary>
+		/// <param name="message">массив байт для отправки</param>
+		/// <returns>true в случае ечсли данные можно отправить</returns>
+		public bool message(byte[] message, int start, int write)
         {
             lock (Sync)
             {
                 if (state > 4)
                     return false;
-                
-                Message();
-
+				
                 SocketError error;
                 if ((error = Write(message, start, write)) != SocketError.Success)
                 {
@@ -273,59 +248,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             }
             return true;
         }
-		async
-		public void MessageFile(string pathfile, string type, int maxlen = 1000 * 16)
-		{
-			await Task.Run(() =>
-			{
-				int i = 0;
-				try
-				{
-					using (FileStream sr = new FileStream(pathfile, FileMode.Open, FileAccess.Read))
-					{
-						Response.StartString = "HTTP/1.1 200 OK";
-						Response.AddHeader("Content-Type", "text/" + type);
-						Response.AddHeader("Content-Length", sr.Length.ToString());
-						Response.AddHeader("Cache-Control:", "no-cache,no-store,max-age=0,must-revalidate");
-
-						int _count = (int)(sr.Length / maxlen);
-						int length = (int)(sr.Length - _count * maxlen);
-						while (i++ < _count)
-						{
-							int recive = 0;
-							byte[] buffer = new byte[maxlen];
-							while ((maxlen - recive) > 0)
-							{
-								recive = sr.Read(buffer, recive, maxlen - recive);
-							}
-							if (!Message(buffer, 0, maxlen))
-								return;
-							Thread.Sleep(10);
-						}
-						if (length > 0)
-						{
-							int recive = 0;
-							byte[] buffer = new byte[length];
-							while ((length - recive) > 0)
-							{
-								recive = sr.Read(buffer, recive, length - recive);
-							}
-							if (!Message(buffer, 0, length))
-								return;
-							Thread.Sleep(10);
-						}
-					}
-				}
-				catch (Exception err)
-				{
-					exc(new HTTPException("Ошибка при четнии файла. " + err.Message, HTTPCode._503_, err));
-				}
-				finally
-				{
-					Response.SetEnd();
-				}
-			});
-        }
+		public abstract bool Message(byte[] message, int start, int write);
+		
         public override TaskResult TaskLoopHandlerProtocol()
         {
             try
@@ -354,6 +278,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                         write();
                     else
                     {
+						End();
                         if (Response.Close)
                             close();
                         else
@@ -423,21 +348,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                         if (state == 4)
                         {
                             Error(Exception);
-                            if (Response.IsRes)
-                                close();
-                            else if (Exception.Status == HTTPCode._500_)
-                            	close();
-							else if (Exception.Status == HTTPCode._400_)
-							{
-                                state =-1;
-								Response.Close = true;
-                                Error(   Exception.Message, 
-                                            Exception.StackTrace, 
-                                                    Exception.Status   );
-                            }	
-							else
-								state = 7;
-				}
+						}
                 /*============================================================
                                         Закрываем соединеие						   
                 ==============================================================*/
@@ -604,10 +515,16 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 e(this, new PEventArgs(s, m, null));
             
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        protected abstract void Work();
+		/// <summary>
+		/// закончена передача данных чтобы закрыть соединеие не обходимо установить
+		/// значение response.Close = true;
+		/// в случае ошибок необходимо бросать HTTPException с указанным статусом http
+		/// </summary>
+		protected abstract void End();
+		/// <summary>
+		/// 
+		/// </summary>
+		protected abstract void Work();
         /// <summary>
         /// работаем
         /// в случае ошибок необходимо бросать HTTPException с указанным статусом http

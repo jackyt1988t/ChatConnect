@@ -34,16 +34,18 @@ namespace MyWebSocket.Log
             StreamWriter writer = null;
             try
             {
-                if (fileinfo.Exists)
-                {
-                    writer = fileinfo.AppendText();
-                }
-                else
-                {
-                    writer = fileinfo.CreateText();
-                }
-						lock (Sync)
-							writer.WriteLine(message);
+				lock (Sync)
+				{
+					if (fileinfo.Exists)
+					{
+						writer = fileinfo.AppendText();
+					}
+					else
+					{
+						writer = fileinfo.CreateText();
+					}
+					writer.WriteLine(message);
+				}
             }
             finally
             {
