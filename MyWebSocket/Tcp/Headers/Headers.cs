@@ -18,9 +18,9 @@ namespace MyWebSocket.Tcp
 			{
 				return contentlength;
 			}
-			private set
+			set
 			{
-				ContainerHeaders.Add("Content-Length", value.ToString());
+				AddHeader("Content-Length", value.ToString());
 			}
 		}
 		string upgrade;
@@ -30,9 +30,9 @@ namespace MyWebSocket.Tcp
 			{
 				return upgrade;
 			}
-			private set
+			set
 			{
-				ContainerHeaders.Add("Upgrade", value.ToString());
+				AddHeader("Upgrade", value.ToString());
 			}
 		}
 		string connection;
@@ -42,9 +42,9 @@ namespace MyWebSocket.Tcp
 			{
 				return connection;
 			}
-			private set
+			set
 			{
-				ContainerHeaders.Add("Upgrade", value.ToString());
+				AddHeader("Upgrade", value.ToString());
 			}
 		}
 		string transferencoding;
@@ -54,9 +54,9 @@ namespace MyWebSocket.Tcp
 			{
 				return transferencoding;
 			}
-			private set
+			set
 			{
-				ContainerHeaders.Add("TransferEncoding", value.ToString());
+				AddHeader("Transfer-Encoding", value.ToString());
 			}
 		}
 
@@ -215,7 +215,7 @@ namespace MyWebSocket.Tcp
 						throw new HeadersException("Неверный Content-Length");
 				break;
 				case "transfer-encoding":
-					transferencoding = value;
+					transferencoding = value.ToLower();
 				break;
 			}
 			

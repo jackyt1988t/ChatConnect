@@ -8,19 +8,23 @@ namespace MyWebSocket.Tcp
 		int ContentLength
 		{
 			get;
+			set;
 		}
 
 		string Upgrade
 		{
 			get;
+			set;
 		}
 		string Connection
 		{
 			get;
+			set;
 		}
 		string TransferEncoding
 		{
 			get;
+			set;
 		}
 
 		bool IsEnd
