@@ -11,7 +11,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
     {
 		bool Rchunk;
 		WStreamSample reader;
-		public override StreamS Reader
+		public override Mytream Reader
 		{
 			get
 			{
@@ -20,7 +20,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		}
 		bool Wchunk;
 		WStreamSample writer;
-		public override StreamS Writer
+		public override Mytream Writer
 		{
 			get
 			{

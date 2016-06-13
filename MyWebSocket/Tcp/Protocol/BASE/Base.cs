@@ -28,12 +28,12 @@ namespace MyWebSocket.Tcp.Protocol
 			get;
 			protected set;
 		}
-		public virtual StreamS Reader
+		public virtual Mytream Reader
 		{
 			get;
 			protected set;
 		}
-		public virtual StreamS Writer
+		public virtual Mytream Writer
 		{
 			get;
 			protected set;
