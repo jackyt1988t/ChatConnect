@@ -44,7 +44,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		
 		static HTTPProtocol()
 		{
-			ALIVE = 15;
+			ALIVE = 40;
 			ENDCHUNCK =
 				new byte[] { 0x0D, 0x0A };
 			EOFCHUNCK =
@@ -161,6 +161,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			bool result = true;
 			lock (Sync)
 			{
+				__Writer.Resize(MINLENGTHBUFFER);
 				if (Response.ContentEncoding == "gzip")
 				{
 					if (Compress != null)
@@ -258,8 +259,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					&& Request.AcceptEncoding.Count > 0
 					&& Request.AcceptEncoding.Contains("gzip"))
 				{
-					//Response.ContentEncoding = "gzip";
-					//Compress = new GZipStream(__Writer, CompressionLevel.Fastest, true);
+					Response.ContentEncoding = "gzip";
+					Compress = new GZipStream(__Writer, CompressionLevel.Fastest, true);
 				}
 
 				if (!Result.Jump)
