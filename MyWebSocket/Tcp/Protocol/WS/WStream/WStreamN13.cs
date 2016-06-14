@@ -2,7 +2,7 @@
 
 namespace MyWebSocket.Tcp.Protocol.WS
 {
-    class WStreamN13 : Mytream
+    class WStreamN13 : MyStream
     {
 		byte _ngHead;
 		public WSFrameN13 _Frame;

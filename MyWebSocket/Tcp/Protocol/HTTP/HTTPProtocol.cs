@@ -9,30 +9,42 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 	
 	class HTTPProtocol : HTTP
 	{
-		public static readonly int CHUNK;
 		public static readonly long ALIVE;
 		public static readonly byte[] ENDCHUNCK;
 		public static readonly byte[] EOFCHUNCK;
-
-		HTTPStream _Reader;
-		public override Mytream Reader
+		
+		/// <summary>
+		/// Время ожидания запросов
+		/// </summary>
+		public TimeSpan Alive
+		{
+			get;
+		}
+		public GZipStream Compress
+		{
+			get;
+			set;
+		}
+		HTTPReader __Reader;
+		public override MyStream Reader
 		{
 			get
 			{
-				return _Reader;
+				return __Reader;
 			}
 		}
-		HTTPWriter _Writer;
-		public override Mytream Writer
+		HTTPWriter __Writer;
+		public override MyStream Writer
 		{
 			get
 			{
-				return _Writer;
+				return __Writer;
 			}
 		}
+		
 		static HTTPProtocol()
 		{
-			ALIVE = TimeSpan.TicksPerSecond * 15;
+			ALIVE = 15;
 			ENDCHUNCK =
 				new byte[] { 0x0D, 0x0A };
 			EOFCHUNCK =
@@ -42,24 +54,25 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			base()
         {
             Tcp = tcp;
-			Result.Protocol = TaskProtocol.HTTP;
-			__twaitconn = DateTime.Now.Ticks;
-			_Reader = new HTTPStream(MINLENGTHBUFFER)
-			{
-				header = Request
-			};
-			_Writer = new HTTPWriter(MINLENGTHBUFFER)
-			{
-				header = Response
-			};
+			Alive = new TimeSpan(DateTime.Now.Ticks + 
+						TimeSpan.TicksPerSecond * ALIVE);
+			
+				Result.Protocol    =    TaskProtocol.HTTP;
+				__Reader = new HTTPReader(MINLENGTHBUFFER)
+				{
+					header = Request
+				};
+				__Writer = new HTTPWriter(MINLENGTHBUFFER)
+				{
+					header = Response
+				};
 		}
 		public override void file(string path, int chunk)
 		{
 			int i = 0;
 			Response.StartString = "HTTP/1.1 200 OK";
 			Response.AddHeader("Content-Type", "text/" + Request.File);
-			//Response.AddHeader("Content-Length", sr.Length.ToString());
-						Response.AddHeader("Transfer-encoding", "chunked");
+			Response.AddHeader("Transfer-encoding", "chunked");
 			
 			FileInfo fileinfo = new FileInfo(path);
 			if (!fileinfo.Exists)
@@ -68,9 +81,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			}
 			else
 			{
+				chunk = 64000;
 				using (FileStream sr = fileinfo.OpenRead())
 				{
-					/*int _count = (int)(sr.Length / chunk);
+					//Response.AddHeader("Content-Length", sr.Length.ToString());
+					int _count = (int)(sr.Length / chunk);
 					int length = (int)(sr.Length - _count * chunk);
 					while (i++ < _count)
 					{
@@ -93,36 +108,50 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						}
 						if (!Message(buffer, 0, length))
 							return;
-					}*/
-					lock (Sync)
-					{
-						Response.AddHeader("Content-Encoding", "gzip");
-						using (GZipStream compress = new GZipStream(_Writer, CompressionMode.Compress))
-						{
-							sr.CopyTo(compress);
-
-						}
-						_Writer.Eof();
 					}
 				}
 			}
 		}
+		public override void Dispose(bool disposing)
+		{
+			if (disposing)
+			{
+				if (Compress != null)
+					Compress.Dispose();
+			}
+				base.Dispose(disposing);
+		}
+		/// <summary>
+		/// Записываем данные в стандартный поток, если заголвок Content-Encoding
+		/// установлен в gzip декодируем данные в формате gzip(быстрое сжатие)
+		/// </summary>
+		/// <param name="buffer">массив данных</param>
+		/// <param name="start">стартовая позиция</param>
+		/// <param name="write">количество которое необходимо записать</param>
+		/// <returns></returns>
 		public override bool Message(byte[] buffer, int start, int write)
 		{
 			bool result = true;
-			/*==============================================================
-				Отправляем заголвоки если они еще не были отправлены.
-				Если указан заголвок Content-Length равен 0 устанавливаем
-				заголовок Transfer-Encoding равным chunked.
-				Отправляем данные, если заголвок Content-Length больше 0
-				отправляем данные как есть, иначе отправляем данные 
-				в формате chunked.
-			================================================================*/
 			lock (Sync)
 			{
-				if (Response.ContentLength == 0)
-					Response.TransferEncoding = "chuncked";
-				_Writer.Write(buffer, start, write);
+				if (!Loop)
+					result = false;
+				else
+				{
+					try
+					{
+						if (Response.ContentEncoding != "gzip")
+							__Writer.Write(buffer, start, write);
+						else
+							Compress.Write(buffer, start, write);
+					}
+					catch (IOException exc)
+					{
+						close();
+						result = false;
+						Log.Loging.AddMessage(exc.Message + Log.Loging.NewLine + exc.StackTrace, "Log/log.log", Log.Log.Debug);
+					}
+				}
 			}
 			return result;
 		}
@@ -132,9 +161,25 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			bool result = true;
 			lock (Sync)
 			{
+				if (Response.ContentEncoding == "gzip")
+				{
+					if (Compress != null)
+						Compress.Dispose();
+				}
 				// Отправить блок данных chunked 0CRLFCRLF
 				if (Response.TransferEncoding == "chunked")
-					_Writer.End();
+				{
+					try
+					{
+						__Writer.Eof();
+					}
+					catch (IOException exc)
+					{
+						close();
+						result = false;
+						Log.Loging.AddMessage(exc.Message + Log.Loging.NewLine + exc.StackTrace, "Log/log.log", Log.Log.Debug);
+					}
+				}
 			}
 			if (result)
 				Console.WriteLine("Успешно");
@@ -142,31 +187,32 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		protected override void Work()
 		{
 			OnEventWork();
-			if ((__twaitconn + ALIVE) < DateTime.Now.Ticks)
+			if (Alive.Ticks < DateTime.Now.Ticks)
 				close();
 			
 		}
 		protected override void Data()
 		{
 			
-			if (_Reader.Empty)
+			if (__Reader.Empty)
 				return;
 
-			if ( _Reader._Frame.GetHead && _Reader._Frame.GetBody )
+			if ( __Reader._Frame.GetHead && __Reader._Frame.GetBody )
 			{
-				_Reader._Frame.Clear();
-				_Reader.header = Request;
-				_Writer.header = Response;
+				__Reader._Frame.Clear();
+				__Writer._Frame.Clear();
+				__Reader.header = Request;
+				__Writer.header = Response;
 			}
-			if (!_Reader._Frame.GetHead)
+			if (!__Reader._Frame.GetHead)
 			{
-				if (_Reader.ReadHead() == -1)
+				if (__Reader.ReadHead() == -1)
 					return;
-				
+
 				switch (Request.Method)
 				{
 					case "GET":
-						if (_Reader._Frame.bleng > 0)
+						if (__Reader._Frame.bleng > 0)
 							throw new HTTPException("Неверная длина запроса", HTTPCode._400_);
 						break;
 					default:
@@ -201,22 +247,30 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 								break;
 							case "sample":
 								Result.Jump = true;
-								_Reader._Frame.Handl = 1;
-								_Reader._Frame.bleng = 8;
+								__Reader._Frame.Handl = 1;
+								__Reader._Frame.bleng = 8;
 								Result.Protocol = TaskProtocol.WSAMPLE;
 								break;
 						}
 					}
 				}
+				if (Request.AcceptEncoding != null
+					&& Request.AcceptEncoding.Count > 0
+					&& Request.AcceptEncoding.Contains("gzip"))
+				{
+					//Response.ContentEncoding = "gzip";
+					//Compress = new GZipStream(__Writer, CompressionLevel.Fastest, true);
+				}
+
 				if (!Result.Jump)
 					OnEventOpen(Request, Response);
 			}
-			if (!_Reader._Frame.GetBody)
+			if (!__Reader._Frame.GetBody)
 			{
-				if (_Reader.ReadBody() == -1)
+				if (__Reader.ReadBody() == -1)
 					return;
 
-				switch (_Reader._Frame.Pcod)
+				switch (__Reader._Frame.Pcod)
 				{
 					case HTTPFrame.DATA:
 						if (Result.Jump)
@@ -250,7 +304,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				else if (Exception.Status.value >= 200)
 					;
 				else
-					;
+					close();
 			}
 
 		}

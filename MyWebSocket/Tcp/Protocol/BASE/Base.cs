@@ -28,12 +28,12 @@ namespace MyWebSocket.Tcp.Protocol
 			get;
 			protected set;
 		}
-		public virtual Mytream Reader
+		public virtual MyStream Reader
 		{
 			get;
 			protected set;
 		}
-		public virtual Mytream Writer
+		public virtual MyStream Writer
 		{
 			get;
 			protected set;
@@ -89,10 +89,14 @@ namespace MyWebSocket.Tcp.Protocol
 			int length = Tcp.Receive(buffer, start, count, SocketFlags.None, out error);
 			if (length > 0)
 			{
-				if (length < Reader.Clear)
+				try
+				{
 					Reader.SetLength(length);
-				else
-					error = SocketError.SocketError;	
+				}
+				catch (IOException)
+				{
+					error = SocketError.SocketError;
+				}
 			}
 			return error;
 		}
@@ -116,13 +120,15 @@ namespace MyWebSocket.Tcp.Protocol
 					  (int)(Writer.Count - start);
 				int length = Tcp.Send(buffer, start, write, SocketFlags.None, out error);
 				if (length > 0)
-					Writer.Position = length;
-				if (MINLENGTHBUFFER < Writer.Count)
 				{
-					int resize = (int)Writer.Count / 2;
-					if (resize > Writer.Length 
-							&& __INTERVALRESIZE.Ticks < DateTime.Now.Ticks)
-						Writer.Resize(resize);
+					try
+					{
+						Writer.Position = length;
+					}
+					catch (IOException)
+					{
+						error = SocketError.SocketError;
+					}
 				}
 			}
 			return error;
@@ -130,33 +136,26 @@ namespace MyWebSocket.Tcp.Protocol
 			protected SocketError Write(byte[] buffer, int start, int write)
 			{
 				SocketError error = SocketError.Success;
+				lock (Writer.__Sync)
+			{
+
 				if (Writer.Empty)
-					start  =  Tcp.Send(buffer, start, write, SocketFlags.None, out error);
+					start = Tcp.Send(buffer, start, write, SocketFlags.None, out error);
 
 				int length = write - start;
 				if (length > 0)
 				{
-					lock (Writer.__Sync)
+
+					try
 					{
-						if (Writer.Clear - 1 < length)
-						{
-							int resize = (int)Writer.Count * 2;
-							if (resize < length)
-								resize = length;
-							if (Writer.Count > MAXLENGTHBUFFER)
-								error = SocketError.SocketError;
-							else 
-							{
-								Writer.Resize(resize);
-								Writer.Write(buffer, start, length);
-								__INTERVALRESIZE = new TimeSpan(DateTime.Now.Ticks + TimeSpan.TicksPerSecond * 8);
-							}
-							
-						}
-							else
-								Writer.Write(buffer, start, length);
-					}	
+						Writer.SetLength(length);
+					}
+					catch (IOException)
+					{
+						error = SocketError.SocketError;
+					}
 				}
+			}
 				return error;
 		}
 	}

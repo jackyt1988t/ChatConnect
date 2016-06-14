@@ -16,12 +16,24 @@ namespace MyWebSocket.Tcp
 			get;
 			set;
 		}
+
 		string Connection
 		{
 			get;
 			set;
 		}
+		string ContentEncoding
+		{
+			get;
+			set;
+		}
 		string TransferEncoding
+		{
+			get;
+			set;
+		}
+
+		List<string> AcceptEncoding
 		{
 			get;
 			set;

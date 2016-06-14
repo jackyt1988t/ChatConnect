@@ -47,6 +47,18 @@ namespace MyWebSocket.Tcp
 				AddHeader("Upgrade", value.ToString());
 			}
 		}
+		string contentencoding;
+		public string ContentEncoding
+		{
+			get
+			{
+				return contentencoding;
+			}
+			set
+			{
+				AddHeader("Content-Encoding", value.ToString());
+			}
+		}
 		string transferencoding;
 		public string TransferEncoding
 		{
@@ -60,7 +72,20 @@ namespace MyWebSocket.Tcp
 			}
 		}
 
-#endregion
+		List<string> acceptencoding;
+		public List<string> AcceptEncoding
+		{
+			get
+			{
+				return acceptencoding;
+			}
+			set
+			{
+				AddHeader("Accept-Encoding", value.ToString());
+			}
+		}
+
+		#endregion
 
 		/// <summary>
 		/// Показывает отправлены, получены данные
@@ -211,12 +236,18 @@ namespace MyWebSocket.Tcp
 					connection = value.ToLower();
 					break;
 				case "content-length":
-					if (!int.TryParse(value, out contentlength))
-						throw new HeadersException("Неверный Content-Length");
-				break;
+					contentlength = int.Parse(value);
+					break;
+				case "accept-encoding":
+					acceptencoding = 
+							ReplaseValues(value, ",");
+					break;
+				case "content-encoding":
+					contentencoding = value.ToLower();
+					break;
 				case "transfer-encoding":
 					transferencoding = value.ToLower();
-				break;
+					break;
 			}
 			
 		}
@@ -296,6 +327,16 @@ namespace MyWebSocket.Tcp
 				}
 			}
 			ContainerHeaders.Add(key, value);
+		}
+		private List<string> ReplaseValues(string value, string separat)
+		{
+			List<string> values = 
+						new List<string>(value.Split(separat.ToCharArray()));
+			for (int i = 0; i < values.Count; i++)
+			{
+				values[i] = values[i].TrimStart(new char[] { ' ' });
+			}
+			return values;
 		}
 	}
 }

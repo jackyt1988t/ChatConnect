@@ -13,11 +13,11 @@ namespace MyWebSocket.Tcp.Protocol
 		{
 			get;
 		}
-		Mytream Reader
+		MyStream Reader
 		{
 			get;
 		}
-		Mytream Writer
+		MyStream Writer
 		{
 			get;
 		}
