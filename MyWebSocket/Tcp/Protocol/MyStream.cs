@@ -155,16 +155,17 @@ namespace MyWebSocket.Tcp.Protocol
 			_p_w = 0;
 		}
 		/// <summary>
-		/// увеличивает вместимость кольцевого потока
+		/// изменяет емкость кольцевого потока
 		/// </summary>
-		/// <param name="length"></param>
+		/// <param name="length">емкость потока</param>
 		public virtual void Resize(int length)
 		{
+			
 			byte[] buffer = new byte[length];
-			Read(buffer, 0, (int)_len);
+			Read(  buffer, 0, (int) Count  );
 
 			_p_r    = 0;
-			_p_w    = (int)_len;
+			_p_w    = Count;
 			_len    = length;
 			_buffer = buffer;
 
