@@ -47,6 +47,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 
 		public override void Write(byte[] buffer, int start, int length)
 		{
+			_Frame.Handl++;
 			if (!header.IsRes)
 			{
 				Write(header.ToByte());
