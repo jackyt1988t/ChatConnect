@@ -88,10 +88,10 @@ namespace MyWebSocket.Tcp.Protocol
 		{
 			get
 			{
-				if (_p_w < _p_r)
-					return (_len - _p_r) + _p_w;					
-				else
-					return (_p_w - _p_r);
+					if (_p_w < _p_r)
+						return (_len - _p_r) + _p_w;					
+					else
+						return (_p_w - _p_r);
 			}
 		}
 		public override bool CanRead
