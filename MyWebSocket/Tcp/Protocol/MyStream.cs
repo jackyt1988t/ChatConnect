@@ -244,7 +244,7 @@ namespace MyWebSocket.Tcp.Protocol
 					if (_p_r == _p_w)
 						;
 					if (Empty)
-						return i;
+						break;
 				}
 			}
 			return i;
@@ -268,6 +268,8 @@ namespace MyWebSocket.Tcp.Protocol
 		unsafe public override void Write(byte[] buffer, int pos, int len)
 		{
 			int i;
+			if (len > Clear)
+				throw new IOException();
 			fixed(byte* source = _buffer, target = buffer)
 			{
 				byte* pt = target + pos;
@@ -278,8 +280,6 @@ namespace MyWebSocket.Tcp.Protocol
 					*ps = *pt;					
 					pt++;
 					PointW++;
-					if (Clear == 0)
-						throw new IOException();
 				}
 			}
 		}
