@@ -41,10 +41,15 @@ namespace MyWebSocket.Tcp.Protocol
 			}
 			protected set
 			{
-				if (value < _len)
-					_p_r = value;
-				else
-					_p_r = 0;
+				if (value > 0)
+				{
+					if (value > Count)
+						throw new IOException();
+					if (value + _p_r < Count)
+						_p_r = value + _p_r;
+					else
+						_p_r = value - (Count - _p_r);
+				}
 			}
 		}
 		long _p_r;
@@ -56,10 +61,15 @@ namespace MyWebSocket.Tcp.Protocol
 			}
 			protected set
 			{
-				if (value < _len)
-					_p_w = value;
-				else
-					_p_w = 0;
+				if (value > 0)
+				{
+					if (value > Clear)
+						throw new IOException();
+					if (value + _p_w < Count)
+						_p_w = value + _p_w;
+					else
+						_p_w = value - (Count - _p_w);
+				}
 			}
 		}
 		public object __Sync
