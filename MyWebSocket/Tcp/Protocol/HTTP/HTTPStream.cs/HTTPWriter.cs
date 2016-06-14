@@ -8,6 +8,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 {
 	class HTTPWriter : Mytream
 	{
+		public static int MAXRESIZE;
 		public static readonly byte[] ENDCHUNCK;
 		public static readonly byte[] EOFCHUNCK;
 
@@ -34,6 +35,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		{
 			Write(EOFCHUNCK);
 		}
+		
 		public void Write(string str)
 		{
 			Write(  Encoding.UTF8.GetBytes(str)  );
@@ -42,12 +44,23 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		{
 			base.Write( buffer, 0, buffer.Length );
 		}
+
 		public override void Write(byte[] buffer, int start, int length)
 		{
 			if (!header.IsRes)
 			{
 				Write(header.ToByte());
 					  header.SetRes();
+			}
+			if ( buffer.Length > Clear )
+			{
+				int resize = Count * 2;
+				if (resize < buffer.Length)
+				    resize = buffer.Length;
+				if (resize < MAXRESIZE)
+					Resize(resize);
+				else
+					throw new IOException();
 			}
 			// оптравить форматированные данные
 			if (header.TransferEncoding != "chunked")
