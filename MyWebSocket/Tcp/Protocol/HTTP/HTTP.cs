@@ -11,14 +11,14 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
     abstract class HTTP : BaseProtocol
     {
 		/// <summary>
-		/// true если нет ошибок и
-		/// соединение небыло закрыто
+		/// true если соединение небыло
+		/// закрыто
 		/// </summary>	 
         public bool Loop
 		{
 			get
 			{
-				if (state < 4)
+				if (state < 5)
 					return true;
 				else
 					return false;
@@ -368,17 +368,18 @@ override
                         if (state == 4)
                         {
                             Error(Exception);
+							Interlocked.CompareExchange (ref state,-1, 4);
 						}
                 /*============================================================
                                         Закрываем соединеие						   
                 ==============================================================*/
                                     if (state == 5)
                                     {
-                                        Close();
                                         state = 7;
                                     }
                                     if (state == 7)
                                     {
+										Close();
                                         Dispose();
                                         Result.Option = TaskOption.Delete;
                                     }

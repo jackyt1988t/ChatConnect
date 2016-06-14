@@ -71,7 +71,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		{
 			int i = 0;
 			Response.StartString = "HTTP/1.1 200 OK";
-			Response.AddHeader("Content-Type", "text/" + Request.File);
+			Response.AddHeader("Content-Type", "text/" + 
+							 Request.File + "; charset=utf-8");
 			Response.AddHeader("Transfer-encoding", "chunked");
 			
 			FileInfo fileinfo = new FileInfo(path);
@@ -81,7 +82,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			}
 			else
 			{
-				chunk = 64000;
 				using (FileStream sr = fileinfo.OpenRead())
 				{
 					//Response.AddHeader("Content-Length", sr.Length.ToString());
@@ -298,11 +298,13 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				if (Exception.Status.value >= 500)
 					close();
 				else if (Exception.Status.value >= 400)
-					;
-				else if (Exception.Status.value >= 300)
-					;
-				else if (Exception.Status.value >= 200)
-					;
+				{
+					Response.StartString = "HTTP/1.1 " + 
+								     Exception.Status.value.ToString() +  
+									 " " + Exception.Status.ToString();
+					file(  "Html/" + Exception.Status.value.ToString() + 
+														".html", 6000  );
+				}
 				else
 					close();
 			}
