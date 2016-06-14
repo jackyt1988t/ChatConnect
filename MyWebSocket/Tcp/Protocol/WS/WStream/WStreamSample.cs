@@ -3,7 +3,7 @@ using System.IO;
 
 namespace MyWebSocket.Tcp.Protocol.WS
 {
-	class WStreamSample : Mytream
+	class WStreamSample : MyStream
 	{
 		byte _ngHead;
 		public WSFrameSample Frame;

@@ -6,7 +6,7 @@ namespace MyWebSocket.Tcp.Protocol
 	/// <summary>
 	/// Кольцевой поток данных
 	/// </summary>
-	class Mytream : Stream
+	class MyStream : Stream
 	{
 		public long Count
 		{
@@ -41,15 +41,12 @@ namespace MyWebSocket.Tcp.Protocol
 			}
 			protected set
 			{
-				if (value > 0)
-				{
 					if (value > Count)
 						throw new IOException();
-					if (value + _p_r < Count)
-						_p_r = value + _p_r;
+					if (value < Count)
+						_p_r = value;
 					else
-						_p_r = value - (Count - _p_r);
-				}
+						_p_r = 0;
 			}
 		}
 		long _p_r;
@@ -61,15 +58,12 @@ namespace MyWebSocket.Tcp.Protocol
 			}
 			protected set
 			{
-				if (value > 0)
-				{
-					if (value > Clear)
+					if (value > Count)
 						throw new IOException();
-					if (value + _p_w < Count)
-						_p_w = value + _p_w;
+					if (value < Count)
+						_p_w = value;
 					else
-						_p_w = value - (Count - _p_w);
-				}
+						_p_w = 0;
 			}
 		}
 		public object __Sync
@@ -138,7 +132,7 @@ namespace MyWebSocket.Tcp.Protocol
 		protected long _len;
 		protected byte[] _buffer;
 		
-		public Mytream(int length) : 
+		public MyStream(int length) : 
 			base()
 		{
 			_len = length;
@@ -160,12 +154,12 @@ namespace MyWebSocket.Tcp.Protocol
 		/// <param name="length">емкость потока</param>
 		public virtual void Resize(int length)
 		{
-			
+			int recive = (int)Length;
 			byte[] buffer = new byte[length];
-			Read(  buffer, 0, (int) Count  );
+			Read(  buffer, 0, ( int )recive);
 
 			_p_r    = 0;
-			_p_w    = Count;
+			_p_w    = recive;
 			_len    = length;
 			_buffer = buffer;
 

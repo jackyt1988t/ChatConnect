@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace MyWebSocket.Tcp.Protocol.HTTP
 {
-	class HTTPWriter : Mytream
+	class HTTPWriter : MyStream
 	{
 		public static int MAXRESIZE;
 		public static readonly byte[] ENDCHUNCK;
@@ -17,6 +18,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 
 		static HTTPWriter()
 		{
+			MAXRESIZE = 32000000;
 			ENDCHUNCK =
 				new byte[] { 0x0D, 0x0A };
 			EOFCHUNCK =
@@ -47,31 +49,43 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 
 		public override void Write(byte[] buffer, int start, int length)
 		{
-			_Frame.Handl++;
-			if (!header.IsRes)
+			lock (__Sync)
 			{
-				Write(header.ToByte());
-					  header.SetRes();
-			}
-			if ( buffer.Length > Clear )
-			{
-				int resize = Count * 2;
-				if (resize < buffer.Length)
-				    resize = buffer.Length;
-				if (resize   <   MAXRESIZE)
-				    Resize(resize);
+				_Frame.Handl++;
+				if (!header.IsRes)
+				{
+					byte[] data = header.ToByte();
+					Write( data );
+
+					header.SetRes();
+					_Frame.hleng = data.Length;
+				}
+				if (length > Clear)
+				{
+					int resize = (int)Count * 2;
+					if (resize - (int)Length < length)
+						resize = (int)Length + length + 64;
+
+					if (resize < MAXRESIZE)
+						Resize(resize);
+					else
+						throw new IOException();
+				}
+					_Frame.bleng += length;
+				if (!string.IsNullOrEmpty(
+									header.ContentEncoding))
+					_Frame.bpart += length;
+				// оптравить форматированные данные
+				if (header.TransferEncoding   !=   "chunked")
+					base.Write(buffer, start, length);
 				else
-					throw new IOException();
-			}
-			// оптравить форматированные данные
-			if (header.TransferEncoding != "chunked")
-				base.Write(  buffer, start, length  );
-			else
-			{
-				Write(length.ToString("X"));
-				End();
-				base.Write(  buffer, start, length  );
-				End();
+				{
+					object f = this;
+					Write(length.ToString("X"));
+					End();
+					base.Write(buffer, start, length);
+					End();
+				}
 			}
 		}
 	}

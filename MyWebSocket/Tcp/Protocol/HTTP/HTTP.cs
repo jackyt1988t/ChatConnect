@@ -10,17 +10,32 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 {
     abstract class HTTP : BaseProtocol
     {
-        /// <summary>
-        /// Объект синхронизации
+		/// <summary>
+		/// true если нет ошибок и
+		/// соединение небыло закрыто
+		/// </summary>	 
+        public bool Loop
+		{
+			get
+			{
+				if (state < 4)
+					return true;
+				else
+					return false;
+			}
+		}
+		/// <summary>
+        /// Объект синхронизации данных
         /// </summary>
-        public object Sync
+		public object Sync
         {
             get;
             protected set;
         }
-        volatile int state;
-        override
-        public States State
+volatile
+		int state;		
+override
+		public States State
         {
             protected set
             {
@@ -166,8 +181,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         private  event PHandlerEvent __EventOnOpen;
         static 
         private  event PHandlerEvent __EventConnect;
-        static
-        protected long __twaitconn = DateTime.Now.Ticks;
 
         public HTTP()
         {
@@ -274,20 +287,27 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 ==============================================================*/
                     if (Interlocked.CompareExchange(ref state, 2,-1) !=-1)
                         return Result;
-                    if (!Response.IsEnd || !Writer.Empty)
-                        write();
-                    else
+
+					write();
+                    if (Response.IsEnd && Writer.Empty)
                     {
-						End();
-                        if (Response.Close)
-                            close();
-                        else
-                        {
-                            Request = new Header();
-                            Response = new Header();
-                            Interlocked.CompareExchange (ref state, 0, 2);
-                            
-                        }
+						if (!Response.IsReq)
+						{
+							End();
+							Response.SetReq();
+						}
+						else
+						{
+							if (Response.Close)
+								close();
+							else
+							{
+								Request = new Header();
+								Response = new Header();
+								Interlocked.CompareExchange(ref state, 0, 2);
+
+							}
+						}
                     }
                 /*============================================================
                     Если во время отправки соединение не было закрыто и не 

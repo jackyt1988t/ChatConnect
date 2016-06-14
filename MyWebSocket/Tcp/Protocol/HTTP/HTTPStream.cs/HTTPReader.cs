@@ -2,7 +2,7 @@
 
 namespace MyWebSocket.Tcp.Protocol.HTTP
 {
-	class HTTPStream : Mytream
+	class HTTPReader : MyStream
 	{
 		const int LF = 0x0A;
 		const int CR = 0x0D;
@@ -18,14 +18,14 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		public IHeader header;
 		public HTTPFrame _Frame;
 
-		static HTTPStream()
+		static HTTPReader()
 		{
 			ENDCHUNCK =
 				new byte[] { 0x0D, 0x0A };
 			EOFCHUNCK = 
 				new byte[] { 0x30, 0x0D, 0x0A, 0x0D, 0x0A };
 		}
-		public HTTPStream(int length) :
+		public HTTPReader(int length) :
 			base(length)
 		{
 			_Frame = new HTTPFrame();
