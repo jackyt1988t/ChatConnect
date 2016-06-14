@@ -57,8 +57,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				int resize = Count * 2;
 				if (resize < buffer.Length)
 				    resize = buffer.Length;
-				if (resize < MAXRESIZE)
-					Resize(resize);
+				if (resize   <   MAXRESIZE)
+				    Resize(resize);
 				else
 					throw new IOException();
 			}
