@@ -172,6 +172,7 @@ override
             }
         }
 
+		private bool _filewrite;
         private object SyncEvent = new object();
         private  event PHandlerEvent __EventWork;
         private  event PHandlerEvent __EventData;
@@ -194,6 +195,12 @@ override
         }
 		async public void File(string path, int chunk = 1000 * 64)
 		{
+			lock (Sync)
+			{
+				if (_filewrite)
+					throw new HTTPException("Дождитесь окончания записи файла");
+				_filewrite = true;
+			}
 			await Task.Run(() =>
 			{
 				try
@@ -206,18 +213,19 @@ override
 				}
 				catch (Exception err)
 				{
-					exc(new HTTPException("Ошибка при чтении файла " + path, HTTPCode._500_, err));
+					exc(new HTTPException( "Ошибка при чтении файла " + path, HTTPCode._500_, err ));
 				}
 				finally
 				{
 					flush();
+					lock (Sync)
+						_filewrite = false;
 				}
 			});
         }
-		public abstract void file(string path, int chunk);
 
-	public bool close()
-        {
+		public bool close()
+		{
             lock (Sync)
             {
                 if (state > 4)
@@ -226,11 +234,11 @@ override
                 return false;
             }
         }
-	public bool flush()
-	{
-	    lock (Sync)
-		Response.SetEnd();
-	}
+		public bool flush()
+		{
+			lock (Sync)
+				return Response.SetEnd();
+		}
         public bool Message(string message)
         {
             return Message(Encoding.UTF8.GetBytes(message));
@@ -309,7 +317,6 @@ override
 								Request = new Header();
 								Response = new Header();
 								Interlocked.CompareExchange(ref state, 0, 2);
-
 							}
 						}
                     }
@@ -540,6 +547,12 @@ override
                 e(this, new PEventArgs(s, m, null));
             
         }
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="path"></param>
+		/// <param name="chunk"></param>
+		protected abstract void file(string path, int chunk);
 		/// <summary>
 		/// закончена передача данных чтобы закрыть соединеие не обходимо установить
 		/// значение response.Close = true;

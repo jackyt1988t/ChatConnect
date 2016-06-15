@@ -23,12 +23,12 @@ namespace MyWebSocket.Tcp.Protocol
 		/// </summary>
 		public static int MAXLENGTHBUFFER = 1000 * 1024;
 		/// <summary>
-		/// tcp / ip сокет подкоючения
+		/// tcp / ip сокет подключения
 		/// </summary>
 		public Socket Tcp
 		{
 			get;
-			set;
+			protected set;
 		}
 		/// <summary>
 		/// Статус текущего протокола.
