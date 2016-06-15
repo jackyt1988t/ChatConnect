@@ -245,8 +245,9 @@ override
         }
         public bool Message(byte[] message)
         {
-            return this.message(   message, 0, message.Length  );
+            return Message(   message, 0, message.Length  );
         }
+		/*
 		/// <summary>
 		/// Отправляет данные текущему подключению
 		/// </summary>
@@ -273,6 +274,7 @@ override
             }
             return true;
         }
+		*/
 		public abstract bool Message(byte[] message, int start, int write);
 		
         public override TaskResult TaskLoopHandlerProtocol()
@@ -548,7 +550,7 @@ override
             
         }
 		/// <summary>
-		/// 
+		/// отправляет файл пользователю
 		/// </summary>
 		/// <param name="path"></param>
 		/// <param name="chunk"></param>

@@ -9,8 +9,8 @@ namespace MyWebSocket.Tcp
 	class WServer
 	{
 		public static int Pool = 100; 
-		public static int SendSize = 128 * 1000;
-		public static int ReceiveSize = 128 * 1000;
+		public static int SendSize = 16 * 1000;
+		public static int ReceiveSize = 32 * 1000;
 
 		/// <summary>
 		/// Запускает WebSocket сервер на указанном адрессе и порте

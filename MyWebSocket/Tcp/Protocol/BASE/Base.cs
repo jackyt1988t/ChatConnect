@@ -156,10 +156,11 @@ namespace MyWebSocket.Tcp.Protocol
 			}
 			return error;
 		}
-			protected SocketError Write(byte[] buffer, int start, int write)
-			{
-				SocketError error = SocketError.Success;
-				lock (Writer.__Sync)
+		protected SocketError Write(byte[] buffer, int start, int write)
+		{
+			SocketError error = SocketError.Success;
+
+			lock (Writer.__Sync)
 			{
 
 				if (Writer.Empty)
@@ -168,10 +169,9 @@ namespace MyWebSocket.Tcp.Protocol
 				int length = write - start;
 				if (length > 0)
 				{
-
 					try
 					{
-						Writer.SetLength(length);
+						Writer.Write(buffer, write - length, length);
 					}
 					catch (IOException)
 					{
@@ -179,7 +179,8 @@ namespace MyWebSocket.Tcp.Protocol
 					}
 				}
 			}
-				return error;
+
+			return error;
 		}
 	}
 }

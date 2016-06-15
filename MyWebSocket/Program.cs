@@ -19,20 +19,17 @@ namespace MyWebSocket
 				// Объект WebSocket
 				WS WebSocket = obj as WS;
 				// Событие наступает когда приходят новые данные
+				string message = "";
 				WebSocket.EventData += (object sender, PEventArgs e) =>
 				{
 					WSData data = e.sender as WSData;
-					if (data.Opcod != WSOpcod.Text)
-					{
-						
-						byte[] raw = data.ToByte(); 
-					}
-					else
-					{
-						//Console.WriteLine(data.ToString());
-						// Отправляем текстовый фрейм
-						WebSocket.Message(data.ToString());
-					}
+					message += data.ToString();
+					WebSocket.Message(message);
+				};
+				WebSocket.EventChunk += (object sender, PEventArgs e) =>
+				{
+					WSData data = e.sender as WSData;
+					message += Encoding.UTF8.GetString(data._Data);
 				};
 				// Событие наступает если произошла ошибка данных
 				WebSocket.EventError += (object sender, PEventArgs e) =>

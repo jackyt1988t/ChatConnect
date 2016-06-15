@@ -2,20 +2,20 @@
 
 namespace MyWebSocket.Tcp.Protocol.WS
 {
-    class WStreamN13 : MyStream
+    class WSReaderN13 : MyStream
     {
 		byte _ngHead;
-		public WSFrameN13 _Frame;
+		public WSN13 _Frame;
 
-		public WStreamN13() : 
+		public WSReaderN13() : 
 			base(1024)
 		{
-			_Frame = new WSFrameN13();
+			_Frame = new WSN13();
 		}
-		public WStreamN13(int length) :
+		public WSReaderN13(int length) :
 			base(length)
         {
-			_Frame  =  new WSFrameN13();
+			_Frame  =  new WSN13();
         }
 
 		public override void Reset()
