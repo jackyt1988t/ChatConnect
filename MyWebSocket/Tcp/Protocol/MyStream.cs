@@ -8,6 +8,9 @@ namespace MyWebSocket.Tcp.Protocol
 	/// </summary>
 	class MyStream : Stream
 	{
+		/// <summary>
+		/// Длинна потока
+		/// </summary>
 		public long Count
 		{
 			get
@@ -15,6 +18,9 @@ namespace MyWebSocket.Tcp.Protocol
 				return _len;
 			}
 		}
+		/// <summary>
+		/// true если есть не прочитанные данные
+		/// </summary>
 		public bool Empty
 		{
 			get
@@ -22,6 +28,9 @@ namespace MyWebSocket.Tcp.Protocol
 				return (_p_r == _p_w);
 			}
 		}
+		/// <summary>
+		/// true если в потоке есть место для записи
+		/// </summary>
 		public long Clear
 		{
 			get
@@ -33,6 +42,9 @@ namespace MyWebSocket.Tcp.Protocol
 			}
 		}		
 		long _p_w;
+		/// <summary>
+		/// Указатель на текущую позицию чтения данных
+		/// </summary>
 		public long PointR
 		{
 			get
@@ -50,6 +62,9 @@ namespace MyWebSocket.Tcp.Protocol
 			}
 		}
 		long _p_r;
+		/// <summary>
+		/// Указатель на текущую позицию записи данных
+		/// </summary>
 		public long PointW
 		{
 			get
@@ -78,6 +93,10 @@ namespace MyWebSocket.Tcp.Protocol
 				return _buffer;
 			}
 		}
+		/// <summary>
+		/// Длинна не прочитанных байт. Чтобы узнать длинну потока
+		/// необходимо воспользоваться свойством Count
+		/// </summary>
 		public override long Length
 		{
 			get
@@ -95,13 +114,6 @@ namespace MyWebSocket.Tcp.Protocol
 				return true;
 			}
 		}
-		public override bool CanSeek
-		{
-			get
-			{
-				return true;
-			}
-		}
 		public override bool CanWrite
 		{
 			get
@@ -109,6 +121,18 @@ namespace MyWebSocket.Tcp.Protocol
 				return true;
 			}
 		}
+		public override bool CanSeek
+		{
+			get
+			{
+				return false;
+			}
+		}
+		/// <summary>
+		/// Увеличивает текущую позицию только внутри записанных байт
+		/// если значение выше Length возникнет исключение.
+		/// Всегда возвращает 0
+		/// </summary>
 		public override long Position
 		{
 			get
@@ -149,7 +173,7 @@ namespace MyWebSocket.Tcp.Protocol
 			_p_w = 0;
 		}
 		/// <summary>
-		/// изменяет емкость кольцевого потока
+		/// изменяет емкость(длинну) кольцевого потока
 		/// </summary>
 		/// <param name="length">емкость потока</param>
 		public virtual void Resize(int length)
