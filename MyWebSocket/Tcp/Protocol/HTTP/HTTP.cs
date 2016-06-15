@@ -210,14 +210,13 @@ override
 				}
 				finally
 				{
-					lock (Sync)
-						Response.SetEnd();
+					flush();
 				}
 			});
         }
 		public abstract void file(string path, int chunk);
 
-		public bool close()
+	public bool close()
         {
             lock (Sync)
             {
@@ -227,6 +226,11 @@ override
                 return false;
             }
         }
+	public bool flush()
+	{
+	    lock (Sync)
+		Response.SetEnd();
+	}
         public bool Message(string message)
         {
             return Message(Encoding.UTF8.GetBytes(message));
