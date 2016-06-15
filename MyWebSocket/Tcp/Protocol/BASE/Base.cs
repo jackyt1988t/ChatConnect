@@ -7,6 +7,14 @@ namespace MyWebSocket.Tcp.Protocol
 	class BaseProtocol : IProtocol, IDisposable
 	{
 		/// <summary>
+		/// Длинна чтения сокета
+		/// </summary
+		public static int LENGTHREAD = 1000 * 8;
+		/// <summary>
+		/// Длинна записи сокета
+		/// </summary>
+		public static int LENGTHWRITE = 1000 * 64;
+		/// <summary>
 		/// минимальный размер потока
 		/// </summary>
 		public static int MINLENGTHBUFFER = 1000 * 32;
@@ -14,7 +22,6 @@ namespace MyWebSocket.Tcp.Protocol
 		/// максимальный размер потока
 		/// </summary>
 		public static int MAXLENGTHBUFFER = 1000 * 1024;
-		private TimeSpan __INTERVALRESIZE;
 		/// <summary>
 		/// tcp/ip соединение
 		/// </summary>
@@ -76,7 +83,8 @@ namespace MyWebSocket.Tcp.Protocol
 		{
 			SocketError error = SocketError.Success;
 			
-			int count = 8000;
+			int count = 
+			   LENGTHREAD;
 			int start =
 			   (int)Reader.PointW;
 			byte[] buffer =
@@ -110,8 +118,8 @@ namespace MyWebSocket.Tcp.Protocol
 					(int)Writer.PointR;
 				int write =
 					(int)Writer.Length;
-				if (write > 16000)
-					write = 16000;
+				if (write   >   LENGTHWRITE)
+					write = LENGTHWRITE;
 				byte[] buffer =
 						Writer.Buffer;
 
