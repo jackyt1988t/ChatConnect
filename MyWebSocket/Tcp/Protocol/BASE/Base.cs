@@ -23,33 +23,48 @@ namespace MyWebSocket.Tcp.Protocol
 		/// </summary>
 		public static int MAXLENGTHBUFFER = 1000 * 1024;
 		/// <summary>
-		/// tcp/ip соединение
+		/// tcp / ip сокет подкоючения
 		/// </summary>
 		public Socket Tcp
 		{
 			get;
 			set;
 		}
+		/// <summary>
+		/// Статус текущего протокола.
+		/// </summary>
 		public virtual States State
 		{
 			get;
 			protected set;
 		}
+		/// <summary>
+		/// Кольцевой буффер хранения данных
+		/// </summary>
 		public virtual MyStream Reader
 		{
 			get;
 			protected set;
 		}
+		/// <summary>
+		/// Кольцевой буфер хранения данных
+		/// </summary>
 		public virtual MyStream Writer
 		{
 			get;
 			protected set;
 		}
+		/// <summary>
+		/// Содержит Полученные заголовки запроса
+		/// </summary>
 		public virtual IHeader Request
 		{
 			get;
 			protected set;
 		}
+		/// <summary>
+		/// Содержит Отправленные заголовки запроса
+		/// </summary>
 		public virtual IHeader Response
 		{
 			get;
