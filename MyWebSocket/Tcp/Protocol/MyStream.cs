@@ -179,8 +179,8 @@ namespace MyWebSocket.Tcp.Protocol
 		public virtual void Resize(int length)
 		{
 			int recive = (int)Length;
-			byte[] buffer = new byte[length];
-			Read(  buffer, 0, ( int )recive);
+			byte[] buffer  =  new byte[length];
+			Array.Copy(Buffer, buffer, recive);
 
 			_p_r    = 0;
 			_p_w    = recive;
@@ -259,8 +259,6 @@ namespace MyWebSocket.Tcp.Protocol
 					*ps = *pt;
 					ps++;
 					PointR++;
-					if (_p_r == _p_w)
-						;
 					if (Empty)
 						break;
 				}

@@ -67,25 +67,24 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						resize = (int)Length + length + 64;
 
 					if (resize < MAXRESIZE)
-						Resize(resize);
+						Resize (  resize  );
 					else
-						throw new IOException();
+						throw new IOException("MAXRESIZE");
 				}
 					_Frame.bleng += length;
 				if (!string.IsNullOrEmpty(
 									header.ContentEncoding))
 					_Frame.bpart += length;
-				// оптравить форматированные данные
-				if (header.TransferEncoding   !=   "chunked")
-					base.Write(buffer, start, length);
-				else
-				{
-					object f = this;
-					Write(length.ToString("X"));
-					End();
-					base.Write(buffer, start, length);
-					End();
-				}
+					// оптравить форматированные данные
+					if (header.TransferEncoding   !=   "chunked")
+						base.Write( buffer, start, length );
+					else
+					{
+						Write(length.ToString("X"));
+						End();
+						base.Write( buffer, start, length );
+						End();
+					}
 			}
 		}
 	}

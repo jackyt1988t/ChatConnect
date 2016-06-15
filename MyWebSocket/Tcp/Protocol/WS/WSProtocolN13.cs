@@ -19,7 +19,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			private set;
 		}
 		protected bool Rchunk;
-		protected WStreamN13 reader;
+		protected WSReaderN13 reader;
 		public override MyStream Reader
 		{
 			get
@@ -28,7 +28,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			}
 		}
 		protected bool Wchunk;
-		protected WStreamN13 writer;
+		protected WSWriterN13 writer;
 		public override MyStream Writer
 		{
 			get
@@ -45,11 +45,10 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			Policy = 
 				new WsPolicy();
 			reader = 
-				new WStreamN13(
+				new WSReaderN13(
 						SizeRead);
 			writer = 
-				new WStreamN13( 
-						SizeWrite);
+				new WSWriterN13(0);
 			Request = new Header();
 			TaskResult.Protocol = TaskProtocol.WSN13;
 		}
@@ -110,13 +109,13 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			switch (opcod)
 			{
 				case WSOpcod.Text:
-					Opcod = WSFrameN13.TEXT;
+					Opcod = WSN13.TEXT;
 					break;
 				case WSOpcod.Ping:
-					Opcod = WSFrameN13.PING;
+					Opcod = WSN13.PING;
 					break;
 				case WSOpcod.Pong:
-					Opcod = WSFrameN13.PONG;
+					Opcod = WSN13.PONG;
 					break;
 				case WSOpcod.Close:
 					byte[] _buffer = new byte[2 + message.Length];
@@ -125,40 +124,36 @@ namespace MyWebSocket.Tcp.Protocol.WS
 				length = _buffer.Length;
 					message.CopyTo(_buffer, 2);
 							 message = _buffer;
-				Opcod = WSFrameN13.CLOSE;
+				Opcod = WSN13.CLOSE;
 				break;
 				case WSOpcod.Binnary:
-					Opcod = WSFrameN13.BINNARY;
+					Opcod = WSN13.BINNARY;
 					break;
 				case WSOpcod.Continue:
-					Opcod = WSFrameN13.CONTINUE;
+					Opcod = WSN13.CONTINUE;
 					break;
 			}
-			
-			lock (Writer)
-			{
-				/*      Очитстить.      */
-				writer._Frame.Null();
-				writer._Frame.BitFin   = Fin;
-				writer._Frame.BitPcod  = Opcod;
-				writer._Frame.BitMask  = Policy.Mask;
-				writer._Frame.PartBody = recive;
-				writer._Frame.LengBody = length;
-				writer._Frame.DataBody = message;
-				
-				writer._Frame.InitializationHeader();
-				if (Debug)
-					WSDebug.DebugN13( writer._Frame );
-				if (!Message(writer._Frame.DataHead, 0, (int)writer._Frame.LengHead))
-					return false;
-				else
-					return Message(writer._Frame.DataBody, (int)writer._Frame.PartBody, (int)writer._Frame.LengBody);
-			}
+			WSN13 frame = new WSN13();
+			/*   Очитстить    */
+			writer._Frame.Null();
+			writer._Frame.BitFin   = Fin;
+			writer._Frame.BitPcod  = Opcod;
+			writer._Frame.BitMask  = Policy.Mask;
+			writer._Frame.PartBody = recive;
+			writer._Frame.LengBody = length;
+			writer._Frame.DataBody = message;
+
+			writer._Frame.InitializationHeader();
+			if (Debug)
+				WSDebug.DebugN13( writer._Frame );
+			if (!Message(writer._Frame.DataHead, 0, (int)writer._Frame.LengHead))
+				return false;
+			else
+				return Message(writer._Frame.DataBody, (int)writer._Frame.PartBody, (int)writer._Frame.LengBody);
 		}
 		protected override void Work()
 		{
 			OnEventWork();
-			
 			/*if (!PingControl.IsPong && PingControl.GetPong.Ticks < DateTime.Now.Ticks)
 				 throw new WSException( "Нет ответа Понг", WsError.PingNotResponse, WSClose.PolicyViolation);
 
@@ -205,7 +200,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 				switch (reader._Frame.BitPcod)
 				{
 					
-					case WSFrameN13.TEXT:
+					case WSN13.TEXT:
 						if (Rchunk)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
 						if (reader._Frame.BitFin == 1)
@@ -216,14 +211,14 @@ namespace MyWebSocket.Tcp.Protocol.WS
 							OnEventChunk(new WSData(reader._Frame.DataBody, WSOpcod.Text, WSFin.Next));
 						}
 						break;
-					case WSFrameN13.PING:
+					case WSN13.PING:
 						if (reader._Frame.BitFin == 0)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
 
 							OnEventPing(new WSData(reader._Frame.DataBody, WSOpcod.Ping, WSFin.Last));
 							Message(   reader._Frame.DataBody, 0, (int)reader._Frame.LengBody, WSOpcod.Pong, WSFin.Last   );
 						break;
-					case WSFrameN13.PONG:
+					case WSN13.PONG:
 						if (reader._Frame.BitFin == 0)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
 						if (PingControl.SetPing.ToString() != Encoding.UTF8.GetString(reader._Frame.DataBody))
@@ -232,7 +227,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 
 							OnEventPong(new WSData(reader._Frame.DataBody, WSOpcod.Pong, WSFin.Last));
 						break;
-					case WSFrameN13.CLOSE:
+					case WSN13.CLOSE:
 						if (reader._Frame.BitFin == 0)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
 						
@@ -258,7 +253,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 							message = Encoding.UTF8.GetString(reader._Frame.DataBody, 2, (int)(reader._Frame.LengBody - 2));
 							CloseServer(__close, message, false);
 						break;
-					case WSFrameN13.BINNARY:
+					case WSN13.BINNARY:
 						if (Rchunk)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
 						if (reader._Frame.BitFin == 1)
@@ -269,7 +264,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 							OnEventChunk(new WSData(reader._Frame.DataBody, WSOpcod.Binnary, WSFin.Next));
 						}
 						break;
-					case WSFrameN13.CONTINUE:
+					case WSN13.CONTINUE:
 						if (!Rchunk)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
 						if (reader._Frame.BitFin == 1)

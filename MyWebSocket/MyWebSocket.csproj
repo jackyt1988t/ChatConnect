@@ -141,9 +141,10 @@
     <Compile Include="Tcp\Protocol\WS\WStream\WStreamSample.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
-    <Compile Include="Tcp\Protocol\WS\WStream\WStreamN13.cs">
+    <Compile Include="Tcp\Protocol\WS\WStream\WSReaderN13.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
+    <Compile Include="Tcp\Protocol\WS\WStream\WSWriterN13.cs" />
     <Compile Include="Tcp\WServer.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
@@ -151,6 +152,7 @@
   <ItemGroup>
     <None Include="App.config" />
     <None Include="MyWebSocket.userprefs" />
+    <None Include="Tcp\Protocol\BASE\README.md" />
     <None Include="TestBrowser\Html\README.md" />
   </ItemGroup>
   <ItemGroup>
