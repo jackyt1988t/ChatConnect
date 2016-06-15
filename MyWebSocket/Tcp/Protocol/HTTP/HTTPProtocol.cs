@@ -13,6 +13,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		public static readonly byte[] ENDCHUNCK;
 		public static readonly byte[] EOFCHUNCK;
 		
+		public Stream Arhiv
+		{
+			get;
+			set;
+		}
 		/// <summary>
 		/// Время ожидания запросов
 		/// </summary>
@@ -20,11 +25,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		{
 			get;
 		}
-		public GZipStream Compress
-		{
-			get;
-			set;
-		}
+		
 		HTTPReader __Reader;
 		public override MyStream Reader
 		{
@@ -67,14 +68,28 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					header = Response
 				};
 		}
-		public override void file(string path, int chunk)
+		public override void Dispose(bool disposing)
+		{
+			if (disposing)
+			{
+				if (Arhiv != null)
+					Arhiv.Dispose();
+			}
+				base.Dispose(disposing);
+		}
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="path"></param>
+		/// <param name="chunk"></param>
+		protected override void file(string path, int chunk)
 		{
 			int i = 0;
 			Response.StartString = "HTTP/1.1 200 OK";
-			Response.AddHeader("Content-Type", "text/" + 
+			Response.AddHeader("Content-Type", "text/" +
 							 Request.File + "; charset=utf-8");
 			Response.AddHeader("Transfer-encoding", "chunked");
-			
+
 			FileInfo fileinfo = new FileInfo(path);
 			if (!fileinfo.Exists)
 			{
@@ -112,15 +127,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				}
 			}
 		}
-		public override void Dispose(bool disposing)
-		{
-			if (disposing)
-			{
-				if (Compress != null)
-					Compress.Dispose();
-			}
-				base.Dispose(disposing);
-		}
 		/// <summary>
 		/// Записываем данные в стандартный поток, если заголвок Content-Encoding
 		/// установлен в gzip декодируем данные в формате gzip(быстрое сжатие)
@@ -140,10 +146,10 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				{
 					try
 					{
-						if (Response.ContentEncoding != "gzip")
-							__Writer.Write(buffer, start, write);
+						if (Response.ContentEncoding == "gzip")
+							Arhiv.Write(buffer, start, write);
 						else
-							Compress.Write(buffer, start, write);
+							__Writer.Write(buffer, start, write);
 					}
 					catch (IOException exc)
 					{
@@ -164,8 +170,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				__Writer.Resize(MINLENGTHBUFFER);
 				if (Response.ContentEncoding == "gzip")
 				{
-					if (Compress != null)
-						Compress.Dispose();
+					if (Arhiv != null)
+						Arhiv.Dispose();
 				}
 				// Отправить блок данных chunked 0CRLFCRLF
 				if (Response.TransferEncoding == "chunked")
@@ -260,7 +266,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					&& Request.AcceptEncoding.Contains("gzip"))
 				{
 					Response.ContentEncoding = "gzip";
-					Compress = new GZipStream(__Writer, CompressionLevel.Fastest, true);
+					Arhiv = new GZipStream(__Writer, CompressionLevel.Fastest, true);
 				}
 
 				if (!Result.Jump)
