@@ -225,43 +225,50 @@ namespace MyWebSocket.Tcp
 		{
 			key = key.Trim(new char[] { ' ' });
 			value = value.TrimStart(new char[] { ' ' });
-
-			ReplaceHeader(key, value);
-			switch (key.ToLower())
-			{
-				case "upgrade":
-					upgrade = value.ToLower();
-					break;
-				case "connection":
-					connection = value.ToLower();
-					break;
-				case "content-length":
-					contentlength = int.Parse(value);
-					break;
-				case "accept-encoding":
-					acceptencoding = 
-							ReplaseValues(value, ",");
-					break;
-				case "content-encoding":
-					contentencoding = value.ToLower();
-					break;
-				case "transfer-encoding":
-					transferencoding = value.ToLower();
-					break;
-			}
 			
+			Analizating(key, value);
+			ReplaceHeader(key, value);
+		}
+		/// <summary>
+		/// Удаляет заголовок если он был добавлен
+		/// </summary>
+		/// <param name="key">параметр заголвока</param>
+		/// <param name="@case">регстронезависимый поиск параметра</param>
+		/// <returns>true если заголвок был найден иначе false</returns>
+		public bool RemoveHeader(string key, bool @case = true)
+		{
+			foreach (KeyValuePair<string, string> header in ContainerHeaders)
+			{
+				string Key;
+				if (!@case)
+					Key = header.Key;
+				else
+					Key = header.Key.ToLower();
+				if (Key == key)
+				{
+					Analizating(Key, string.Empty);
+					ContainerHeaders.Remove(header.Key);
+					return true;
+				}
+			}
+			return false;
 		}
 		/// <summary>
 		/// Проверяет добвлен указанный заголвок или нет
 		/// </summary>
 		/// <param name="key">параметр заголвока</param>
 		/// <param name="@case">регстронезависимый поиск параметра</param>
-		/// <returns>true если заголвок был найден инче false</returns>
+		/// <returns>true если заголвок был найден иначе false</returns>
 		public bool ContainsKeys(string key, bool @case = true)
 		{
 			foreach (KeyValuePair<string, string> header in ContainerHeaders)
 			{
-				if (header.Key.ToLower() == key)
+				string Key;
+				if (!@case)
+					Key = header.Key;
+				else
+					Key = header.Key.ToLower();
+				if (Key == key)
 					return true;
 			}
 			return false;
@@ -312,6 +319,31 @@ namespace MyWebSocket.Tcp
 				return request;
 			}
 		
+		private void Analizating(string key, string value)
+		{
+			switch (key.ToLower())
+			{
+				case "upgrade":
+					upgrade = value.ToLower();
+					break;
+				case "connection":
+					connection = value.ToLower();
+					break;
+				case "content-length":
+					contentlength = int.Parse(value);
+					break;
+				case "accept-encoding":
+					acceptencoding = 
+							ReplaseValues(value, ",");
+					break;
+				case "content-encoding":
+					contentencoding = value.ToLower();
+					break;
+				case "transfer-encoding":
+					transferencoding = value.ToLower();
+					break;
+			}
+		}
 		private void ReplaceHeader(string key, string value)
 		{
 			if (IsReq)
