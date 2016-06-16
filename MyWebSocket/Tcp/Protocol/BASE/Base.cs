@@ -101,40 +101,44 @@ namespace MyWebSocket.Tcp.Protocol
 			{
 				return error;
 			}
-			if (Tcp.Available == 0)
+			else if (Tcp.Available == 0)
 				return SocketError.NotConnected;
-			int count = 
-			   LENGTHREAD;
-			int start =
-			   (int)Reader.PointW;
-			byte[] buffer =
-					Reader.Buffer;
 			
-			if (Reader.Count - start < count)
-				count =
-					  (int)(Reader.Count - start);
+				lock (Reader.__Sync)			
+				{
+					int count = 
+					   LENGTHREAD;
+					int start =
+					   (int)Reader.PointW;
+					byte[] buffer =
+							Reader.Buffer;
+				
+					if (Reader.Count - start < count)
+						count =
+							  (int)(Reader.Count - start);
 			
-			int length = Tcp.Receive(buffer, start, count, SocketFlags.None, out error);
-			if (length > 0)
-			{
-				try
-				{
-					Reader.SetLength(length);
+					int length = Tcp.Receive(buffer, start, count, SocketFlags.None, out error);
+					if (length > 0)
+					{
+						try
+						{
+							Reader.SetLength(length);
+						}
+						catch (IOException)
+						{
+							error = SocketError.SocketError;
+						}
+					}
 				}
-				catch (IOException)
-				{
-					error = SocketError.SocketError;
-				}
-			}
 			return error;
 		}
 		protected SocketError Send()
 		{
 			SocketError error = SocketError.Success;
-			if (Tcp.Poll(0, SelectMode.SelectRead))
+			if (Tcp.Poll(0, SelectMode.SelectRead)
+					&& Tcp.Available == 0)
 			{
-				if (Tcp.Available == 0)
-					return SocketError.NotConnected;
+				return SocketError.NotConnected;
 			}
 			
 				lock (Writer.__Sync)
@@ -169,31 +173,31 @@ namespace MyWebSocket.Tcp.Protocol
 		protected SocketError Write(byte[] buffer, int start, int write)
 		{
 			SocketError error = SocketError.Success;
-			if (Tcp.Poll(0, SelectMode.SelectRead))
+			if (Tcp.Poll(0, SelectMode.SelectRead)
+					&& Tcp.Available == 0)
 			{
-				if (Tcp.Available == 0)
 				return SocketError.NotConnected;
 			}
-			lock (Writer.__Sync)
-			{
-
-				if (Writer.Empty)
-					start = Tcp.Send(buffer, start, write, SocketFlags.None, out error);
-
-				int length = write - start;
-				if (length > 0)
+			
+				lock (Writer.__Sync)
 				{
-					try
+
+					if (Writer.Empty)
+						start = Tcp.Send(buffer, start, write, SocketFlags.None, out error);
+
+					int length = write - start;
+					if (length > 0)
 					{
-						Writer.Write(buffer, write - length, length);
-					}
-					catch (IOException)
-					{
-						error = SocketError.SocketError;
+						try
+						{
+							Writer.Write(buffer, write - length, length);
+						}
+						catch (IOException)
+						{
+							error = SocketError.SocketError;
+						}
 					}
 				}
-			}
-
 			return error;
 		}
 	}
