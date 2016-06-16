@@ -31,20 +31,20 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		}
 		public void End()
 		{
-			Write(ENDCHUNCK);
+			base.Write(ENDCHUNCK, 0, 2);
 		}
 		public void Eof()
 		{
-			Write(EOFCHUNCK);
+			base.Write(EOFCHUNCK, 0, 5);
 		}
 		
 		public void Write(string str)
 		{
-			Write(  Encoding.UTF8.GetBytes(str)  );
+			Write(Encoding.UTF8.GetBytes(str));
 		}
 		public void Write(byte[] buffer)
 		{
-			base.Write( buffer, 0, buffer.Length );
+			Write(  buffer, 0, buffer.Length  );
 		}
 
 		public override void Write(byte[] buffer, int start, int length)
@@ -55,7 +55,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				if (!header.IsRes)
 				{
 					byte[] data = header.ToByte();
-					Write( data );
+					Write( data, 0, data.Length );
 
 					header.SetRes();
 					_Frame.hleng = data.Length;
