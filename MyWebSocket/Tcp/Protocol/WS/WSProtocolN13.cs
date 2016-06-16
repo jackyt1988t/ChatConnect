@@ -60,14 +60,13 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			this()
 		{
 			Tcp = http.Tcp;
+			if (http.Reader.Length > 0)
+				http.Reader.CopyTo(Reader,
+						 (int)http.Reader.Length);
+
 			Policy.SetPolicy(0, 1, 1, 1, 0, 32000);
 			Request = http.Request;
-			if (!http.Reader.Empty)
-			{
-				int start = (int)http.Reader.PointR;
-				int length = (int)http.Reader.Length;
-				Reader.Write(http.Reader.Buffer, start, length);
-			}
+			
 			try
 			{
 				Session = new WSEssion(((IPEndPoint)Tcp.RemoteEndPoint).Address);
@@ -146,10 +145,13 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			writer._Frame.InitializationHeader();
 			if (Debug)
 				WSDebug.DebugN13( writer._Frame );
-			if (!Message(writer._Frame.DataHead, 0, (int)writer._Frame.LengHead))
-				return false;
-			else
-				return Message(writer._Frame.DataBody, (int)writer._Frame.PartBody, (int)writer._Frame.LengBody);
+			lock (Sync)
+			{
+				if (!Message(writer._Frame.DataHead, 0, (int)writer._Frame.LengHead))
+					return false;
+				else
+					return Message(writer._Frame.DataBody, (int)writer._Frame.PartBody, (int)writer._Frame.LengBody);
+			}
 		}
 		protected override void Work()
 		{

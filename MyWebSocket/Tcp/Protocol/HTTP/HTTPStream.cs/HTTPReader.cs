@@ -112,6 +112,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						_Frame.Handl = 4;
 					else
 					{
+						header.SetEnd();
 						_Frame.GetBody = true;
 						return read;
 					}
@@ -189,7 +190,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							throw new HTTPException( "Длинна параметра заголовка", HTTPCode._400_ );
 						if (@char == CN)
 						{
-							PointR++;
                             _Frame.Handl = 2;
 						}
 						else

@@ -445,8 +445,6 @@ override
         /// <param name="data">Данные</param>
         private void write()
         {
-            if (Writer.Empty)
-                return;
             SocketError error;
             if ((error = Send()) != SocketError.Success)
             {

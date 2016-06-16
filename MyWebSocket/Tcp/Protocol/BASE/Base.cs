@@ -97,7 +97,12 @@ namespace MyWebSocket.Tcp.Protocol
 		protected SocketError Read()
 		{
 			SocketError error = SocketError.Success;
-			
+			if (!Tcp.Poll(0, SelectMode.SelectRead))
+			{
+				return error;
+			}
+			if (Tcp.Available == 0)
+				return SocketError.NotConnected;
 			int count = 
 			   LENGTHREAD;
 			int start =
@@ -126,40 +131,49 @@ namespace MyWebSocket.Tcp.Protocol
 		protected SocketError Send()
 		{
 			SocketError error = SocketError.Success;
-
-			lock (Writer.__Sync)
+			if (Tcp.Poll(0, SelectMode.SelectRead))
 			{
-				int start =
-					(int)Writer.PointR;
-				int write =
-					(int)Writer.Length;
-				if (write   >   LENGTHWRITE)
-					write = LENGTHWRITE;
-				byte[] buffer =
-						Writer.Buffer;
-
-				if (Writer.Count - start < write)
-					write =
-					  (int)(Writer.Count - start);
-				int length = Tcp.Send(buffer, start, write, SocketFlags.None, out error);
-				if (length > 0)
+				if (Tcp.Available == 0)
+					return SocketError.NotConnected;
+			}
+			
+				lock (Writer.__Sync)
 				{
-					try
+					int start =
+						(int)Writer.PointR;
+					int write =
+						(int)Writer.Length;
+					if (write > LENGTHWRITE)
+						write = LENGTHWRITE;
+					byte[] buffer =
+							Writer.Buffer;
+
+					if (Writer.Count - start < write)
+						write =
+						  (int)(Writer.Count - start);
+					int length = Tcp.Send(buffer, start, write, SocketFlags.None, out error);
+					if (length > 0)
 					{
-						Writer.Position = length;
-					}
-					catch (IOException)
-					{
-						error = SocketError.SocketError;
+						try
+						{
+							Writer.Position = length;
+						}
+						catch (IOException)
+						{
+							error = SocketError.SocketError;
+						}
 					}
 				}
-			}
 			return error;
 		}
 		protected SocketError Write(byte[] buffer, int start, int write)
 		{
 			SocketError error = SocketError.Success;
-
+			if (Tcp.Poll(0, SelectMode.SelectRead))
+			{
+				if (Tcp.Available == 0)
+				return SocketError.NotConnected;
+			}
 			lock (Writer.__Sync)
 			{
 

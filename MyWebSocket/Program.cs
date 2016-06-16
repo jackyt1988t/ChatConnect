@@ -25,6 +25,7 @@ namespace MyWebSocket
 					WSData data = e.sender as WSData;
 					message += data.ToString();
 					WebSocket.Message(message);
+					message = "";
 				};
 				WebSocket.EventChunk += (object sender, PEventArgs e) =>
 				{
@@ -47,7 +48,6 @@ namespace MyWebSocket
 			{
 				// Объект Http
 				HTTP Http = obj as HTTP;
-				Console.WriteLine("Connect");
 				// Событие наступает когда приходят новые данные
 				Http.EventData += (object sender, PEventArgs e) =>
 				{
