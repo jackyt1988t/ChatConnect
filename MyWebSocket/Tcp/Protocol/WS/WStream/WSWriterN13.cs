@@ -19,20 +19,23 @@ namespace MyWebSocket.Tcp.Protocol.WS
 
 			set
 			{
-				base.Position = value;
-				if (Count > MINRESIZE)
+				lock (__Sync)
 				{
-					int resize;
+					base.Position = value;
+					if (Count > MINRESIZE)
+					{
+						int resize;
 
-					if (Length > 0)
-						resize = (int)Length / 2;
-					else
-						resize = 0;
+						if (Length > 0)
+							resize = (int)Length / 4;
+						else
+							resize = 0;
 
-					if (resize < MINRESIZE)
-						resize = MINRESIZE;
-					if (resize > (int)Length)
-						Resize(    resize    );
+						if (resize < MINRESIZE)
+							resize = MINRESIZE;
+						if (resize > (int)Length)
+							Resize(    resize    );
+					}
 				}
 			}
 		}
@@ -50,14 +53,17 @@ namespace MyWebSocket.Tcp.Protocol.WS
 
 		public override int Read(byte[] buffer, int start, int length)
 		{
+			
 			int read;
+			lock (__Sync)
+			{
 				read = base.Read(buffer, start, length);
 				if (Count > MINRESIZE)
 				{
 					int resize;
 
 					if (Length > 0)
-						resize = (int)Length / 2;
+						resize = (int)Length / 4;
 					else
 						resize = 0;
 
@@ -66,6 +72,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 					if (resize > (int)Length)
 						Resize(    resize    );
 				}
+			}
 			return read;
 		}
 

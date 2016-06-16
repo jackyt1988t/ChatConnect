@@ -53,12 +53,15 @@ namespace MyWebSocket.Tcp.Protocol
 			}
 			protected set
 			{
+				lock (__Sync)
+				{
 					if (value > Count)
 						throw new IOException();
 					if (value < Count)
 						_p_r = value;
 					else
 						_p_r = 0;
+				}
 			}
 		}
 		long _p_r;
@@ -73,12 +76,15 @@ namespace MyWebSocket.Tcp.Protocol
 			}
 			protected set
 			{
+				lock (__Sync)
+				{
 					if (value > Count)
 						throw new IOException();
 					if (value < Count)
 						_p_w = value;
 					else
 						_p_w = 0;
+				}
 			}
 		}
 		public object __Sync
@@ -101,10 +107,13 @@ namespace MyWebSocket.Tcp.Protocol
 		{
 			get
 			{
+				lock (__Sync)
+				{
 					if (_p_w < _p_r)
-						return (_len - _p_r) + _p_w;					
+						return (_len - _p_r) + _p_w;
 					else
 						return (_p_w - _p_r);
+				}
 			}
 		}
 		public override bool CanRead
@@ -142,14 +151,17 @@ namespace MyWebSocket.Tcp.Protocol
 
 			set
 			{
-				if (value > 0)
+				lock (__Sync)
 				{
-					if (value > Length)
-						throw new IOException();
-					if (value + _p_r < Count)
-						_p_r = value + _p_r;
-					else
-						_p_r = value - (Count - _p_r);
+					if (value > 0)
+					{
+						if (value > Length)
+							throw new IOException();
+						if (value + _p_r < Count)
+							_p_r = value + _p_r;
+						else
+							_p_r = value - (Count - _p_r);
+					}
 				}
 			}
 		}
@@ -178,15 +190,17 @@ namespace MyWebSocket.Tcp.Protocol
 		/// <param name="length">емкость потока</param>
 		public virtual void Resize(int length)
 		{
-			int recive = (int)Length;
-			byte[] buffer  =  new byte[length];
-			Array.Copy(Buffer, buffer, recive);
+			lock (__Sync)
+			{
+				int recive = (int)Length;
+				byte[] buffer = new byte[  length  ];
+				Array.Copy(Buffer, buffer, recive);
 
-			_p_r    = 0;
-			_p_w    = recive;
-			_len    = length;
-			_buffer = buffer;
-
+				_p_r = 0;
+				_p_w = recive;
+				_len = length;
+				_buffer = buffer;
+			}
 		}
 #endregion
 
@@ -203,12 +217,15 @@ namespace MyWebSocket.Tcp.Protocol
 						
 		public override void SetLength(long value)
 		{
-			if (value > Clear)
-				throw new IOException();
-			if (PointW + value < _len)
-				PointW = value + PointW;
-			else
-				PointW = value - (Count - PointW);
+			lock (__Sync)
+			{
+				if (value > Clear)
+					throw new IOException();
+				if (PointW + value < _len)
+					PointW = value + PointW;
+				else
+					PointW = value - (Count - PointW);
+			}
 		}
 		#endregion
 
@@ -230,11 +247,14 @@ namespace MyWebSocket.Tcp.Protocol
 			throw new NotImplementedException();
 		}
 		
-		public override  int ReadByte()
+		public override int ReadByte()
 		{
-			if (Empty)
-				return -1;
-			return _buffer[_p_r++];
+			lock (__Sync)
+			{
+				if (Empty)
+					return -1;
+				return _buffer[_p_r++];
+			}
 		}
 		/// <summary>
 		/// Записывает данные в поток
@@ -246,21 +266,25 @@ namespace MyWebSocket.Tcp.Protocol
 		unsafe public override int Read(byte[] buffer, int pos, int len)
 		{
 			int i;
-			if (Empty)
-				return -1;
-			fixed(byte* source = buffer, target = _buffer)
+			lock (__Sync)
 			{
-				
-				byte* ps = source + pos;
-				for (  i = 0; i < len; i++  )
+				if (Empty)
+					return 0;
+				if (Length < len)
+					throw new IOException();
+				fixed (byte* source = buffer, target = _buffer)
 				{
-					byte* pt = target + PointR;
-					
-					*ps = *pt;
-					ps++;
-					PointR++;
-					if (Empty)
-						break;
+
+					byte* ps = source + pos;
+					for (i = 0; i < len; i++)
+					{
+						byte* pt = target + PointR;
+
+						*ps = *pt;
+						ps++;
+						PointR++;
+						
+					}
 				}
 			}
 			return i;
@@ -283,19 +307,22 @@ namespace MyWebSocket.Tcp.Protocol
 		/// <param name="len">количество которое необходимо прочитать</param>
 		unsafe public override void Write(byte[] buffer, int pos, int len)
 		{
-			int i;
-			if (len > Clear)
-				throw new IOException();
-			fixed(byte* source = _buffer, target = buffer)
+			lock (__Sync)
 			{
-				byte* pt = target + pos;
-				for (  i = 0; i < len; i++  )
+				int i;
+				if (len > Clear)
+					throw new IOException();
+				fixed (byte* source = _buffer, target = buffer)
 				{
-					byte* ps = source + PointW;
+					byte* pt = target + pos;
+					for (i = 0; i < len; i++)
+					{
+						byte* ps = source + PointW;
 
-					*ps = *pt;					
-					pt++;
-					PointW++;
+						*ps = *pt;
+						pt++;
+						PointW++;
+					}
 				}
 			}
 		}

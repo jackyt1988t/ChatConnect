@@ -97,8 +97,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			{
 				using (FileStream sr = fileinfo.OpenRead())
 				{
-					if (string.IsNullOrEmpty(Response.ContentEncoding))
-						Response.Content-Length  =  (  int  )sr.Length;
+					if (string.IsNullOrEmpty(Response.TransferEncoding))
+						Response.ContentLength  =  (   int   )sr.Length;
 					
 					int _count = (int)(sr.Length / chunk);
 					int length = (int)(sr.Length - _count * chunk);
@@ -167,7 +167,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			bool result = true;
 			lock (Sync)
 			{
-				__Writer.Resize(MINLENGTHBUFFER);
 				if (Response.ContentEncoding == "gzip")
 				{
 					if (Arhiv != null)
@@ -224,7 +223,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							throw new HTTPException("Неверная длина запроса GET", HTTPCode._400_);
 						break;
 					case "POST":
-						if (__Reader._Frame.handl == 0)
+						if (__Reader._Frame.Handl == 0)
 							throw new HTTPException("Неверная длина запроса POST", HTTPCode._400_);
 						break;
 					default:
@@ -269,11 +268,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 
 				if (!Result.Jump)
 				{
-					if (Reauest.AcceptEncoding != null
-					 && Request.AcceptEncoding.Contains("gzip"))
-						Response.ContentEncoding  = "gzip";
-						
-						Response.TransferEncoding = "chunked";
+					if (Request.AcceptEncoding != null
+						&& Request.AcceptEncoding.Contains("gzip"))
+						Response.ContentEncoding = "gzip";
+					
+					Response.TransferEncoding = "chunked";
 					
 					OnEventOpen(Request, Response);
 					
