@@ -86,9 +86,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		{
 			int i = 0;
 			Response.StartString = "HTTP/1.1 200 OK";
-			Response.AddHeader("Content-Type", "text/" +
-							 Request.File + "; charset=utf-8");
-			Response.AddHeader("Transfer-encoding", "chunked");
+			Response.AddHeader("Content-Type", "text/" + Request.File + "; charset=utf-8");
 
 			FileInfo fileinfo = new FileInfo(path);
 			if (!fileinfo.Exists)
@@ -99,7 +97,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			{
 				using (FileStream sr = fileinfo.OpenRead())
 				{
-					//Response.AddHeader("Content-Length", sr.Length.ToString());
+					if (string.IsNullOrEmpty(Response.ContentEncoding))
+						Response.Content-Length  =  (  int  )sr.Length;
+					
 					int _count = (int)(sr.Length / chunk);
 					int length = (int)(sr.Length - _count * chunk);
 					while (i++ < _count)
@@ -215,12 +215,17 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			{
 				if (__Reader.ReadHead() == -1)
 					return;
-
+				
+				
 				switch (Request.Method)
 				{
 					case "GET":
 						if (__Reader._Frame.bleng > 0)
-							throw new HTTPException("Неверная длина запроса", HTTPCode._400_);
+							throw new HTTPException("Неверная длина запроса GET", HTTPCode._400_);
+						break;
+					case "POST":
+						if (__Reader._Frame.handl == 0)
+							throw new HTTPException("Неверная длина запроса POST", HTTPCode._400_);
 						break;
 					default:
 							throw new HTTPException("Метод не поддерживается", HTTPCode._501_);
@@ -261,16 +266,25 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						}
 					}
 				}
-				if (Request.AcceptEncoding != null
-					&& Request.AcceptEncoding.Count > 0
-					&& Request.AcceptEncoding.Contains("gzip"))
-				{
-					Response.ContentEncoding = "gzip";
-					Arhiv = new GZipStream(__Writer, CompressionLevel.Fastest, true);
-				}
 
 				if (!Result.Jump)
+				{
+					if (Reauest.AcceptEncoding != null
+					 && Request.AcceptEncoding.Contains("gzip"))
+						Response.ContentEncoding  = "gzip";
+						
+						Response.TransferEncoding = "chunked";
+					
 					OnEventOpen(Request, Response);
+					
+						if (Response.ContentEncoding == "gzip")
+						{
+							Arhiv = new GZipStream(__Writer, CompressionLevel.Fastest, true);
+						}
+				}
+
+				
+
 			}
 			if (!__Reader._Frame.GetBody)
 			{
