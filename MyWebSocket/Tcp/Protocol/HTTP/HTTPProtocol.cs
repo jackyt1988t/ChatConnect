@@ -1,149 +1,311 @@
 ﻿using System;
-using System.Net.Sockets;
+using System.IO;
+using System.IO.Compression;
+	using System.Net.Sockets;
 
 namespace MyWebSocket.Tcp.Protocol.HTTP
 {
 	
 	class HTTPProtocol : HTTP
 	{
-		const long WAIT = 10 * 1000 * 1000 * 20;
-
-		HTTPStream _Reader;
-		public override StreamS Reader
+		public static readonly long ALIVE;
+		
+		public Stream __Arhiv
+		{
+			get;
+			set;
+		}
+		/// <summary>
+		/// Время ожидания запросов
+		/// </summary>
+		public TimeSpan Alive
+		{
+			get;
+		}
+		
+		HTTPReader __Reader;
+		public override MyStream Reader
 		{
 			get
 			{
-				return _Reader;
+				return __Reader;
 			}
 		}
-		HTTPStream _Writer;
-		public override StreamS Writer
+		HTTPWriter __Writer;
+		public override MyStream Writer
 		{
 			get
 			{
-				return _Writer;
+				return __Writer;
 			}
+		}
+		
+		static HTTPProtocol()
+		{
+			ALIVE = 40;
+			HTTPWriter.MINRESIZE = MINLENGTHBUFFER;
+			HTTPWriter.MAXRESIZE = MAXLENGTHBUFFER;
 		}
 		public HTTPProtocol(Socket tcp) :
 			base()
         {
             Tcp = tcp;
-			_Reader = new HTTPStream(1000 * 32)
+			Alive = new TimeSpan(DateTime.Now.Ticks + 
+						TimeSpan.TicksPerSecond * ALIVE);
+			
+				Result.Protocol    =    TaskProtocol.HTTP;
+				__Reader = new HTTPReader(MINLENGTHBUFFER)
+				{
+					header = Request
+				};
+				__Writer = new HTTPWriter(MINLENGTHBUFFER)
+				{
+					header = Response
+				};
+		}
+		public override void Dispose(bool disposing)
+		{
+			if (disposing)
 			{
-				header = Request
-			};
-			_Writer = new HTTPStream(1000 * 128)
+				if (__Arhiv != null)
+					__Arhiv.Dispose();
+			}
+				base.Dispose(disposing);
+		}
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="path"></param>
+		/// <param name="chunk"></param>
+		protected override void file(string path, int chunk)
+		{
+
+			if (string.IsNullOrEmpty(Response.StartString))
+				Response.StartString = "HTTP/1.1 200 OK";
+
+			FileInfo fileinfo = new FileInfo(path);
+			if (string.IsNullOrEmpty(Response.ContentType))
 			{
-				header = Response
-			};
-			TaskResult.Protocol   =   TaskProtocol.HTTP;
+				string extension = fileinfo.Extension.Substring(1);
+				Response.ContentType = "text/" + extension + "; charset=utf-8";
+			}
+			if (!fileinfo.Exists)
+			{
+				throw new HTTPException("Указанный файл не найден " + path, HTTPCode._404_);
+			}
+			else
+			{
+				using (FileStream sr = fileinfo.OpenRead())
+				{
+					int i = 0;
+					int _count = (int)(sr.Length / chunk);
+					int length = (int)(sr.Length - _count * chunk);
+
+					if (string.IsNullOrEmpty(Response.TransferEncoding))
+						Response.ContentLength  =  (   int   )sr.Length;
+					
+					while (i++ < _count)
+					{
+						int recive = 0;
+						byte[] buffer = new byte[chunk];
+						while ((chunk - recive) > 0)
+						{
+							recive = sr.Read(buffer, recive, chunk - recive);
+						}
+						if (!Message(buffer, 0, chunk))
+							return;
+					}
+					if (length > 0)
+					{
+						int recive = 0;
+						byte[] buffer = new byte[length];
+						while ((length - recive) > 0)
+						{
+							recive = sr.Read(buffer, recive, length - recive);
+						}
+						if (!Message(buffer, 0, length))
+							return;
+					}
+				}
+			}
+		}
+		/// <summary>
+		/// Записываем данные в стандартный поток, если заголвок Content-Encoding
+		/// установлен в gzip декодируем данные в формате gzip(быстрое сжатие)
+		/// </summary>
+		/// <param name="buffer">массив данных</param>
+		/// <param name="start">стартовая позиция</param>
+		/// <param name="write">количество которое необходимо записать</param>
+		/// <returns></returns>
+		public override bool Message(byte[] buffer, int start, int write)
+		{
+			bool result = true;
+			lock (Sync)
+			{
+				if (!Loop)
+					result = false;
+				else
+				{
+					try
+					{
+						if (Response.ContentEncoding == "gzip")
+							__Arhiv.Write(buffer, start, write);
+						else
+							__Writer.Write(buffer, start, write);
+					}
+					catch (IOException exc)
+					{
+						close();
+						result = false;
+						Log.Loging.AddMessage(exc.Message + Log.Loging.NewLine + exc.StackTrace, "Log/log.log", Log.Log.Debug);
+					}
+				}
+			}
+			return result;
+		}
+
+		protected override void End()
+		{
+			bool result = true;
+			lock (Sync)
+			{
+				if (Response.ContentEncoding == "gzip")
+				{
+					if (__Arhiv != null)
+						__Arhiv.Dispose();
+				}
+				// Отправить блок данных chunked 0CRLFCRLF
+				if (Response.TransferEncoding == "chunked")
+				{
+					try
+					{
+						__Writer.Eof();
+					}
+					catch (IOException exc)
+					{
+						close();
+						result = false;
+						Log.Loging.AddMessage(exc.Message + Log.Loging.NewLine + exc.StackTrace, "Log/log.log", Log.Log.Debug);
+					}
+				}
+			}
+			if (result)
+				Console.WriteLine("Успешно");
 		}
 		protected override void Work()
 		{
-			if ((__twaitconn + WAIT) < DateTime.Now.Ticks)
-				Close(string.Empty);
 			OnEventWork();
+			if (Alive.Ticks < DateTime.Now.Ticks)
+				close();
+			
 		}
 		protected override void Data()
 		{
-			if (_Reader.Empty)
-				return;
 			
-			if (!_Reader.frame.GetHead)
+			if (__Reader.Empty)
+				return;
+
+			if ( __Reader._Frame.GetHead && __Reader._Frame.GetBody )
 			{
-				_Reader.header = Request;
-				if (_Reader.ReadHead() == -1)
+				__Reader._Frame.Clear();
+				__Writer._Frame.Clear();
+				__Reader.header = Request;
+				__Writer.header = Response;
+			}
+			if (!__Reader._Frame.GetHead)
+			{
+				if (__Reader.ReadHead() == -1)
 					return;
 				
-				if (Request.ContainsKey("upgrade"))
+				
+				switch (Request.Method)
 				{
-					TaskResult.Jump = true;
-					if (Request["upgrade"].ToLower() == "websocket")
+					case "GET":
+						if (__Reader._Frame.bleng > 0)
+							throw new HTTPException("Неверная длина запроса GET", HTTPCode._400_);
+						break;
+					case "POST":
+						if (__Reader._Frame.Handl == 0)
+							throw new HTTPException("Неверная длина запроса POST", HTTPCode._400_);
+						break;
+					default:
+							throw new HTTPException("Не поддерживается текущей реализацией", HTTPCode._501_);
+				}
+				if (!string.IsNullOrEmpty(Request.Upgrade))
+				{
+					Result.Jump = true;
+					if (Request.Upgrade.ToLower() == "websocket")
 					{
-						string version = string.Empty;
-						string protocol	= string.Empty;
-						if (Request.ContainsKey("websocket-protocol"))
-						{
-							version = Request["websocket-protocol"].ToLower();
+						string version;
+						string protocol = string.Empty;
+						if (Request.ContainsKeys("websocket-protocol", out version, true))
 							protocol = "websocket-protocol";
-						}
-						else if (Request.ContainsKey("sec-websocket-version"))
-						{
-							version = Request["sec-websocket-version"].ToLower();
+						else if (Request.ContainsKeys("sec-websocket-version", out version, true))
 							protocol = "sec-websocket-version";
-						}
-						else if (Request.ContainsKey("sec-websocket-protocol"))
-						{
-							version = Request["sec-websocket-protocol"].ToLower();
+						else if (Request.ContainsKeys("sec-websocket-protocol", out version, true))
 							protocol = "sec-websocket-protocol"; 
-						}
-						switch (version)
+						switch (version.ToLower())
 						{
 							case "7":
-								TaskResult.Jump = true;
-								TaskResult.Protocol = TaskProtocol.WSN13;
+								Result.Jump = true;
+								Result.Protocol = TaskProtocol.WSN13;
 								break;
 							case "8":
-								TaskResult.Jump = true;
-								TaskResult.Protocol = TaskProtocol.WSN13;
+								Result.Jump = true;
+								Result.Protocol = TaskProtocol.WSN13;
 								break;
 							case "13":
-								TaskResult.Jump = true;
-								TaskResult.Protocol = TaskProtocol.WSN13;
+								Result.Jump = true;
+								Result.Protocol = TaskProtocol.WSN13;
 								break;
 							case "sample":
-								TaskResult.Jump = true;
-								_Reader.frame.Handl = 1;
-								_Reader.frame.bleng = 8;
-								TaskResult.Protocol = TaskProtocol.WSAMPLE;
+								Result.Jump = true;
+								__Reader._Frame.Handl = 1;
+								__Reader._Frame.bleng = 8;
+								Result.Protocol = TaskProtocol.WSAMPLE;
 								break;
-							}
 						}
 					}
-							else if (!__handconn)
-								throw new HTTPException("Неверные заголовки");
-
-					if (Request.ContainsKey("connection")
-					    && Request["connection"] == "close")
-					{
-						Request.Close = true;
-						Response.Close = true;
-						Response.Add("Connection", "close");
-					}
-					if (Request.ContainsKey("content-length"))
-					{
-						if (int.TryParse(Request["content-length"], 
-													 out _Reader.frame.bleng))
-							if (_Reader.frame.bleng > 0)
-							{
-								_Reader.frame.Handl = 1;
-								_Reader.frame.DataBody = 
-												new byte[_Reader.frame.bleng];
-							}
-							else
-								throw new HTTPException("Неверные заголовки");
-					}
-					if (Request.ContainsKey("transfer-encoding"))
-					{
-							if (_Reader.frame.bleng > 0)
-								throw new HTTPException("Неверные заголовки");
-							else
-								_Reader.frame.Handl = 2;
-					}	
 				}
-			if (!_Reader.frame.GetBody)
+
+				if (!Result.Jump)
+				{
+					if (Request.AcceptEncoding != null
+						&& Request.AcceptEncoding.Contains("gzip"))
+						Response.ContentEncoding = "gzip";
+					Response.TransferEncoding = "chunked";
+
+					Response.AddHeader("Date", 
+								DateTimeOffset.Now.ToString());
+					Response.AddHeader("Server", "MyWebSocket");
+					
+
+					OnEventOpen(Request, Response);
+					
+						if (Response.ContentEncoding == "gzip")
+						{
+							__Arhiv = new GZipStream(__Writer, CompressionLevel.Fastest, true);
+						}
+				}
+
+				
+
+			}
+			if (!__Reader._Frame.GetBody)
 			{
-				_Writer.header = Response;
-				if (_Reader.ReadBody() == -1)
+				if (__Reader.ReadBody() == -1)
 					return;
 
-			    if (_Reader.frame.Pcod == HTTPFrame.DATA)
+				switch (__Reader._Frame.Pcod)
 				{
-					Request.SetReq();
-					if (TaskResult.Jump)
-						TaskResult.Option = TaskOption.Protocol;
-					_Reader.frame.Clear();
-					return;
+					case HTTPFrame.DATA:
+						if (Result.Jump)
+							Result.Option = TaskOption.Protocol;
+						else
+							OnEventData();
+						break;
+					case HTTPFrame.CHUNK:
+						break;
 				}
 			}
 		}
@@ -155,11 +317,30 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		protected override void Error(HTTPException error)
 		{
 			OnEventError(error);
+			if (Response.IsRes)
+				close();
+			else
+			{
+				if (Exception.Status.value >= 500)
+					close();
+				else if (Exception.Status.value >= 400)
+				{
+					Response.Clear();
+					Response.StartString = "HTTP/1.1 " + 
+								     Exception.Status.value.ToString() +  
+									 " " + Exception.Status.ToString();
+					
+					file(  "Html/" + Exception.Status.value.ToString() + 
+														".html", 6000  );
+				}
+				else
+					close();
+			}
 
 		}
-		protected override void Connection(IHeader request, IHeader response)
+		protected override void Connection()
 		{
-			OnEventConnect(request, response);
+			OnEventConnect();
 		}
     }
 }

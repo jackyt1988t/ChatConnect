@@ -38,10 +38,10 @@ namespace MyWebSocket.Tcp
 					else
 					{
 						agregator.TaskLoopHandler();
-						if (loop++ > Container.Count)
+						if (loop++ > 500)
 						{
 							loop = 0;
-							Thread.Sleep(50);
+							Thread.Sleep(10);
 						}
 					}
 				}
