@@ -192,11 +192,12 @@ namespace MyWebSocket.Tcp.Protocol
 		{
 			lock (__Sync)
 			{
-				byte[] buffer = new byte[  length  ];
-				Array.Copy(Buffer, PointR, buffer, 0, Length);
+				int recive = (int)Length;
+				byte[] buffer = new byte[length];
+				this.Read(  buffer, 0, recive  );
 
 				_p_r = 0;
-				_p_w = Length;
+				_p_w = recive;
 				_len = length;
 				_buffer = buffer;
 			}

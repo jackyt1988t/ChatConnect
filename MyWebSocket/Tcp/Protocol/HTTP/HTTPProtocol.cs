@@ -1,8 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.IO.Compression;
-using System.Net.Sockets;
-using System.Text;
+	using System.Net.Sockets;
 
 namespace MyWebSocket.Tcp.Protocol.HTTP
 {
@@ -10,10 +9,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 	class HTTPProtocol : HTTP
 	{
 		public static readonly long ALIVE;
-		public static readonly byte[] ENDCHUNCK;
-		public static readonly byte[] EOFCHUNCK;
 		
-		public Stream Arhiv
+		public Stream __Arhiv
 		{
 			get;
 			set;
@@ -46,10 +43,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		static HTTPProtocol()
 		{
 			ALIVE = 40;
-			ENDCHUNCK =
-				new byte[] { 0x0D, 0x0A };
-			EOFCHUNCK =
-				new byte[] { 0x30, 0x0D, 0x0A, 0x0D, 0x0A };
+			HTTPWriter.MINRESIZE = MINLENGTHBUFFER;
+			HTTPWriter.MAXRESIZE = MAXLENGTHBUFFER;
 		}
 		public HTTPProtocol(Socket tcp) :
 			base()
@@ -72,8 +67,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		{
 			if (disposing)
 			{
-				if (Arhiv != null)
-					Arhiv.Dispose();
+				if (__Arhiv != null)
+					__Arhiv.Dispose();
 			}
 				base.Dispose(disposing);
 		}
@@ -84,24 +79,31 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// <param name="chunk"></param>
 		protected override void file(string path, int chunk)
 		{
-			int i = 0;
-			Response.StartString = "HTTP/1.1 200 OK";
-			Response.AddHeader("Content-Type", "text/" + Request.File + "; charset=utf-8");
+
+			if (string.IsNullOrEmpty(Response.StartString))
+				Response.StartString = "HTTP/1.1 200 OK";
 
 			FileInfo fileinfo = new FileInfo(path);
+			if (string.IsNullOrEmpty(Response.ContentType))
+			{
+				string extension = fileinfo.Extension.Substring(1);
+				Response.ContentType = "text/" + extension + "; charset=utf-8";
+			}
 			if (!fileinfo.Exists)
 			{
-				throw new HTTPException("Файл не найден " + path, HTTPCode._404_);
+				throw new HTTPException("Указанный файл не найден " + path, HTTPCode._404_);
 			}
 			else
 			{
 				using (FileStream sr = fileinfo.OpenRead())
 				{
+					int i = 0;
+					int _count = (int)(sr.Length / chunk);
+					int length = (int)(sr.Length - _count * chunk);
+
 					if (string.IsNullOrEmpty(Response.TransferEncoding))
 						Response.ContentLength  =  (   int   )sr.Length;
 					
-					int _count = (int)(sr.Length / chunk);
-					int length = (int)(sr.Length - _count * chunk);
 					while (i++ < _count)
 					{
 						int recive = 0;
@@ -147,7 +149,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					try
 					{
 						if (Response.ContentEncoding == "gzip")
-							Arhiv.Write(buffer, start, write);
+							__Arhiv.Write(buffer, start, write);
 						else
 							__Writer.Write(buffer, start, write);
 					}
@@ -169,8 +171,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			{
 				if (Response.ContentEncoding == "gzip")
 				{
-					if (Arhiv != null)
-						Arhiv.Dispose();
+					if (__Arhiv != null)
+						__Arhiv.Dispose();
 				}
 				// Отправить блок данных chunked 0CRLFCRLF
 				if (Response.TransferEncoding == "chunked")
@@ -227,7 +229,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							throw new HTTPException("Неверная длина запроса POST", HTTPCode._400_);
 						break;
 					default:
-							throw new HTTPException("Метод не поддерживается", HTTPCode._501_);
+							throw new HTTPException("Не поддерживается текущей реализацией", HTTPCode._501_);
 				}
 				if (!string.IsNullOrEmpty(Request.Upgrade))
 				{
@@ -271,14 +273,18 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					if (Request.AcceptEncoding != null
 						&& Request.AcceptEncoding.Contains("gzip"))
 						Response.ContentEncoding = "gzip";
-					
 					Response.TransferEncoding = "chunked";
+
+					Response.AddHeader("Date", 
+								DateTimeOffset.Now.ToString());
+					Response.AddHeader("Server", "MyWebSocket");
 					
+
 					OnEventOpen(Request, Response);
 					
 						if (Response.ContentEncoding == "gzip")
 						{
-							Arhiv = new GZipStream(__Writer, CompressionLevel.Fastest, true);
+							__Arhiv = new GZipStream(__Writer, CompressionLevel.Fastest, true);
 						}
 				}
 
@@ -319,9 +325,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					close();
 				else if (Exception.Status.value >= 400)
 				{
+					Response.Clear();
 					Response.StartString = "HTTP/1.1 " + 
 								     Exception.Status.value.ToString() +  
 									 " " + Exception.Status.ToString();
+					
 					file(  "Html/" + Exception.Status.value.ToString() + 
 														".html", 6000  );
 				}

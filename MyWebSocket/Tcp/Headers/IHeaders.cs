@@ -22,6 +22,11 @@ namespace MyWebSocket.Tcp
 			get;
 			set;
 		}
+		string ContentType
+		{
+			get;
+			set;
+		}
 		string ContentEncoding
 		{
 			get;

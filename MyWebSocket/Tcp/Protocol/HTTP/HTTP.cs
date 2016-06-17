@@ -392,6 +392,7 @@ override
                                     }
                                     if (state == 7)
                                     {
+										Tcp.Close();
 										Close();
                                         Dispose();
                                         Result.Option = TaskOption.Delete;
