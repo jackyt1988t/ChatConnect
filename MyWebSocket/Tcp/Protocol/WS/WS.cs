@@ -517,7 +517,7 @@ override
 		{
 				
 			SocketError error;
-			if (!Writer.Empty && Tcp.Poll(0, SelectMode.SelectWrite)
+			if (!Writer.Empty && Tcp.Poll(0, SelectMode.SelectWrite))
 			{
 					if ((error = Send()) != SocketError.Success)
 					{

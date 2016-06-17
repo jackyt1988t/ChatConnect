@@ -427,13 +427,13 @@ override
         /// </summary>
         private void read()
         {
-            SocketError error;
-            if (Tcp.Poll(0, SelectMode.SelectRead)
+            if (Tcp.Poll(0, SelectMode.SelectRead))
             {
                 if (Tcp.Available == 0)
-                    exc( new HTTPException("Ошибка чтения http данных: " + error.ToString(), HTTPCode._500_));
+                    exc( new HTTPException("Ошибка чтения http данных. Соединение закрыто.", HTTPCode._500_));
                 else
-                { 
+                {
+					SocketError error; 
                     if ((error = Read()) != SocketError.Success)
                     {
                         if (error != SocketError.WouldBlock
@@ -453,9 +453,10 @@ override
         /// <param name="data">Данные</param>
         private void write()
         {
-            SocketError error;
-            if (!Tcp.Poll(0, SelectMode.SelectRead || Tcp.Available > 0)
+            
+            if (!Tcp.Poll(0, SelectMode.SelectRead) || Tcp.Available > 0)
             {
+					SocketError error;
                     if ((error = Send()) != SocketError.Success)
                     {
                         if (error != SocketError.WouldBlock
@@ -468,7 +469,7 @@ override
                     }
             }
                         else
-                            exc( new HTTPException("Ошибка записи http данных: " + error.ToString(), HTTPCode._500_));
+                            exc( new HTTPException("Ошибка записи http данных. Соединение закрыто.", HTTPCode._500_));
         }
         /// <summary>
         /// Потокобезопасный запуск события Work
