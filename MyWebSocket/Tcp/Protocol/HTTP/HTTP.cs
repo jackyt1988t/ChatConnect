@@ -428,14 +428,22 @@ override
         private void read()
         {
             SocketError error;
-            if ((error = Read()) != SocketError.Success)
+            if (Tcp.Poll(0, SelectMode.SelectRead)
             {
-                if (error != SocketError.WouldBlock
-                    && error != SocketError.NoBufferSpaceAvailable)
-                {
-                    Response.Close = true;
+                if (Tcp.Available == 0)
                     exc( new HTTPException("Ошибка чтения http данных: " + error.ToString(), HTTPCode._500_));
+                else
+                { 
+                    if ((error = Read()) != SocketError.Success)
+                    {
+                        if (error != SocketError.WouldBlock
+                         && error != SocketError.NoBufferSpaceAvailable)
+                        {
+                            Response.Close = true;
+                            exc( new HTTPException("Ошибка чтения http данных: " + error.ToString(), HTTPCode._500_));
                     
+                        }
+                    }
                 }
             }
         }
@@ -446,16 +454,21 @@ override
         private void write()
         {
             SocketError error;
-            if ((error = Send()) != SocketError.Success)
+            if (!Tcp.Poll(0, SelectMode.SelectRead || Tcp.Available > 0)
             {
-                if (error != SocketError.WouldBlock
-                    && error != SocketError.NoBufferSpaceAvailable)
-                {
-                    Response.Close = true;
-                    exc( new HTTPException("Ошибка записи http данных: " + error.ToString(), HTTPCode._500_));
+                    if ((error = Send()) != SocketError.Success)
+                    {
+                        if (error != SocketError.WouldBlock
+                         && error != SocketError.NoBufferSpaceAvailable)
+                        {
+                            Response.Close = true;
+                            exc( new HTTPException("Ошибка записи http данных: " + error.ToString(), HTTPCode._500_));
                         
-                }
+                        }
+                    }
             }
+                        else
+                            exc( new HTTPException("Ошибка записи http данных: " + error.ToString(), HTTPCode._500_));
         }
         /// <summary>
         /// Потокобезопасный запуск события Work
