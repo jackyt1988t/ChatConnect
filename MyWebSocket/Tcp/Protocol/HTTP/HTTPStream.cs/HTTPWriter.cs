@@ -34,7 +34,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						int resize;
 
 						if (Length > 0)
-							resize = (int)Length / 4;
+							resize = (int)Count / 4;
 						else
 							resize = 0;
 
@@ -90,7 +90,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					int resize;
 
 					if (Length > 0)
-						resize = (int)Length / 4;
+						resize = (int)Count / 4;
 					else
 						resize = 0;
 
