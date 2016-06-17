@@ -486,18 +486,27 @@ override
 		private void read()
 		{
 			SocketError error;
-			if ((error = Read()) != SocketError.Success)
+			if (Tcp.Poll(0, SelectMode.SelectRead))
 			{
-				if (error != SocketError.WouldBlock
-					&& error != SocketError.NoBufferSpaceAvailable)
+				
+				if (Tcp.Available == 0)
+					CloseServer( WSClose.Abnormal, string.Empty, false );
+				else
 				{
-					/*         Текущее подключение было закрыто сброшено или разорвано          */
-					if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
+					if ((error = Read()) != SocketError.Success)
+					{
+						if (error != SocketError.WouldBlock
+							&& error != SocketError.NoBufferSpaceAvailable)
+						{
+							/*         Текущее подключение было закрыто сброшено или разорвано          */
+							if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
 														   || error == SocketError.ConnectionAborted)
-						CloseServer( WSClose.Abnormal, string.Empty, false );
-					else
-						ExcServer(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
-				}
+								CloseServer( WSClose.Abnormal, string.Empty, false );
+							else
+							ExcServer(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
+						}
+					}
+				}	
 			}
 		}
 		/// <summary>
@@ -506,23 +515,23 @@ override
 		/// <param name="data">Данные</param>
 		private void write()
 		{
-			if (Writer.Empty)
-				return;
 				
 			SocketError error;
-			if ((error = Send()) != SocketError.Success)
+			if (!Writer.Empty && Tcp.Poll(0, SelectMode.SelectWrite)
 			{
-				if (error != SocketError.WouldBlock
-					&& error != SocketError.NoBufferSpaceAvailable)
-				{
-					Writer.Position = Writer.Length;
-					/*         Текущее подключение было закрыто сброшено или разорвано          */
-					if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
+					if ((error = Send()) != SocketError.Success)
+					{
+						if (error != SocketError.WouldBlock
+							&& error != SocketError.NoBufferSpaceAvailable)
+						{
+							/*         Текущее подключение было закрыто сброшено или разорвано          */
+							if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
 														   || error == SocketError.ConnectionAborted)
-						CloseServer( WSClose.Abnormal, string.Empty, false );
-					else
-						ExcServer(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
-				}
+								CloseServer( WSClose.Abnormal, string.Empty, false );
+							else
+								ExcServer(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
+						}
+					}
 			}
 		}
 		protected void OnEventWork()
