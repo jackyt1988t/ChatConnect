@@ -135,11 +135,12 @@ namespace MyWebSocket.Tcp.Protocol
 		protected SocketError Send()
 		{
 			SocketError error = SocketError.Success;
-			if (Tcp.Poll(0, SelectMode.SelectRead)
-					&& Tcp.Available == 0)
+			if (!Tcp.Poll(0, SelectMode.SelectRead))
 			{
-				return SocketError.NotConnected;
+				return error;
 			}
+			else if (Tcp.Available == 0)
+				return SocketError.NotConnected;
 			
 				lock (Writer.__Sync)
 				{
@@ -173,11 +174,6 @@ namespace MyWebSocket.Tcp.Protocol
 		protected SocketError Write(byte[] buffer, int start, int write)
 		{
 			SocketError error = SocketError.Success;
-			if (Tcp.Poll(0, SelectMode.SelectRead)
-					&& Tcp.Available == 0)
-			{
-				return SocketError.NotConnected;
-			}
 			
 				lock (Writer.__Sync)
 				{
