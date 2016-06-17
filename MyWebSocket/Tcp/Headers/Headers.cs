@@ -47,6 +47,18 @@ namespace MyWebSocket.Tcp
 				AddHeader("Upgrade", value.ToString());
 			}
 		}
+		string contenttype;
+		public string ContentType
+		{
+			get
+			{
+				return contenttype;
+			}
+			set
+			{
+				AddHeader("Content-Type", value.ToString());
+			}
+		}
 		string contentencoding;
 		public string ContentEncoding
 		{
@@ -328,6 +340,9 @@ namespace MyWebSocket.Tcp
 					break;
 				case "connection":
 					connection = value.ToLower();
+					break;
+				case "content-type":
+					contenttype = value.ToLower();
 					break;
 				case "content-length":
 					contentlength = int.Parse(value);

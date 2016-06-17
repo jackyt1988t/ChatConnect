@@ -55,6 +55,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 				return (States)state;
 			}
 		}
+		
 		/// <summary>
 		/// Информации о закрытии соединения
 		/// </summary>
@@ -67,6 +68,11 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		{
 			get;
 			protected set;
+		}
+		public WsPolicy Pollicy
+		{
+			get;
+			private set;
 		}
 		public WSEssion Session
 		{

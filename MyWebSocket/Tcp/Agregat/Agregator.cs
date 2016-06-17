@@ -12,8 +12,7 @@ namespace MyWebSocket.Tcp
 {
 	class Agregator
 	{
-		public IProtocol Protocol;
-		private static volatile int sleep = 0;		
+		public IProtocol Protocol;		
 		private static ConcurrentQueue<Agregator> Container;
 
 		static Agregator()
@@ -28,8 +27,6 @@ namespace MyWebSocket.Tcp
  static public void Loop()
 		{
 			short loop = 0;
-			sleep++;
-			int count = 1;
 			while ( true )
 			{
 				Agregator agregator = null;
@@ -41,12 +38,10 @@ namespace MyWebSocket.Tcp
 					else
 					{
 						agregator.TaskLoopHandler();
-						if (loop++ > count)
+						if (loop++ > 500)
 						{
 							loop = 0;
 							Thread.Sleep(10);
-							if (Container.Count > 0)
-								count = Container.Count / 2;
 						}
 					}
 				}

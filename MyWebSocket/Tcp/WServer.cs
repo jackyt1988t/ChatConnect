@@ -31,7 +31,7 @@ namespace MyWebSocket.Tcp
 				Thread thr = new Thread(Agregator.Loop);
 					   thr.IsBackground = true;
 					   thr.Start();
-				Thread.Sleep(100);
+				Thread.Sleep(1000);
 			}
 			while (true)
 			{

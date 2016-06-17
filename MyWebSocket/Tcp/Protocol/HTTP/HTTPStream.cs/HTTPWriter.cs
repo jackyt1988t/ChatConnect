@@ -50,7 +50,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		static HTTPWriter()
 		{
 			MINRESIZE = 32000;
-			MAXRESIZE = 3200000;
+			MAXRESIZE = 1000000;
 			ENDCHUNCK =
 				new byte[] { 0x0D, 0x0A };
 			EOFCHUNCK =
@@ -77,30 +77,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		public void Write(byte[] buffer)
 		{
 			Write(  buffer, 0, buffer.Length  );
-		}
-		public override int Read(byte[] buffer, int start, int length)
-		{
-			
-			int read;
-			lock (__Sync)
-			{
-				read = base.Read(buffer, start, length);
-				if (Count > MINRESIZE)
-				{
-					int resize;
-
-					if (Length > 0)
-						resize = (int)Count / 4;
-					else
-						resize = 0;
-
-					if (resize < MINRESIZE)
-						resize = MINRESIZE;
-					if (resize > (int)Length)
-						Resize(    resize    );
-				}
-			}
-			return read;
 		}
 		public override void Write(byte[] buffer, int start, int length)
 		{
@@ -131,7 +107,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 									header.ContentEncoding))
 					_Frame.bpart += length;
 					// оптравить форматированные данные
-					if (header.TransferEncoding   !=   "chunked")
+					if (header.TransferEncoding != "chunked")
 						base.Write(  buffer, start, length  );
 					else
 					{
