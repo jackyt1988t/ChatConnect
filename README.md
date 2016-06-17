@@ -24,8 +24,6 @@ using ChatConnect.Tcp.Protocol.WS;
 			{
 				// Объект WebSocket
 				WS WebSocket = obj as WS;
-				// Максимально допустимая длинна фрейма
-				WebSocket.Pollicy.MaxLeng = 32000;
 				// Событие наступает когда приходят новые данные
 				string message = "";
 				WebSocket.EventData += (object sender, PEventArgs e) =>
