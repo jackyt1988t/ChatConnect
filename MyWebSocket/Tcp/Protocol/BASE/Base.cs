@@ -97,13 +97,6 @@ namespace MyWebSocket.Tcp.Protocol
 		protected SocketError Read()
 		{
 			SocketError error = SocketError.Success;
-			if (!Tcp.Poll(0, SelectMode.SelectRead))
-			{
-				return error;
-			}
-			else if (Tcp.Available == 0)
-				return SocketError.NotConnected;
-			
 				lock (Reader.__Sync)			
 				{
 					int count = 
@@ -135,12 +128,6 @@ namespace MyWebSocket.Tcp.Protocol
 		protected SocketError Send()
 		{
 			SocketError error = SocketError.Success;
-			if (!Tcp.Poll(0, SelectMode.SelectRead))
-			{
-				return error;
-			}
-			else if (Tcp.Available == 0)
-				return SocketError.NotConnected;
 			
 				lock (Writer.__Sync)
 				{
