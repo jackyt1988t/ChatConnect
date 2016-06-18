@@ -147,7 +147,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             lock (Sync)
             {
                 if (State == States.Close 
-					 || State == States.Disconnect)
+                     || State == States.Disconnect)
                     result = false;
                 else
                 {
@@ -201,13 +201,13 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         protected override void Work()
         {
             OnEventWork();
-			// вермя до закрытия(  keep-alive  )
-			if (Alive.Ticks < DateTime.Now.Ticks)
-			{
-				if (  State != States.work
-					   && State != States.Send  )
-					close();
-			}
+            // вермя до закрытия(  keep-alive  )
+            if (Alive.Ticks < DateTime.Now.Ticks)
+            {
+                if (  State != States.work
+                       && State != States.Send  )
+                    close();
+            }
             
         }
         protected override void Data()
