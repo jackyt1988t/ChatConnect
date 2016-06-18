@@ -198,15 +198,7 @@ namespace MyWebSocket.Tcp
 		}
 
 #region function
-
-		/// <summary>
-		/// Очищает все заголвоки
-		/// </summary>
-		public void Clear()
-		{
-			StartString = null;
-			ContainerHeaders.Clear();
-		}
+		
 		/// <summary>
 		/// Добавляет значение и параметр заголовка
 		/// если заголовок уже добавлен заменяет его
@@ -220,6 +212,18 @@ namespace MyWebSocket.Tcp
 			
 			Analizating(key, value);
 			ReplaceHeader(key, value);
+		}
+		/// <summary>
+		/// Очищает все заголвоки
+		/// </summary>
+		public void ClearHeaders()
+		{
+			StartString = null;
+			foreach (KeyValuePair<string, string> header in ContainerHeaders)
+			{
+				Analizating(header.Key, string.Empty);
+			}
+			ContainerHeaders.Clear();
 		}
 		/// <summary>
 		/// Удаляет заголовок если он был добавлен

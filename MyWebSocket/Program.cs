@@ -65,13 +65,18 @@ namespace MyWebSocket
 								for (int i = 0; i < Pollings.Count; i++)
 								{
 									Pollings[i].Response.StartString = "HTTP/1.1 200 OK";
+									Pollings[i].Response.AddHeader("Control", "no-cache");
 									Pollings[i].Response.ContentType = "text/plain; charset=utf-8";
 									Pollings[i].Message(Http.Request._Body);
 									Pollings[i].Flush();
 								}
-								Http.Response.StartString = "HTTP/1.1 200 OK";
-								Http.Message(string.Empty);
-								Http.Flush();
+								if (!polling)
+								{
+									Http.Response.StartString = "HTTP/1.1 200 OK";
+									Http.Response.AddHeader("Control", "no-cache");
+									Http.Message("Работает...");
+									Http.Flush();
+								}
 						}
 							break;
 						case "/subscribe":

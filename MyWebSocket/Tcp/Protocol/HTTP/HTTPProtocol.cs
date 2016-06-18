@@ -204,7 +204,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         protected override void Work()
         {
             OnEventWork();
-            if (Alive.Ticks < DateTime.Now.Ticks)
+			// Мягкая посадка
+            if (Alive.Ticks < DateTime.Now.Ticks && 
+                (State != States.work &&  State != States.Send))
                 close();
             
         }
@@ -365,7 +367,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                     close();
                 else if (Exception.Status.value >= 400)
                 {
-                    Response.Clear();
+                    Response.ClearHeaders();
                     Response.StartString = "HTTP/1.1 " + 
                                      Exception.Status.value.ToString() +  
                                      " " + Exception.Status.ToString();
