@@ -232,10 +232,10 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 return false;
             }
         }
-		/// <summary>
-		/// Очищает записывающий буффер данных
-		/// </summary>
-		/// <returns>true в случае успеха</returns>
+        /// <summary>
+        /// Очищает записывающий буффер данных
+        /// </summary>
+        /// <returns>true в случае успеха</returns>
         public bool Flush()
         {
             lock (Sync)
@@ -266,8 +266,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 {
                     Work();
                 /*============================================================
-                    Происходит отправка данных из буффера и проверка 
-                    окончания отправки всех данных, если отправка данных 
+                    Пытаемся отправить данные, если отправка данных 
                     была закончена и все данные были отправлены проверяем 
                     необходимость закрытия текушего соединения если это так,
                     закрываем соединения, если нет обновляем заголвоки и 
@@ -315,18 +314,17 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                     Work();
                 /*============================================================
                                     Обработчик получения данных
-                    Пока данные не были получены и не произошло никаких
-                    продолжаем читать данные и обрабатывать их. Когда все
-                    данные будут получены переходим к следующему 
-                    обработчику, обработчику отправки данных.					   
+                    Читаем данные из сокета, если есть данные обрабатываем 
+					их. Когда данные будут получены и обработаны переходим
+					к следующему обработчику, обработчику отправки данных.					   
                 ==============================================================*/
                     if (Interlocked.CompareExchange(ref state, 1, 0) != 0)
                         return Result;
                     if (!Request.IsEnd)
                     {
                         read();
-						if (!Reader.Empty)
-							Data();
+                        if (!Reader.Empty)
+                            Data();
                     }
                     else
                         Interlocked.CompareExchange(ref state,-1, 1);
@@ -363,29 +361,29 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 ==============================================================*/
                         if (state == 5)
                         {
-					        if (!Writer.Empty)
-					 	        write();
-					        else
-						        state = 7;
+                            if (!Writer.Empty)
+                                write();
+                            else
+                                state = 7;
                         }
                         if (state == 7)
                         {
-							Close();
-								if (Tcp.Connected)
-									Tcp.Close();
+                            Close();
+                                if (Tcp.Connected)
+                                    Tcp.Close();
                             
-								Result.Option = TaskOption.Delete;
+                                Result.Option = TaskOption.Delete;
                         }
             }
             catch (HTTPException err)
             {
                 exc(err);
             }
-			catch (Exception err)
-			{
-				exc(new HTTPException("Критическая ошибка. " + err.Message, HTTPCode._500_, err));
-				Log.Loging.AddMessage(err.Message + Log.Loging.NewLine + err.StackTrace, "Log/log.log", Log.Log.Debug);
-			}
+            catch (Exception err)
+            {
+                exc(new HTTPException("Критическая ошибка. " + err.Message, HTTPCode._500_, err));
+                Log.Loging.AddMessage(err.Message + Log.Loging.NewLine + err.StackTrace, "Log/log.log", Log.Log.Debug);
+            }
             return Result;
         }
         public override string ToString()
@@ -412,32 +410,32 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         /// </summary>
         private void read()
         {
-			/*
-			    Если функция Poll Вернет true проверяем наличие данных, еслм данных нет значит соединение
-				было закрыто. Если есть данные читаем данные из сокетаи проверяем на наличие ошибок, если
-				выполнение произошло с ошибкой, обрабатываем.
-			*/
+            /*
+                Если функция Poll Вернет true проверяем наличие данных, еслм данных нет значит соединение
+                было закрыто. Если есть данные читаем данные из сокетаи проверяем на наличие ошибок, если
+                выполнение произошло с ошибкой, обрабатываем.
+            */
             if (Tcp.Poll(0, SelectMode.SelectRead))
             {
-				if (Tcp.Available == 0)
-				{
-					Response.SetClose();
-					exc(new HTTPException("Ошибка чтения http данных. Соединение закрыто.", HTTPCode._500_));
-				}
-				else
-				{
-					SocketError error;
-					if ((error = Read()) != SocketError.Success)
-					{
-						if (error != SocketError.WouldBlock
-						 && error != SocketError.NoBufferSpaceAvailable)
-						{
-							Response.SetClose();
-							exc(new HTTPException("Ошибка чтения http данных: " + error.ToString(), HTTPCode._500_));
+                if (Tcp.Available == 0)
+                {
+                    Response.SetClose();
+                    exc(new HTTPException("Ошибка чтения http данных. Соединение закрыто.", HTTPCode._500_));
+                }
+                else
+                {
+                    SocketError error;
+                    if ((error = Read()) != SocketError.Success)
+                    {
+                        if (error != SocketError.WouldBlock
+                         && error != SocketError.NoBufferSpaceAvailable)
+                        {
+                            Response.SetClose();
+                            exc(new HTTPException("Ошибка чтения http данных: " + error.ToString(), HTTPCode._500_));
 
-						}
-					}
-				}
+                        }
+                    }
+                }
             }
         }
         /// <summary>
@@ -446,11 +444,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         /// <param name="data">Данные</param>
         private void write()
         {
-			/*
-			    Если функция Poll Вернет false или есть наличие данные, считываем данные из сокета, иначе закрываем
-				соединение.
-			*/
-			if (!Tcp.Poll(0, SelectMode.SelectRead) || Tcp.Available > 0)
+            /*
+                Если функция Poll Вернет false или есть наличие данные, считываем данные из сокета, иначе закрываем
+                соединение.
+            */
+            if (!Tcp.Poll(0, SelectMode.SelectRead) || Tcp.Available > 0)
             {
                     SocketError error;
                     if ((error = Send()) != SocketError.Success)
@@ -464,11 +462,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                         }
                     }
             }
-						else
-						{
-							Response.SetClose();
-							exc(new HTTPException("Ошибка записи http данных. Соединение закрыто.", HTTPCode._500_));
-						}
+                        else
+                        {
+                            Response.SetClose();
+                            exc(new HTTPException("Ошибка записи http данных. Соединение закрыто.", HTTPCode._500_));
+                        }
         }
         /// <summary>
         /// Потокобезопасный запуск события Work
