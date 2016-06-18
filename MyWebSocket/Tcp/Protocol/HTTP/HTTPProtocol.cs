@@ -44,7 +44,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		{
 			ALIVE = 40;
 			HTTPWriter.MINRESIZE = MINLENGTHBUFFER;
-			HTTPWriter.MAXRESIZE = MAXLENGTHBUFFER;
+			HTTPWriter.MAXRESIZE = MAXLENGTHBUFFER * 64;
 		}
 		public HTTPProtocol(Socket tcp) :
 			base()
@@ -79,10 +79,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// <param name="chunk"></param>
 		protected override void file(string path, int chunk)
 		{
-
-			if (string.IsNullOrEmpty(Response.StartString))
-				Response.StartString = "HTTP/1.1 200 OK";
-
 			FileInfo fileinfo = new FileInfo(path);
 			if (string.IsNullOrEmpty(Response.ContentType))
 			{
@@ -140,6 +136,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		public override bool Message(byte[] buffer, int start, int write)
 		{
 			bool result = true;
+			if (string.IsNullOrEmpty(Response.StartString))
+				Response.StartString  =  "HTTP/1.1 200 OK";
 			lock (Sync)
 			{
 				if (!Loop)
@@ -270,9 +268,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 
 				if (!Result.Jump)
 				{
-					if (Request.AcceptEncoding != null
+					/*if (Request.AcceptEncoding != null
 						&& Request.AcceptEncoding.Contains("gzip"))
-						Response.ContentEncoding = "gzip";
+						Response.ContentEncoding = "gzip";*/
 					Response.TransferEncoding = "chunked";
 
 					Response.AddHeader("Date", 

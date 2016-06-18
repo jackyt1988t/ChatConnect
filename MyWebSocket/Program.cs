@@ -67,11 +67,11 @@ namespace MyWebSocket
 									Pollings[i].Response.StartString = "HTTP/1.1 200 OK";
 									Pollings[i].Response.ContentType = "text/plain; charset=utf-8";
 									Pollings[i].Message(Http.Request._Body);
-									Pollings[i].flush();
+									Pollings[i].Flush();
 								}
 								Http.Response.StartString = "HTTP/1.1 200 OK";
 								Http.Message(string.Empty);
-								Http.flush();
+								Http.Flush();
 						}
 							break;
 						case "/subscribe":

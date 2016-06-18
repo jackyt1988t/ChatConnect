@@ -1,41 +1,39 @@
 ﻿using System;
-using System.IO;
-using System.IO.Compression;
 using System.Net.Sockets;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+        using System.Text;
+        using System.Threading;
+        using System.Threading.Tasks;
 
 namespace MyWebSocket.Tcp.Protocol.HTTP
 {
     abstract class HTTP : BaseProtocol
     {
-		/// <summary>
-		/// true если соединение небыло
-		/// закрыто
-		/// </summary>	 
+        /// <summary>
+        /// true если соединение небыло
+        /// закрыто
+        /// </summary>	 
         public bool Loop
-		{
-			get
-			{
-				if (state < 5)
-					return true;
-				else
-					return false;
-			}
-		}
-		/// <summary>
+        {
+            get
+            {
+                if (state < 5)
+                    return true;
+                else
+                    return false;
+            }
+        }
+        /// <summary>
         /// Объект синхронизации данных
         /// </summary>
-		public object Sync
+        public object Sync
         {
             get;
             protected set;
         }
-volatile
-		int state;		
-override
-		public States State
+        volatile
+                int state;
+        override
+                public States State
         {
             protected set
             {
@@ -56,7 +54,7 @@ override
             get;
             protected set;
         }
-            
+
         /// <summary>
         /// Событие которое наступает при проходе по циклу
         /// </summary>
@@ -172,60 +170,60 @@ override
             }
         }
 
-		private bool _filewrite;
+        private bool _filewrite;
         private object SyncEvent = new object();
-        private  event PHandlerEvent __EventWork;
-        private  event PHandlerEvent __EventData;
-        private  event PHandlerEvent __EventError;
-        private  event PHandlerEvent __EventClose;
-        private  event PHandlerEvent __EventChunk;
-        private  event PHandlerEvent __EventOnOpen;
-        static 
-        private  event PHandlerEvent __EventConnect;
+        private event PHandlerEvent __EventWork;
+        private event PHandlerEvent __EventData;
+        private event PHandlerEvent __EventError;
+        private event PHandlerEvent __EventClose;
+        private event PHandlerEvent __EventChunk;
+        private event PHandlerEvent __EventOnOpen;
+        static
+        private event PHandlerEvent __EventConnect;
 
         public HTTP()
         {
-            Sync     = new object();
-            State    
+            Sync = new object();
+            State
                 = States.Connection;
-            Result   = new TaskResult();
-            Request  = new Header();
-            Response = new Header();
-            
+            Result = new TaskResult();
+                Request = new Header();
+                 Response = new Header();
+
         }
-		async public void File(string path, int chunk = 1000 * 64)
-		{
-			lock (Sync)
-			{
-				if (_filewrite)
-					throw new HTTPException("Дождитесь окончания записи файла");
-				_filewrite = true;
-			}
-			await Task.Run(() =>
-			{
-				try
-				{
-					file(path, chunk);
-				}
-				catch (HTTPException err)
-				{
-					exc(err);
-				}
-				catch (Exception err)
-				{
-					exc(new HTTPException( "Ошибка при чтении файла " + path, HTTPCode._500_, err ));
-				}
-				finally
-				{
-					flush();
-					lock (Sync)
-						_filewrite = false;
-				}
-			});
+        async public void File(string path, int chunk = 1000 * 64)
+        {
+            lock (Sync)
+            {
+                if (_filewrite)
+                    throw new HTTPException("Дождитесь окончания записи файла");
+                _filewrite = true;
+            }
+            await Task.Run(() =>
+            {
+                try
+                {
+                    file(path, chunk);
+                }
+                catch (HTTPException err)
+                {
+                    exc(err);
+                }
+                catch (Exception err)
+                {
+                    exc(new HTTPException("Ошибка при чтении файла " + path, HTTPCode._500_, err));
+                }
+                finally
+                {
+                    Flush();
+                    lock (Sync)
+                        _filewrite = false;
+                }
+            });
         }
 
-		public bool close()
-		{
+        public bool close()
+        {
             lock (Sync)
             {
                 if (state > 4)
@@ -234,49 +232,25 @@ override
                 return false;
             }
         }
-		public bool flush()
-		{
-			lock (Sync)
-				return Response.SetEnd();
-		}
+		/// <summary>
+		/// Очищает записывающий буффер данных
+		/// </summary>
+		/// <returns>true в случае успеха</returns>
+        public bool Flush()
+        {
+            lock (Sync)
+                return Response.SetEnd();
+        }
         public bool Message(string message)
         {
             return Message(Encoding.UTF8.GetBytes(message));
         }
         public bool Message(byte[] message)
         {
-            return Message(   message, 0, message.Length  );
+            return Message(message, 0, message.Length);
         }
-		/*
-		/// <summary>
-		/// Отправляет данные текущему подключению
-		/// </summary>
-		/// <param name="message">массив байт для отправки</param>
-		/// <returns>true в случае ечсли данные можно отправить</returns>
-		public bool message(byte[] message, int start, int write)
-        {
-            lock (Sync)
-            {
-                if (state > 4)
-                    return false;
-				
-                SocketError error;
-                if ((error = Write(message, start, write)) != SocketError.Success)
-                {
-                    if (error != SocketError.WouldBlock
-                           && error != SocketError.NoBufferSpaceAvailable)
-                    {
-                        Response.Close = true;
-                        exc(new HTTPException("Ошибка записи http данных: " + error.ToString(), HTTPCode._500_));
-                        return false;
-                    }
-                }
-            }
-            return true;
-        }
-		*/
-		public abstract bool Message(byte[] message, int start, int write);
-		
+        public abstract bool Message(byte[] message, int start, int write);
+
         public override TaskResult TaskLoopHandlerProtocol()
         {
             try
@@ -288,7 +262,7 @@ override
                     обработчику, обработчику отправки пользовательских 
                     данных.						   
                 ==============================================================*/
-                if (state ==-1)
+                if (state == -1)
                 {
                     Work();
                 /*============================================================
@@ -299,35 +273,35 @@ override
                     закрываем соединения, если нет обновляем заголвоки и 
                     продолжаем обрабатывать входящие запросы.						   
                 ==============================================================*/
-                    if (Interlocked.CompareExchange(ref state, 2,-1) !=-1)
+                    if (Interlocked.CompareExchange(ref state, 2, -1) != -1)
                         return Result;
 
-					write();
+                    write();
                     if (Response.IsEnd && Writer.Empty)
                     {
-						if (!Response.IsReq)
-						{
-							End();
-							Response.SetReq();
-						}
-						else
-						{
-							if (Response.Close)
-								close();
-							else
-							{
-								Request = new Header();
-								Response = new Header();
-								Interlocked.CompareExchange(ref state, 0, 2);
-							}
-						}
+                        if (!Response.IsReq)
+                        {
+                            End();
+                            Response.SetReq();
+                        }
+                        else
+                        {
+                            if (Response.Close)
+                                close();
+                            else
+                            {
+                                Request = new Header();
+                                Response = new Header();
+                                Interlocked.CompareExchange(ref state, 0, 2);
+                            }
+                        }
                     }
                 /*============================================================
                     Если во время отправки соединение не было закрыто и не 
                     произошло никаких ошибок возвращаемся к предыдущему
                     обработчику.						   
                 ==============================================================*/
-                    if (Interlocked.CompareExchange(ref state,-1, 2) == 2)
+                    if (Interlocked.CompareExchange(ref state, -1, 2) == 2)
                         return Result;
                 }
                 /*============================================================
@@ -348,13 +322,13 @@ override
                 ==============================================================*/
                     if (Interlocked.CompareExchange(ref state, 1, 0) != 0)
                         return Result;
-                        if (!Request.IsEnd)
-                        {
-                            read();
-                            Data();
-                        }
-                        else
-                            Interlocked.CompareExchange (ref state,-1, 1);
+                    if (!Request.IsEnd)
+                    {
+                        read();
+                        Data();
+                    }
+                    else
+                        Interlocked.CompareExchange(ref state,-1, 1);
                     if (Interlocked.CompareExchange(ref state, 0, 1) == 1)
                         return Result;
                 }
@@ -381,22 +355,26 @@ override
                         if (state == 4)
                         {
                             Error(Exception);
-							Interlocked.CompareExchange (ref state,-1, 4);
-						}
+                            Interlocked.CompareExchange(ref state,-1, 4);
+                        }
                 /*============================================================
                                         Закрываем соединеие						   
                 ==============================================================*/
-                                    if (state == 5)
-                                    {
-                                        state = 7;
-                                    }
-                                    if (state == 7)
-                                    {
-										Tcp.Close();
-										Close();
-                                        Dispose();
-                                        Result.Option = TaskOption.Delete;
-                                    }
+                        if (state == 5)
+                        {
+					        if (!Writer.Empty)
+					 	        write();
+					        else
+						        state = 7;
+                        }
+                        if (state == 7)
+                        {
+							Close();
+							if (Tcp.Connected)
+								Tcp.Close();
+                            
+                            Result.Option = TaskOption.Delete;
+                        }
             }
             catch (HTTPException err)
             {
@@ -420,7 +398,7 @@ override
                     state = 4;
                 else if (state < 7)
                     state = 7;
-                    Exception = err;
+                Exception = err;
             }
         }
         /// <summary>
@@ -428,21 +406,26 @@ override
         /// </summary>
         private void read()
         {
+			/*
+			    Если функция Poll Вернет true проверяем наличие данных, еслм данных нет значит соединение
+				было закрыто. Если есть данные читаем данные из сокетаи проверяем на наличие ошибок, если
+				выполнение произошло с ошибкой, обрабатываем.
+			*/
             if (Tcp.Poll(0, SelectMode.SelectRead))
             {
                 if (Tcp.Available == 0)
-                    exc( new HTTPException("Ошибка чтения http данных. Соединение закрыто.", HTTPCode._500_));
+                    exc(new HTTPException("Ошибка чтения http данных. Соединение закрыто.", HTTPCode._500_));
                 else
                 {
-					SocketError error; 
+                    SocketError error;
                     if ((error = Read()) != SocketError.Success)
                     {
                         if (error != SocketError.WouldBlock
                          && error != SocketError.NoBufferSpaceAvailable)
                         {
                             Response.Close = true;
-                            exc( new HTTPException("Ошибка чтения http данных: " + error.ToString(), HTTPCode._500_));
-                    
+                            exc(new HTTPException("Ошибка чтения http данных: " + error.ToString(), HTTPCode._500_));
+
                         }
                     }
                 }
@@ -454,23 +437,26 @@ override
         /// <param name="data">Данные</param>
         private void write()
         {
-            
-            if (!Tcp.Poll(0, SelectMode.SelectRead) || Tcp.Available > 0)
+			/*
+			    Если функция Poll Вернет false или есть наличие данные, считываем данные из сокета, иначе закрываем
+				соединение.
+			*/
+			if (!Tcp.Poll(0, SelectMode.SelectRead) || Tcp.Available > 0)
             {
-					SocketError error;
+                    SocketError error;
                     if ((error = Send()) != SocketError.Success)
                     {
                         if (error != SocketError.WouldBlock
                          && error != SocketError.NoBufferSpaceAvailable)
                         {
                             Response.Close = true;
-                            exc( new HTTPException("Ошибка записи http данных: " + error.ToString(), HTTPCode._500_));
-                        
+                            exc(new HTTPException("Ошибка записи http данных: " + error.ToString(), HTTPCode._500_));
+
                         }
                     }
             }
-                        else
-                            exc( new HTTPException("Ошибка записи http данных. Соединение закрыто.", HTTPCode._500_));
+            else
+                exc(new HTTPException("Ошибка записи http данных. Соединение закрыто.", HTTPCode._500_));
         }
         /// <summary>
         /// Потокобезопасный запуск события Work
@@ -560,24 +546,24 @@ override
                 e = __EventConnect;
             if (e != null)
                 e(this, new PEventArgs(s, m, null));
-            
+
         }
-		/// <summary>
-		/// отправляет файл пользователю
-		/// </summary>
-		/// <param name="path"></param>
-		/// <param name="chunk"></param>
-		protected abstract void file(string path, int chunk);
-		/// <summary>
-		/// закончена передача данных чтобы закрыть соединеие не обходимо установить
-		/// значение response.Close = true;
-		/// в случае ошибок необходимо бросать HTTPException с указанным статусом http
-		/// </summary>
-		protected abstract void End();
-		/// <summary>
-		/// 
-		/// </summary>
-		protected abstract void Work();
+        /// <summary>
+        /// отправляет файл пользователю
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="chunk"></param>
+        protected abstract void file(string path, int chunk);
+        /// <summary>
+        /// закончена передача данных чтобы закрыть соединеие не обходимо установить
+        /// значение response.Close = true;
+        /// в случае ошибок необходимо бросать HTTPException с указанным статусом http
+        /// </summary>
+        protected abstract void End();
+        /// <summary>
+        /// 
+        /// </summary>
+        protected abstract void Work();
         /// <summary>
         /// работаем
         /// в случае ошибок необходимо бросать HTTPException с указанным статусом http

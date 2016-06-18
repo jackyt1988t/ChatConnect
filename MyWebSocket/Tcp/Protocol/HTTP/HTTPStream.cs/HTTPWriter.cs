@@ -50,7 +50,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		static HTTPWriter()
 		{
 			MINRESIZE = 32000;
-			MAXRESIZE = 1000000;
+			MAXRESIZE = 10000000;
 			ENDCHUNCK =
 				new byte[] { 0x0D, 0x0A };
 			EOFCHUNCK =
@@ -63,11 +63,13 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		}
 		public void End()
 		{
-			base.Write(ENDCHUNCK, 0, 2);
+			lock (__Sync)
+				base.Write(ENDCHUNCK, 0, 2);
 		}
 		public void Eof()
 		{
-			base.Write(EOFCHUNCK, 0, 5);
+			lock (__Sync)
+				base.Write(EOFCHUNCK, 0, 5);
 		}
 		
 		public void Write(string str)
@@ -91,10 +93,10 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					header.SetRes();
 					_Frame.hleng = data.Length;
 				}
-				if (length > Clear)
+				if ((length + 64) > Clear)
 				{
 					int resize = (int)Count * 2;
-					if (resize - (int)Length < length)
+					if (resize - (int)Length - 64 < length)
 						resize = (int)Length + length + 64;
 
 					if (resize < MAXRESIZE)
