@@ -47,7 +47,7 @@ namespace MyWebSocket.Tcp
 				}
 				catch (Exception exc)
 				{
-					Loging.AddMessage(exc.Message + Loging.NewLine + exc.StackTrace, "Log/log.log", Log.Log.Debug);
+					Loging.AddMessage(exc.Message + Loging.NewLine + exc.StackTrace, "log.log", Log.Log.Debug);
 				}
 			}
 		}

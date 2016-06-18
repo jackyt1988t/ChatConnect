@@ -392,7 +392,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             catch (Exception err)
             {
                 exc(new HTTPException("Критическая ошибка. " + err.Message, HTTPCode._500_, err));
-                Log.Loging.AddMessage(err.Message + Log.Loging.NewLine + err.StackTrace, "Log/log.log", Log.Log.Debug);
+                Log.Loging.AddMessage(err.Message + Log.Loging.NewLine + err.StackTrace, "log.log", Log.Log.Debug);
             }
             return Result;
         }

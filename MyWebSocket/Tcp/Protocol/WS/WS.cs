@@ -473,7 +473,7 @@ override
 			catch (Exception exc)
 			{
 				ExcServer(new WSException("Критическая. " + exc.Message, WsError.CriticalError, WSClose.ServerError));
-				Log.Loging.AddMessage(exc.Message + Log.Loging.NewLine + exc.StackTrace, "Log/log.log", Log.Log.Fatal);
+				Log.Loging.AddMessage(exc.Message + Log.Loging.NewLine + exc.StackTrace, "log.log", Log.Log.Fatal);
 			}
 			return TaskResult;
 		}

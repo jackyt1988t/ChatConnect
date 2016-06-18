@@ -146,7 +146,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 Response.StartString  =  "HTTP/1.1 200 OK";
             lock (Sync)
             {
-                if (!Loop)
+                if (State == States.Close 
+					 || State == States.Disconnect)
                     result = false;
                 else
                 {
@@ -169,7 +170,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                     {
                         close();
                         result = false;
-                        Log.Loging.AddMessage(exc.Message + Log.Loging.NewLine + exc.StackTrace, "Log/log.log", Log.Log.Debug);
+                        Log.Loging.AddMessage(exc.Message + Log.Loging.NewLine + exc.StackTrace, "log.log", Log.Log.Debug);
                     }
                 }
             }
@@ -178,7 +179,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 
         protected override void End()
         {
-            bool result = true;
             lock (Sync)
             {
                 if (__Arhiv != null)
@@ -193,23 +193,21 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                     catch (IOException exc)
                     {
                         close();
-                        result = false;
-                        Log.Loging.AddMessage(exc.Message + Log.Loging.NewLine + exc.StackTrace, "Log/log.log", Log.Log.Debug);
+                        Log.Loging.AddMessage(exc.Message + Log.Loging.NewLine + exc.StackTrace, "log.log", Log.Log.Debug);
                     }
                 }
             }
-			if (result)
-			{
-				//Console.WriteLine("Успешно");
-			}
         }
         protected override void Work()
         {
             OnEventWork();
-			// Мягкая посадка
-            if (Alive.Ticks < DateTime.Now.Ticks && 
-                (State != States.work &&  State != States.Send))
-                close();
+			// вермя до закрытия(  keep-alive  )
+			if (Alive.Ticks < DateTime.Now.Ticks)
+			{
+				if (  State != States.work
+					   && State != States.Send  )
+					close();
+			}
             
         }
         protected override void Data()
