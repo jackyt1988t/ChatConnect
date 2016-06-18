@@ -1,11 +1,7 @@
-﻿using System.Text;
-
-using System.Net;
-using System.Net.Sockets;
-
-using System.Threading;
-using System;
-using MyWebSocket.Log;
+﻿using System;
+using System.Text;
+	using System.Net.Sockets;
+		using System.Threading;
 
 namespace MyWebSocket.Tcp.Protocol.WS
 {
@@ -448,7 +444,8 @@ override
 						if (!___Close.Req)
 						{
 							Read();
-							Data();
+							if (!Reader.Empty)
+								Data();
 						}
 							write();
 							return TaskResult;
@@ -461,8 +458,10 @@ override
 				==================================================================*/
 						if (state == 7)
 						{
-							Dispose();
+							
 							Close(___Close);
+								if (Tcp.Connected)
+									Tcp.Close();
 								TaskResult.Option   =   TaskOption.Delete;
 						}
 			}
@@ -473,8 +472,8 @@ override
 			}
 			catch (Exception exc)
 			{
-				Loging.AddMessage(
-					exc.Message + Loging.NewLine + exc.StackTrace, "Log/log.log", Log.Log.Fatal);
+				ExcServer(new WSException("Критическая. " + exc.Message, WsError.CriticalError, WSClose.ServerError));
+				Log.Loging.AddMessage(exc.Message + Log.Loging.NewLine + exc.StackTrace, "Log/log.log", Log.Log.Fatal);
 			}
 			return TaskResult;
 		}

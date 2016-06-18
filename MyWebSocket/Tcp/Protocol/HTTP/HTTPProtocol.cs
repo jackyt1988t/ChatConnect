@@ -146,10 +146,18 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				{
 					try
 					{
-						if (Response.ContentEncoding == "gzip")
-							__Arhiv.Write(buffer, start, write);
-						else
-							__Writer.Write(buffer, start, write);
+						switch (Response.ContentEncoding)
+						{
+							case "gzip":
+								__Arhiv.Write(buffer, start, write);
+								break;
+							case "deflate":
+								__Arhiv.Write(buffer, start, write);
+								break;
+							default:
+								__Writer.Write(buffer, start, write);
+								break;
+						}
 					}
 					catch (IOException exc)
 					{
@@ -167,11 +175,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			bool result = true;
 			lock (Sync)
 			{
-				if (Response.ContentEncoding == "gzip")
-				{
-					if (__Arhiv != null)
-						__Arhiv.Dispose();
-				}
+				if (__Arhiv != null)
+					__Arhiv.Dispose();
 				// Отправить блок данных chunked 0CRLFCRLF
 				if (Response.TransferEncoding == "chunked")
 				{
@@ -199,10 +204,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		}
 		protected override void Data()
 		{
-			
-			if (__Reader.Empty)
-				return;
-
 			if ( __Reader._Frame.GetHead && __Reader._Frame.GetBody )
 			{
 				__Reader._Frame.Clear();
@@ -210,6 +211,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				__Reader.header = Request;
 				__Writer.header = Response;
 			}
+			// получаем заголовки
 			if (!__Reader._Frame.GetHead)
 			{
 				if (__Reader.ReadHead() == -1)
@@ -268,27 +270,36 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 
 				if (!Result.Jump)
 				{
-					/*if (Request.AcceptEncoding != null
-						&& Request.AcceptEncoding.Contains("gzip"))
-						Response.ContentEncoding = "gzip";*/
+					if (Request.Connection == "close")
+					{
+						Response.SetClose();
+						Response.Connection = "close";
+					}
+					else
+						Response.Connection = "keep-alive";
+
+					if (Request.AcceptEncoding != null)
+					{
+						if (Request.AcceptEncoding.Contains("gzip"))
+							Response.ContentEncoding = "gzip";
+						else if (Request.AcceptEncoding.Contains("deflate"))
+							Response.ContentEncoding = "deflate";
+					}
 					Response.TransferEncoding = "chunked";
 
 					Response.AddHeader("Date", 
-								DateTimeOffset.Now.ToString());
-					Response.AddHeader("Server", "MyWebSocket");
-					
+										DateTimeOffset.Now.ToString() + " UTC");
+					Response.AddHeader("Server", "MyWebSocket Vers. Alpha 1.0");
 
 					OnEventOpen(Request, Response);
-					
-						if (Response.ContentEncoding == "gzip")
-						{
-							__Arhiv = new GZipStream(__Writer, CompressionLevel.Fastest, true);
-						}
+
+					if (Response.ContentEncoding == "gzip")
+						__Arhiv = new GZipStream(__Writer, CompressionLevel.Fastest, true);
+					else if (Response.ContentEncoding == "deflate")
+						__Arhiv = new DeflateStream(__Writer, CompressionLevel.Fastest, true);
 				}
-
-				
-
 			}
+			// Получаем тело запроса
 			if (!__Reader._Frame.GetBody)
 			{
 				if (__Reader.ReadBody() == -1)

@@ -13,6 +13,14 @@ namespace MyWebSocket.Tcp.Protocol
 		{
 			get;
 		}
+		Header Request
+		{
+			get;
+		}
+		Header Response
+		{
+			get;
+		}
 		MyStream Reader
 		{
 			get;
@@ -21,13 +29,6 @@ namespace MyWebSocket.Tcp.Protocol
 		{
 			get;
 		}
-		IHeader Request
-		{
-			get;
-		}
-		IHeader Response
-		{
-			get;
-		}
+		
     }
 }

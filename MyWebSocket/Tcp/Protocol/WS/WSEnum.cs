@@ -10,6 +10,7 @@
 		HeaderFrameError = 5,
 		BodyFrameError = 6,
 		HandshakeError = 7,
-		BufferLimitLength = 8
+		BufferLimitLength = 8,
+		CriticalError = 9
 	}
 }

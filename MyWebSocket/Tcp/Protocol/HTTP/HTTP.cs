@@ -325,7 +325,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                     if (!Request.IsEnd)
                     {
                         read();
-                        Data();
+						if (!Reader.Empty)
+							Data();
                     }
                     else
                         Interlocked.CompareExchange(ref state,-1, 1);
@@ -370,16 +371,21 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                         if (state == 7)
                         {
 							Close();
-							if (Tcp.Connected)
-								Tcp.Close();
+								if (Tcp.Connected)
+									Tcp.Close();
                             
-                            Result.Option = TaskOption.Delete;
+								Result.Option = TaskOption.Delete;
                         }
             }
             catch (HTTPException err)
             {
                 exc(err);
             }
+			catch (Exception err)
+			{
+				exc(new HTTPException("Критическая ошибка. " + err.Message, HTTPCode._500_, err));
+				Log.Loging.AddMessage(err.Message + Log.Loging.NewLine + err.StackTrace, "Log/log.log", Log.Log.Debug);
+			}
             return Result;
         }
         public override string ToString()
@@ -413,22 +419,25 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			*/
             if (Tcp.Poll(0, SelectMode.SelectRead))
             {
-                if (Tcp.Available == 0)
-                    exc(new HTTPException("Ошибка чтения http данных. Соединение закрыто.", HTTPCode._500_));
-                else
-                {
-                    SocketError error;
-                    if ((error = Read()) != SocketError.Success)
-                    {
-                        if (error != SocketError.WouldBlock
-                         && error != SocketError.NoBufferSpaceAvailable)
-                        {
-                            Response.Close = true;
-                            exc(new HTTPException("Ошибка чтения http данных: " + error.ToString(), HTTPCode._500_));
+				if (Tcp.Available == 0)
+				{
+					Response.SetClose();
+					exc(new HTTPException("Ошибка чтения http данных. Соединение закрыто.", HTTPCode._500_));
+				}
+				else
+				{
+					SocketError error;
+					if ((error = Read()) != SocketError.Success)
+					{
+						if (error != SocketError.WouldBlock
+						 && error != SocketError.NoBufferSpaceAvailable)
+						{
+							Response.SetClose();
+							exc(new HTTPException("Ошибка чтения http данных: " + error.ToString(), HTTPCode._500_));
 
-                        }
-                    }
-                }
+						}
+					}
+				}
             }
         }
         /// <summary>
@@ -449,14 +458,17 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                         if (error != SocketError.WouldBlock
                          && error != SocketError.NoBufferSpaceAvailable)
                         {
-                            Response.Close = true;
+                            Response.SetClose();
                             exc(new HTTPException("Ошибка записи http данных: " + error.ToString(), HTTPCode._500_));
 
                         }
                     }
             }
-            else
-                exc(new HTTPException("Ошибка записи http данных. Соединение закрыто.", HTTPCode._500_));
+						else
+						{
+							Response.SetClose();
+							exc(new HTTPException("Ошибка записи http данных. Соединение закрыто.", HTTPCode._500_));
+						}
         }
         /// <summary>
         /// Потокобезопасный запуск события Work

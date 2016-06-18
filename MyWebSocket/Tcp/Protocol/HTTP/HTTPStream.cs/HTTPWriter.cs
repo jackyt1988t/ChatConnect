@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace MyWebSocket.Tcp.Protocol.HTTP
 {
@@ -14,7 +11,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		public static readonly byte[] ENDCHUNCK;
 		public static readonly byte[] EOFCHUNCK;
 
-		public IHeader header;
+		public Header header;
 		public HTTPFrame _Frame;
 
 		public override long Position
@@ -50,7 +47,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		static HTTPWriter()
 		{
 			MINRESIZE = 32000;
-			MAXRESIZE = 10000000;
+			MAXRESIZE = 1000000;
 			ENDCHUNCK =
 				new byte[] { 0x0D, 0x0A };
 			EOFCHUNCK =

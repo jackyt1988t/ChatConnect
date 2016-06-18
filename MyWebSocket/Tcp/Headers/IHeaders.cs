@@ -59,7 +59,6 @@ namespace MyWebSocket.Tcp
 		bool Close
 		{
 			get;
-			set;
 		}
 		byte[] _Body
         {
@@ -99,10 +98,6 @@ namespace MyWebSocket.Tcp
 		{
 			get;
 		}
-		void Clear();
-		bool SetReq();
-		bool SetRes();
-		bool SetEnd();
 		byte[] ToByte();
 		void AddHeader(string key, string value);
 		bool ContainsKeys(string key, bool @case = true);

@@ -75,9 +75,15 @@ namespace MyWebSocket
 						}
 							break;
 						case "/subscribe":
-							polling = true;
+							
 							lock (Pollings)
-								Pollings.Add(Http);
+							{
+								if (!polling)
+								{
+									polling = true;
+									Pollings.Add(Http);
+								}
+							}
 							break;
 						default:
 							Http.File("Html" + Http.Request.Path);

@@ -129,7 +129,7 @@ namespace MyWebSocket.Tcp
 		public bool Close
 		{
 			get;
-			set;
+			private set;
 		}
 		/// <summary>
 		/// тело сообщения
@@ -196,36 +196,16 @@ namespace MyWebSocket.Tcp
 			ContainerHeaders = new Dictionary<string, string>();
 
 		}
+
+#region function
+
+		/// <summary>
+		/// Очищает все заголвоки
+		/// </summary>
 		public void Clear()
 		{
+			StartString = null;
 			ContainerHeaders.Clear();
-		}
-		public bool SetReq()
-		{
-			if (!IsReq)
-			{
-				IsReq = true;
-				return false;
-			}
-			return true;
-		}
-		public bool SetRes()
-		{
-			if (!IsRes)
-			{
-				IsRes = true;
-				return false;
-			}
-			return true;
-		}
-		public bool SetEnd()
-		{
-			if (!IsEnd)
-			{
-				IsEnd = true;
-				return false;
-			}
-			return true;
 		}
 		/// <summary>
 		/// Добавляет значение и параметр заголовка
@@ -385,5 +365,48 @@ namespace MyWebSocket.Tcp
 			}
 			return values;
 		}
+
+#endregion
+	
+#region Internal function
+
+		internal bool SetReq()
+		{
+			if (!IsReq)
+			{
+				IsReq = true;
+				return false;
+			}
+			return true;
+		}
+		internal bool SetRes()
+		{
+			if (!IsRes)
+			{
+				IsRes = true;
+				return false;
+			}
+			return true;
+		}
+		internal bool SetEnd()
+		{
+			if (!IsEnd)
+			{
+				IsEnd = true;
+				return false;
+			}
+			return true;
+		}
+		internal bool SetClose()
+		{
+			if (!Close)
+			{
+				Close = true;
+				return false;
+			}
+			return true;
+		}
+
+#endregion
 	}
 }
