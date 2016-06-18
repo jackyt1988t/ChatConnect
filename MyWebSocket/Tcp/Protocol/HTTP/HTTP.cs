@@ -241,12 +241,22 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             lock (Sync)
                 return Response.SetEnd();
         }
+        /// <summary>
+        /// Отправляет указанную строку уд. стороне
+        /// </summary>
+        /// <returns>true в случае успеха</returns>
         public bool Message(string message)
         {
             return Message(Encoding.UTF8.GetBytes(message));
         }
+        /// <summary>
+        /// Отправляет указанный массив данных уд. стороне
+        /// </summary>
+        /// <returns>true в случае успеха</returns>
         public bool Message(byte[] message)
         {
+            if (message == null)
+                message = new byte[0];
             return Message(message, 0, message.Length);
         }
         public abstract bool Message(byte[] message, int start, int write);
@@ -410,12 +420,12 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         /// </summary>
         private void read()
         {
-            /*
-                Если функция Poll Вернет true проверяем наличие данных, еслм данных нет значит соединение
-                было закрыто. Если есть данные читаем данные из сокетаи проверяем на наличие ошибок, если
+			/*
+                Если функция Poll Вернет true проверяем наличие данных, если данных нет значит соединение
+                было закрыто. Если есть данные читаем данные из сокета проверяем на наличие ошибок, если
                 выполнение произошло с ошибкой, обрабатываем.
             */
-            if (Tcp.Poll(0, SelectMode.SelectRead))
+			if (Tcp.Poll(0, SelectMode.SelectRead))
             {
                 if (Tcp.Available == 0)
                 {
@@ -446,13 +456,16 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         {
             /*
                 Если функция Poll Вернет false или есть наличие данные, считываем данные из сокета, иначе закрываем
-                соединение.
+                соединение. Если проверка прошла успешно читаем данные из сокета
             */
             if (!Tcp.Poll(0, SelectMode.SelectRead) || Tcp.Available > 0)
             {
-                    SocketError error;
+                SocketError error;
+                if (!Writer.Empty)
+                {
                     if ((error = Send()) != SocketError.Success)
                     {
+                        // проверка является данная ошибка критической
                         if (error != SocketError.WouldBlock
                          && error != SocketError.NoBufferSpaceAvailable)
                         {
@@ -461,6 +474,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 
                         }
                     }
+                }
             }
                         else
                         {
@@ -489,7 +503,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         protected void OnEventData()
         {
             string s = "data";
-            string m = "Получен фрейм с данными";
+            string m = "Получены все данные";
 
             PHandlerEvent e;
             lock (SyncEvent)
@@ -498,10 +512,25 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 e(this, new PEventArgs(s, m, null));
         }
         /// <summary>
-        /// Потокобезопасный запуск события Close
-        /// желательно запускать в обработчике Close
+        /// Потокобезопасный запуск события Chunk
+        /// желательно запускать в обработчике Chunk
         /// </summary>
-        protected void OnEventClose()
+        protected void OnEventChunk()
+        {
+            string s = "сhunk";
+            string m = "Получена часть данных";
+
+            PHandlerEvent e;
+            lock (SyncEvent)
+                e = __EventChunk;
+            if (e != null)
+                e(this, new PEventArgs(s, m, null));
+        }
+		/// <summary>
+		/// Потокобезопасный запуск события Close
+		/// желательно запускать в обработчике Close
+		/// </summary>
+		protected void OnEventClose()
         {
             string s = "close";
             string m = "Соединение было закрыто";

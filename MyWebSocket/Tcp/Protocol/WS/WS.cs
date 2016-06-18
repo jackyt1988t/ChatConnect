@@ -490,7 +490,12 @@ override
 		/// </summary>
 		private void read()
 		{
-			SocketError error;
+            SocketError error;
+            /*
+                Если функция Poll Вернет true проверяем наличие данных, если данных нет значит соединение
+                было закрыто. Если есть данные читаем данные из сокета проверяем на наличие ошибок, если
+                выполнение произошло с ошибкой, обрабатываем.
+            */
 			if (Tcp.Poll(0, SelectMode.SelectRead))
 			{
 				
@@ -519,10 +524,13 @@ override
 		/// </summary>
 		/// <param name="data">Данные</param>
 		private void write()
-		{
-				
-			SocketError error;
-			if (!Writer.Empty && Tcp.Poll(0, SelectMode.SelectWrite))
+		{	
+            SocketError error;
+            /*
+                Если есть данные и сокет доступен для записи отправляем данные. Если во время отправки произошла
+                 ошибка, обрабатываем.
+            */
+            if (!Writer.Empty && Tcp.Poll(0, SelectMode.SelectWrite))
 			{
 					if ((error = Send()) != SocketError.Success)
 					{
