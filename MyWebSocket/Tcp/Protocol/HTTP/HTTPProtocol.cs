@@ -198,8 +198,10 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                     }
                 }
             }
-            if (result)
-                Console.WriteLine("Успешно");
+			if (result)
+			{
+				//Console.WriteLine("Успешно");
+			}
         }
         protected override void Work()
         {
