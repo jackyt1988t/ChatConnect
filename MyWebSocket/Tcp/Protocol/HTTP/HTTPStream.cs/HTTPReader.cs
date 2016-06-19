@@ -49,7 +49,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				switch ( _Frame.Handl )
 				{
 					case 1:
-						header._Body[_Frame.bpart] = (byte)@char;
+						header.Body[_Frame.bpart] = (byte)@char;
 						break;
 					case 2:
 						if (@char == CR)
@@ -70,7 +70,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						if (_Frame.bleng > LENCHUNK)
 							throw new HTTPException("Превышена длинна тела", HTTPCode._400_);
 						else
-							header._Body = new byte[_Frame.bleng];
+							header.Body = new byte[_Frame.bleng];
 						break;
 					case 4:
 						if (@char == CR)
@@ -112,7 +112,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 
 				if (_Frame.bpart == _Frame.bleng)
 				{
-					header.SegmentsBuffer.Enqueue(header._Body);
+					header.SegmentsBuffer.Enqueue(header.Body);
 					if (!string.IsNullOrEmpty(  _Frame.Param  ))
 						_Frame.Handl = 4;
 					else
@@ -261,7 +261,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						{
 							_Frame.Handl = 1;
 							_Frame.bleng = header.ContentLength;
-							header._Body = new byte[header.ContentLength];
+							header.Body = new byte[header.ContentLength];
 							
 						}
 						// данные будут приходить по кускам

@@ -74,34 +74,34 @@
 		WS ws = obj as WS;
 		List<byte[]> Data = new List<byte[]>();
 		List<string> Text = new List<string>();
-		ws.EventData += (object obj, PEventArgs a) =>
-		{
+			ws.EventData += (object obj, PEventArgs a) =>
+			{
 			// Информация о полученных данных
 			WSData data = e.sender as WSData;
 
-			if (data.Opcod == WSOpcod.Text)
-			{
-				Text.Add(data.ToString());
-				// обрабатываем данные
-			}
-			else if (data.Opcod == WSOpcod.Binnary)
-			{
-				Data.Add(data.ToByte());
-				// обрабатываем данные 
-			}
+				if (data.Opcod == WSOpcod.Text)
+				{
+					Text.Add(data.ToString());
+					// обрабатываем данные
+				}
+				else
+				{
+					Data.Add(data.ToByte());
+					// обрабатываем данные 
+				}
 
-		};
-		ws.EventChunk += (object obj, PEventArgs a) =>
-		{
-			if (data.Opcod == WSOpcod.Text)
+			};
+			ws.EventChunk += (object obj, PEventArgs a) =>
 			{
-				Text.Add(data.ToString());
-			}
-			else if (data.Opcod == WSOpcod.Binnary)
-			{
-				Data.Add(data.ToByte());
-			}
-		};
+				if (data.Opcod == WSOpcod.Text)
+				{
+					Text.Add(data.ToString());
+				}
+				else
+				{
+					Data.Add(data.ToByte());
+				}
+			};
 	};
 
 ```
@@ -129,8 +129,8 @@
 ## Что с ошибками?
 
 <div>
-	Все критисекие ошибки будут записаны в файл log.log где раполагается запущенный сервер. Ошибки обрабатывается
-	в событие EventError
+	Все критисекие ошибки будут записаны в файл log.log где раполагается запущенный сервер. Ошибки 
+	обрабатывается в событие EventError
 </div>
 
 ```C#
@@ -153,7 +153,8 @@
 	Чтобы включить отладочную информацию необходимо установить свойство WS.Debug = true
 	Отладочная информация:
 </div>
-<img src="https://github.com/jackyt1988t/WebSocket/blob/master/MyWebSocketDebug.png" alt="Отладочная информация">
+<img src="https://github.com/jackyt1988t/WebSocket/blob/master/MyWebSocketDebug.png" 
+	 alt="Отладочная информация">
 
 # Средствами сервера можно обрабатывать HTTP запросы и устанавливать LongPolling соединения
 
@@ -223,8 +224,9 @@
 	HTTP.EventConnect += (object obj, PEventArgs a) =>
 	{
 		Console.WriteLine("HTTP");
+		
+		bool poll = false;
 		HTTP Http = obj as HTTP;
-		bool polling = false;
 		// здесь можно проверить правильность заголовков
 		Http.EventOnOpen += (object sender, PEventArgs e) =>
 		{	
@@ -245,34 +247,34 @@
 					{
 						for (int i = 0; i < Pollings.Count; i++)
 						{
-							Pollings[i].Flush(Http.Request._Body);
+							Pollings[i].Flush(Http.Request.Body);
 						}
-						if (!polling)
+						if (!poll)
 							Http.Flush("Данные получены");
 					}
-						break;
-					case "/subscribe":
-						polling = true;
-						lock (Pollings)
-							Pollings.Add(Http);
-						break;
-					default:
-						Http.File("Html" + Http.Request.Path);
-						break;
-					}
-				};
-				Http.EventError += (object sender, PEventArgs e) =>
-				{
-					Console.WriteLine("ERROR");
-				};
-				Http.EventClose += (object sender, PEventArgs e) =>
-				{
-					if (polling)
-					{
-						lock (Pollings)
-							Pollings.Remove(Http);
-					}
-					Console.WriteLine("CLOSE");
-				};
-			};
+					break;
+				case "/subscribe":
+					poll = true;
+					lock (Pollings)
+						Pollings.Add(Http);
+					break;
+				default:
+					Http.File(  "Html" + Http.Request.Path  );
+					break;
+			}
+		};
+		Http.EventError += (object sender, PEventArgs e) =>
+		{
+			Console.WriteLine("ERROR");
+		};
+		Http.EventClose += (object sender, PEventArgs e) =>
+		{
+			if (poll)
+			{
+				lock (Pollings)
+					Pollings.Remove(Http);
+			}
+			Console.WriteLine("CLOSE");
+		};
+	};
 ```

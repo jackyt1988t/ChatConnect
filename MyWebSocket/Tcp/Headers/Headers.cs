@@ -12,6 +12,9 @@ namespace MyWebSocket.Tcp
 #region Распространенные Заголовки http
 
 		int contentlength;
+		/// <summary>
+		/// Длинна заголовков
+		/// </summary>
 		public int ContentLength
 		{
 			get
@@ -24,6 +27,9 @@ namespace MyWebSocket.Tcp
 			}
 		}
 		string upgrade;
+		/// <summary>
+		/// Заголовок Upgrade
+		/// </summary>
 		public string Upgrade
 		{
 			get
@@ -36,6 +42,9 @@ namespace MyWebSocket.Tcp
 			}
 		}
 		string connection;
+		/// <summary>
+		/// Заголовок Connection
+		/// </summary>
 		public string Connection
 		{
 			get
@@ -48,6 +57,9 @@ namespace MyWebSocket.Tcp
 			}
 		}
 		string contentencoding;
+		/// <summary>
+		/// Заголовок Content-Encoding
+		/// </summary>
 		public string ContentEncoding
 		{
 			get
@@ -60,6 +72,9 @@ namespace MyWebSocket.Tcp
 			}
 		}
 		string transferencoding;
+		/// <summary>
+		/// Заголовок TransferEncoding
+		/// </summary>
 		public string TransferEncoding
 		{
 			get
@@ -73,6 +88,10 @@ namespace MyWebSocket.Tcp
 		}
 		
 		List<string> cashcontrol;
+		/// <summary>
+		/// Заголовок Cash-Control
+		/// Содержит список значений Cash-Control
+		/// </summary>
 		public List<string> CashControl
 		{
 			get
@@ -86,6 +105,10 @@ namespace MyWebSocket.Tcp
 			}
 		}
 		List<string> contenttype;
+		/// <summary>
+		/// Заголовок Content-Type
+		/// Содержит список значений Content-Type
+		/// </summary>
 		public List<string> ContentType
 		{
 			get
@@ -99,6 +122,10 @@ namespace MyWebSocket.Tcp
 			}
 		}
 		List<string> acceptencoding;
+		/// <summary>
+		/// Заголовок Accept-Encoding
+		/// Содержит список значений Accept-Encoding
+		/// </summary>
 		public List<string> AcceptEncoding
 		{
 			get
@@ -149,7 +176,7 @@ namespace MyWebSocket.Tcp
 		/// <summary>
 		/// тело сообщения
 		/// </summary>
-		public byte[] _Body
+		public byte[] Body
         {
             get;
             set;
@@ -161,6 +188,9 @@ namespace MyWebSocket.Tcp
 		{
 			get;
 		}
+		/// <summary>
+		/// Расширение файла(html)
+		/// </summary>
 		public string File
 		{
 			get;
@@ -192,6 +222,9 @@ namespace MyWebSocket.Tcp
             get;
             set;
         }
+		/// <summary>
+		/// время создания объекта заголвоков
+		/// </summary>
 		public DateTime TimeConnection
 		{
 			get;
@@ -203,6 +236,9 @@ namespace MyWebSocket.Tcp
 			private set;
 		}
 		private Dictionary<string, string> ContainerHeaders;
+		/// <summary>
+		/// Класс Header содержит информацию о заголвоках
+		/// </summary>
 		public Header()
         {
 			Sync = new object();

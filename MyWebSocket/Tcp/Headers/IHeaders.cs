@@ -64,7 +64,7 @@ namespace MyWebSocket.Tcp
 		{
 			get;
 		}
-		byte[] _Body
+		byte[] Body
         {
             get;
             set;

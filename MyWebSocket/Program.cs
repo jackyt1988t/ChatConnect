@@ -82,14 +82,14 @@ namespace MyWebSocket
 							{
 								for (int i = 0; i < Array.Count; i++)
 								{
-									Array[i].Message(Http.Request._Body, WSOpcod.Text, WSFin.Last);
+									Array[i].Message(Http.Request.Body, WSOpcod.Text, WSFin.Last);
 								}
 							}
 							lock (Pollings)
 							{
 								for (int i = 0; i < Pollings.Count; i++)
 								{
-									Pollings[i].Flush(Http.Request._Body);
+									Pollings[i].Flush(Http.Request.Body);
 								}
 								if (!polling)
 								{
