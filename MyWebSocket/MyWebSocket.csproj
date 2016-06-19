@@ -54,7 +54,8 @@
     <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
   </PropertyGroup>
   <PropertyGroup>
-    <StartupObject>MyWebSocket.Program</StartupObject>
+    <StartupObject>
+    </StartupObject>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -138,12 +139,13 @@
     <Compile Include="Tcp\Protocol\WS\WSProtocolN13.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
-    <Compile Include="Tcp\Protocol\WS\WStream\WStreamSample.cs">
+    <Compile Include="Tcp\Protocol\WS\WStream\WSSampleReader.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
     <Compile Include="Tcp\Protocol\WS\WStream\WSReaderN13.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
+    <Compile Include="Tcp\Protocol\WS\WStream\WSSampleWriter.cs" />
     <Compile Include="Tcp\Protocol\WS\WStream\WSWriterN13.cs" />
     <Compile Include="Tcp\WServer.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

@@ -11,15 +11,17 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		const int STSTR = 1024;
 		const int PARAM = 1024;
 		const int VALUE = 1024;
-
+		
+		public static int LENCHUNK;
 		public static readonly byte[] ENDCHUNCK;
 		public static readonly byte[] EOFCHUNCK;
 
-		public IHeader header;
+		public Header header;
 		public HTTPFrame _Frame;
 
 		static HTTPReader()
 		{
+			LENCHUNK = 64000;
 			ENDCHUNCK =
 				new byte[] { 0x0D, 0x0A };
 			EOFCHUNCK = 
@@ -65,7 +67,10 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							throw new HTTPException("Неверная длинна тела.", HTTPCode._400_);
 						
 						_Frame.Handl = 1;
-						header._Body = new byte[_Frame.bleng];
+						if (_Frame.bleng > LENCHUNK)
+							throw new HTTPException("Превышена длинна тела", HTTPCode._400_);
+						else
+							header._Body = new byte[_Frame.bleng];
 						break;
 					case 4:
 						if (@char == CR)
@@ -250,10 +255,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						}
 						else
 							throw new HTTPException( "Отсутствует символ [LF]", HTTPCode._400_ );
-						
-						// Закрыть соединение
-						if (header.Connection == "close")
-							header.Close = true;
 						
 						// длинна тела запроса
 						if (header.ContentLength > 0)

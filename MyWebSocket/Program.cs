@@ -14,19 +14,35 @@ namespace MyWebSocket
         static void Main(string[] args)
         {
 			//WS.Debug = true;
+			// Список подписчиков
+			List<WS> Array = new List<WS>();
+			List<HTTP> Pollings = new List<HTTP>();
 			WS.EventConnect += (object obj, PEventArgs a) =>
 			{
 				// Объект WebSocket
 				WS WebSocket = obj as WS;
-				// Максимально допустимая длинна фрейма
-				WebSocket.Pollicy.MaxLeng = 32000;
+				lock (Array)
+					Array.Add(WebSocket);
 				// Событие наступает когда приходят новые данные
 				string message = "";
 				WebSocket.EventData += (object sender, PEventArgs e) =>
 				{
 					WSData data = e.sender as WSData;
 					message += data.ToString();
-					WebSocket.Message(message);
+					lock (Array)
+					{
+						for (int i = 0; i < Array.Count; i++)
+						{
+							Array[i].Message(message);
+						}
+					}
+					lock (Pollings)
+					{
+						for (int i = 0; i < Pollings.Count; i++)
+						{
+							Pollings[i].Flush(message);
+						}
+					}
 					message = "";
 				};
 				WebSocket.EventChunk += (object sender, PEventArgs e) =>
@@ -42,11 +58,11 @@ namespace MyWebSocket
 				// Событие наступает если соединение было закрыто
 				WebSocket.EventClose += (object sender, PEventArgs e) =>
 				{
+					lock (Array)
+						Array.Remove(WebSocket);
 					Console.WriteLine(e.sender.ToString());
 				};
 			};
-			// Список подписчиков
-			List<HTTP> Pollings = new List<HTTP>();
 			// Обрабатываем новый http запрос
 			HTTP.EventConnect += (object obj, PEventArgs a) =>
 			{
@@ -62,24 +78,36 @@ namespace MyWebSocket
 							Http.File("Html/index.html");
 							break;
 						case "/message":
+							lock (Array)
+							{
+								for (int i = 0; i < Array.Count; i++)
+								{
+									Array[i].Message(Http.Request._Body, WSOpcod.Text, WSFin.Last);
+								}
+							}
 							lock (Pollings)
 							{
 								for (int i = 0; i < Pollings.Count; i++)
 								{
-									Pollings[i].Response.StartString = "HTTP/1.1 200 OK";
-									Pollings[i].Response.ContentType = "text/plain; charset=utf-8";
-									Pollings[i].Message(Http.Request._Body);
-									Pollings[i].flush();
+									Pollings[i].Flush(Http.Request._Body);
 								}
-								Http.Response.StartString = "HTTP/1.1 200 OK";
-								Http.Message(string.Empty);
-								Http.flush();
-						}
+								if (!polling)
+								{
+									Http.Message("Работает...");
+									Http.Flush();
+								}
+							}
 							break;
 						case "/subscribe":
-							polling = true;
+							
 							lock (Pollings)
-								Pollings.Add(Http);
+							{
+								if (!polling)
+								{
+									polling = true;
+									Pollings.Add(Http);
+								}
+							}
 							break;
 						default:
 							Http.File("Html" + Http.Request.Path);

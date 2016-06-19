@@ -47,18 +47,6 @@ namespace MyWebSocket.Tcp
 				AddHeader("Upgrade", value.ToString());
 			}
 		}
-		string contenttype;
-		public string ContentType
-		{
-			get
-			{
-				return contenttype;
-			}
-			set
-			{
-				AddHeader("Content-Type", value.ToString());
-			}
-		}
 		string contentencoding;
 		public string ContentEncoding
 		{
@@ -83,7 +71,33 @@ namespace MyWebSocket.Tcp
 				AddHeader("Transfer-Encoding", value.ToString());
 			}
 		}
-
+		
+		List<string> cashcontrol;
+		public List<string> CashControl
+		{
+			get
+			{
+				return cashcontrol;
+			}
+			set
+			{
+				cashcontrol = value;
+				AddHeader("Cash-Control", SplitValues(",", value));
+			}
+		}
+		List<string> contenttype;
+		public List<string> ContentType
+		{
+			get
+			{
+				return contenttype;
+			}
+			set
+			{
+				contenttype = value;
+				AddHeader("Content-Type", SplitValues(";", value));
+			}
+		}
 		List<string> acceptencoding;
 		public List<string> AcceptEncoding
 		{
@@ -93,7 +107,8 @@ namespace MyWebSocket.Tcp
 			}
 			set
 			{
-				AddHeader("Accept-Encoding", value.ToString());
+				acceptencoding = value;
+				AddHeader("Accept-Encoding", SplitValues(",", value));
 			}
 		}
 
@@ -129,7 +144,7 @@ namespace MyWebSocket.Tcp
 		public bool Close
 		{
 			get;
-			set;
+			private set;
 		}
 		/// <summary>
 		/// тело сообщения
@@ -196,37 +211,9 @@ namespace MyWebSocket.Tcp
 			ContainerHeaders = new Dictionary<string, string>();
 
 		}
-		public void Clear()
-		{
-			ContainerHeaders.Clear();
-		}
-		public bool SetReq()
-		{
-			if (!IsReq)
-			{
-				IsReq = true;
-				return false;
-			}
-			return true;
-		}
-		public bool SetRes()
-		{
-			if (!IsRes)
-			{
-				IsRes = true;
-				return false;
-			}
-			return true;
-		}
-		public bool SetEnd()
-		{
-			if (!IsEnd)
-			{
-				IsEnd = true;
-				return false;
-			}
-			return true;
-		}
+
+#region function
+		
 		/// <summary>
 		/// Добавляет значение и параметр заголовка
 		/// если заголовок уже добавлен заменяет его
@@ -240,6 +227,18 @@ namespace MyWebSocket.Tcp
 			
 			Analizating(key, value);
 			ReplaceHeader(key, value);
+		}
+		/// <summary>
+		/// Очищает все заголвоки
+		/// </summary>
+		public void ClearHeaders()
+		{
+			StartString = null;
+			foreach (KeyValuePair<string, string> header in ContainerHeaders)
+			{
+				Analizating(header.Key, string.Empty);
+			}
+			ContainerHeaders.Clear();
 		}
 		/// <summary>
 		/// Удаляет заголовок если он был добавлен
@@ -342,7 +341,12 @@ namespace MyWebSocket.Tcp
 					connection = value.ToLower();
 					break;
 				case "content-type":
-					contenttype = value.ToLower();
+					contenttype = 
+						ReplaseValues(value, ",");
+					break;
+				case "cash-control":
+					cashcontrol =
+						ReplaseValues(value, ",");
 					break;
 				case "content-length":
 					contentlength = int.Parse(value);
@@ -359,6 +363,7 @@ namespace MyWebSocket.Tcp
 					break;
 			}
 		}
+		
 		private void ReplaceHeader(string key, string value)
 		{
 			if (IsReq)
@@ -375,6 +380,16 @@ namespace MyWebSocket.Tcp
 			}
 			ContainerHeaders.Add(key, value);
 		}
+		private string SplitValues(string separat, List<string> values)
+		{
+			string value = string.Empty;
+			for (int i = 0; i < values.Count; i++)
+			{
+				value += values[i] + separat;
+			}
+			value.TrimEnd(separat.ToCharArray());
+			return value;
+		}
 		private List<string> ReplaseValues(string value, string separat)
 		{
 			List<string> values = 
@@ -385,5 +400,48 @@ namespace MyWebSocket.Tcp
 			}
 			return values;
 		}
+
+#endregion
+	
+#region Internal function
+
+		internal bool SetReq()
+		{
+			if (!IsReq)
+			{
+				IsReq = true;
+				return false;
+			}
+			return true;
+		}
+		internal bool SetRes()
+		{
+			if (!IsRes)
+			{
+				IsRes = true;
+				return false;
+			}
+			return true;
+		}
+		internal bool SetEnd()
+		{
+			if (!IsEnd)
+			{
+				IsEnd = true;
+				return false;
+			}
+			return true;
+		}
+		internal bool SetClose()
+		{
+			if (!Close)
+			{
+				Close = true;
+				return false;
+			}
+			return true;
+		}
+
+#endregion
 	}
 }

@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace MyWebSocket.Tcp.Protocol.HTTP
 {
@@ -14,7 +11,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		public static readonly byte[] ENDCHUNCK;
 		public static readonly byte[] EOFCHUNCK;
 
-		public IHeader header;
+		public Header header;
 		public HTTPFrame _Frame;
 
 		public override long Position
@@ -63,11 +60,13 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		}
 		public void End()
 		{
-			base.Write(ENDCHUNCK, 0, 2);
+			lock (__Sync)
+				base.Write(ENDCHUNCK, 0, 2);
 		}
 		public void Eof()
 		{
-			base.Write(EOFCHUNCK, 0, 5);
+			lock (__Sync)
+				base.Write(EOFCHUNCK, 0, 5);
 		}
 		
 		public void Write(string str)
@@ -80,6 +79,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		}
 		public override void Write(byte[] buffer, int start, int length)
 		{
+			if (buffer.Length < (length - start))
+				throw new IOException("MAXLENGTH");
+
 			lock (__Sync)
 			{
 				_Frame.Handl++;
@@ -91,10 +93,10 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					header.SetRes();
 					_Frame.hleng = data.Length;
 				}
-				if (length > Clear)
+				if ((length + 64) > Clear)
 				{
 					int resize = (int)Count * 2;
-					if (resize - (int)Length < length)
+					if (resize - (int)Length - 64 < length)
 						resize = (int)Length + length + 64;
 
 					if (resize < MAXRESIZE)
@@ -106,6 +108,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				if (!string.IsNullOrEmpty(
 									header.ContentEncoding))
 					_Frame.bpart += length;
+				if (length > 0)
+				{
 					// оптравить форматированные данные
 					if (header.TransferEncoding != "chunked")
 						base.Write(  buffer, start, length  );
@@ -119,6 +123,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						base.Write(  buffer, start, length  );
 						End();
 					}
+				}
 			}
 		}
 	}

@@ -39,6 +39,22 @@ namespace MyWebSocket.Tcp.Protocol
 			protected set;
 		}
 		/// <summary>
+		/// Содержит Полученные заголовки
+		/// </summary>
+		public virtual Header Request
+		{
+			get;
+			protected set;
+		}
+		/// <summary>
+		/// Содержит Отправленные заголовки
+		/// </summary>
+		public virtual Header Response
+		{
+			get;
+			protected set;
+		}
+		/// <summary>
 		/// Кольцевой буффер хранения данных
 		/// </summary>
 		public virtual MyStream Reader
@@ -54,22 +70,7 @@ namespace MyWebSocket.Tcp.Protocol
 			get;
 			protected set;
 		}
-		/// <summary>
-		/// Содержит Полученные заголовки запроса
-		/// </summary>
-		public virtual IHeader Request
-		{
-			get;
-			protected set;
-		}
-		/// <summary>
-		/// Содержит Отправленные заголовки запроса
-		/// </summary>
-		public virtual IHeader Response
-		{
-			get;
-			protected set;
-		}
+		
 
 		public virtual void Dispose()
 		{

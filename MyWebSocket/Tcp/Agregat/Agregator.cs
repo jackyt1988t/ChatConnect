@@ -38,16 +38,16 @@ namespace MyWebSocket.Tcp
 					else
 					{
 						agregator.TaskLoopHandler();
-						if (loop++ > 500)
+						if (loop++ > Container.Count)
 						{
 							loop = 0;
-							Thread.Sleep(10);
+							Thread.Sleep(20);
 						}
 					}
 				}
 				catch (Exception exc)
 				{
-					Loging.AddMessage(exc.Message + Loging.NewLine + exc.StackTrace, "Log/log.log", Log.Log.Debug);
+					Loging.AddMessage(exc.Message + Loging.NewLine + exc.StackTrace, "log.log", Log.Log.Debug);
 				}
 			}
 		}

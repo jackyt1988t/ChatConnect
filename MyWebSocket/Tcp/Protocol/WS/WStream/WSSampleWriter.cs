@@ -3,12 +3,12 @@ using System.IO;
 
 namespace MyWebSocket.Tcp.Protocol.WS
 {
-	class WSWriterN13 : MyStream
+	class WSSampleWriter : MyStream
 	{
 		public static int MINRESIZE = 0;
 		public static int MAXRESIZE = 512000;
 
-		public WSN13 _Frame;
+		public WSFrameSample _Frame;
 
 		public override long Position
 		{
@@ -34,26 +34,26 @@ namespace MyWebSocket.Tcp.Protocol.WS
 						if (resize < MINRESIZE)
 							resize = MINRESIZE;
 						if (resize > (int)Length)
-							Resize(    resize    );
+							Resize(resize);
 					}
 				}
 			}
 		}
 
-		public WSWriterN13() : 
+		public WSSampleWriter() : 
 			base(1024)
 		{
-			_Frame = new WSN13();
+			_Frame = new WSFrameSample();
 		}
-		public WSWriterN13(int length) :
+		public WSSampleWriter(int length) :
 			base(length)
         {
-			_Frame = new WSN13();
+			_Frame = new WSFrameSample();
 		}
 
 		public override int Read(byte[] buffer, int start, int length)
 		{
-			
+
 			int read;
 			lock (__Sync)
 			{
@@ -70,17 +70,17 @@ namespace MyWebSocket.Tcp.Protocol.WS
 					if (resize < MINRESIZE)
 						resize = MINRESIZE;
 					if (resize > (int)Length)
-						Resize(    resize    );
+						Resize(resize);
 				}
 			}
 			return read;
 		}
 
-		public void Write(WSN13 frame)
+		public void Write(WSFrameSample frame)
 		{
 			_Frame = frame;
 			lock (__Sync)
-			{	 
+			{
 				Write(frame.DataHead);
 				Write(frame.DataBody);
 			}
@@ -98,15 +98,15 @@ namespace MyWebSocket.Tcp.Protocol.WS
 					int resize = (int)Count * 2;
 					if (resize - (int)Length < length)
 						resize = (int)Length + length;
-					
+
 					if (resize < MAXRESIZE)
-						Resize (  resize  );
+						Resize(resize);
 					else
 						throw new IOException("MAXRESIZE");
 				}
-					base.Write( buffer, 0, buffer.Length );
+				base.Write(buffer, 0, buffer.Length);
 			}
-			
+
 		}
 	}
 }

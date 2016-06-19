@@ -52,16 +52,14 @@ namespace MyWebSocket.Tcp
 				{
 					GC.Collect();
 					GC.WaitForPendingFinalizers();
-					Loging.AddMessage(
-						exc.Message + Loging.NewLine + exc.StackTrace, "Log/log.log", Log.Log.Fatal);
+					Loging.AddMessage(exc.Message + Loging.NewLine + exc.StackTrace, "log.log", Log.Log.Fatal);
 				}
 				catch (Exception exc)
 				{
 					if (socket != null)
 						socket.Dispose();
 
-					Loging.AddMessage(
-						exc.Message + Loging.NewLine + exc.StackTrace, "Log/log.log", Log.Log.Debug);
+					Loging.AddMessage(exc.Message + Loging.NewLine + exc.StackTrace, "log.log", Log.Log.Debug);
 				}
 
 			}

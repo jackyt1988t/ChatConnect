@@ -1,11 +1,7 @@
-﻿using System.Text;
-
-using System.Net;
-using System.Net.Sockets;
-
-using System.Threading;
-using System;
-using MyWebSocket.Log;
+﻿using System;
+using System.Text;
+	using System.Net.Sockets;
+		using System.Threading;
 
 namespace MyWebSocket.Tcp.Protocol.WS
 {
@@ -396,17 +392,17 @@ override
 				if (state == 0)
 				{
 					Work();
-				/*==================================================================
-					Проверяет сокет были получены данные или нет. Если 
-					данные были получены Запускает функцию для получения данных.
-					В случае если соединеие было закрыто назначается 
-					соотвествующий обработчик.
-				==================================================================*/
-					if (Interlocked.CompareExchange(ref state, 1, 0) != 0)
-						return TaskResult;
-					read();
-				if (state == 1)
-					Data();
+                /*==================================================================
+                    Проверяет сокет были получены данные или нет. Читаем данные 
+                    из сокета, если есть данные обрабатываем  их. Когда данные
+                    будут получены и обработаны переходим к следующему обработчику,
+                    обработчику отправки данных.
+                ==================================================================*/
+                    if (Interlocked.CompareExchange(ref state, 1, 0) != 0)
+                        return TaskResult;
+                        read();
+                        if (!Reader.Empty)
+                            Data();
 				/*==================================================================
 					Проверяет возможность отправки данных. Если данные можно 
 					отправить запускает функцию для отправки данных, в случае 
@@ -448,7 +444,8 @@ override
 						if (!___Close.Req)
 						{
 							Read();
-							Data();
+							if (!Reader.Empty)
+								Data();
 						}
 							write();
 							return TaskResult;
@@ -461,8 +458,10 @@ override
 				==================================================================*/
 						if (state == 7)
 						{
-							Dispose();
+							
 							Close(___Close);
+								if (Tcp.Connected)
+									Tcp.Close();
 								TaskResult.Option   =   TaskOption.Delete;
 						}
 			}
@@ -473,8 +472,8 @@ override
 			}
 			catch (Exception exc)
 			{
-				Loging.AddMessage(
-					exc.Message + Loging.NewLine + exc.StackTrace, "Log/log.log", Log.Log.Fatal);
+				ExcServer(new WSException("Критическая. " + exc.Message, WsError.CriticalError, WSClose.ServerError));
+				Log.Loging.AddMessage(exc.Message + Log.Loging.NewLine + exc.StackTrace, "log.log", Log.Log.Fatal);
 			}
 			return TaskResult;
 		}
@@ -491,7 +490,12 @@ override
 		/// </summary>
 		private void read()
 		{
-			SocketError error;
+            SocketError error;
+            /*
+                Если функция Poll Вернет true проверяем наличие данных, если данных нет значит соединение
+                было закрыто. Если есть данные читаем данные из сокета проверяем на наличие ошибок, если
+                выполнение произошло с ошибкой, обрабатываем.
+            */
 			if (Tcp.Poll(0, SelectMode.SelectRead))
 			{
 				
@@ -520,10 +524,13 @@ override
 		/// </summary>
 		/// <param name="data">Данные</param>
 		private void write()
-		{
-				
-			SocketError error;
-			if (!Writer.Empty && Tcp.Poll(0, SelectMode.SelectWrite))
+		{	
+            SocketError error;
+            /*
+                Если есть данные и сокет доступен для записи отправляем данные. Если во время отправки произошла
+                 ошибка, обрабатываем.
+            */
+            if (!Writer.Empty && Tcp.Poll(0, SelectMode.SelectWrite))
 			{
 					if ((error = Send()) != SocketError.Success)
 					{
@@ -602,7 +609,7 @@ override
 			if (e != null)
 				e(this, new PEventArgs(S_ERROR, string.Empty, _error));
 		}
-		protected void OnEventConnect(IHeader request, IHeader response)
+		protected void OnEventOpen(IHeader request, IHeader response)
 		{
 			//string m = "Подключение было установлено";
 			PHandlerEvent e;
@@ -610,6 +617,11 @@ override
 				e = __EventOnOpen;
 			if (e != null)
 				e(this, new PEventArgs(S_CONNECT, string.Empty, null));
+		}
+		protected void OnEventConnect()
+		{
+			//string m = "Подключение было установлено";
+			PHandlerEvent e;
 			lock (SyncEvent)
 				e = __EventConnect;
 			if (e != null)
