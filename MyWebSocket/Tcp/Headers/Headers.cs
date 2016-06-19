@@ -47,18 +47,6 @@ namespace MyWebSocket.Tcp
 				AddHeader("Upgrade", value.ToString());
 			}
 		}
-		string contenttype;
-		public string ContentType
-		{
-			get
-			{
-				return contenttype;
-			}
-			set
-			{
-				AddHeader("Content-Type", value.ToString());
-			}
-		}
 		string contentencoding;
 		public string ContentEncoding
 		{
@@ -83,6 +71,7 @@ namespace MyWebSocket.Tcp
 				AddHeader("Transfer-Encoding", value.ToString());
 			}
 		}
+		
 		List<string> cashcontrol;
 		public List<string> CashControl
 		{
@@ -93,14 +82,20 @@ namespace MyWebSocket.Tcp
 			set
 			{
 				cashcontrol = value;
-
-				string header = string.Empty;
-				for (int i = 0; i < value.Count; i++)
-				{
-					header += value[i] + ",";
-				}
-				header.TrimEnd( new char[] { ',' } );
-				AddHeader(  "Cash-Control", header  );
+				AddHeader("Cash-Control", SplitValues(",", value));
+			}
+		}
+		List<string> contenttype;
+		public List<string> ContentType
+		{
+			get
+			{
+				return contenttype;
+			}
+			set
+			{
+				contenttype = value;
+				AddHeader("Content-Type", SplitValues(";", value));
 			}
 		}
 		List<string> acceptencoding;
@@ -113,14 +108,7 @@ namespace MyWebSocket.Tcp
 			set
 			{
 				acceptencoding = value;
-
-				string header = string.Empty;
-				for (int i = 0; i < value.Count; i++)
-				{
-					header  +=  value[i] + ","; 
-				}
-				header.TrimEnd( new char[] { ',' } );
-				AddHeader("Accept-Encoding", header);
+				AddHeader("Accept-Encoding", SplitValues(",", value));
 			}
 		}
 
@@ -353,7 +341,8 @@ namespace MyWebSocket.Tcp
 					connection = value.ToLower();
 					break;
 				case "content-type":
-					contenttype = value.ToLower();
+					contenttype = 
+						ReplaseValues(value, ",");
 					break;
 				case "cash-control":
 					cashcontrol =
@@ -374,6 +363,7 @@ namespace MyWebSocket.Tcp
 					break;
 			}
 		}
+		
 		private void ReplaceHeader(string key, string value)
 		{
 			if (IsReq)
@@ -389,6 +379,16 @@ namespace MyWebSocket.Tcp
 				}
 			}
 			ContainerHeaders.Add(key, value);
+		}
+		private string SplitValues(string separat, List<string> values)
+		{
+			string value = string.Empty;
+			for (int i = 0; i < values.Count; i++)
+			{
+				value += values[i] + separat;
+			}
+			value.TrimEnd(separat.ToCharArray());
+			return value;
 		}
 		private List<string> ReplaseValues(string value, string separat)
 		{

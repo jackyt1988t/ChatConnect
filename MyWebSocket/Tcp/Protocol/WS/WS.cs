@@ -609,7 +609,7 @@ override
 			if (e != null)
 				e(this, new PEventArgs(S_ERROR, string.Empty, _error));
 		}
-		protected void OnEventConnect(IHeader request, IHeader response)
+		protected void OnEventOpen(IHeader request, IHeader response)
 		{
 			//string m = "Подключение было установлено";
 			PHandlerEvent e;
@@ -617,6 +617,11 @@ override
 				e = __EventOnOpen;
 			if (e != null)
 				e(this, new PEventArgs(S_CONNECT, string.Empty, null));
+		}
+		protected void OnEventConnect()
+		{
+			//string m = "Подключение было установлено";
+			PHandlerEvent e;
 			lock (SyncEvent)
 				e = __EventConnect;
 			if (e != null)

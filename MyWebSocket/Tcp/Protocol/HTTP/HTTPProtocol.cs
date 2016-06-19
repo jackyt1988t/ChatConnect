@@ -83,10 +83,14 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         protected override void file(string path, int chunk)
         {
             FileInfo fileinfo = new FileInfo(path);
-            if (string.IsNullOrEmpty(Response.ContentType))
+            if (Response.ContentType == null
+                    || Response.ContentType.Count == 0)
             {
-                string extension = fileinfo.Extension.Substring(1);
-                Response.ContentType = "text/" + extension + "; charset=utf-8";
+                Response.ContentType = new List<string>()
+                                       {
+                                           "text/" + fileinfo.Extension.Substring(1),
+                                           "charset=utf-8"
+                                       };
             }
             if (!fileinfo.Exists)
             {
@@ -169,8 +173,13 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                                                    "no-case", 
                                                    "no-store" 
                                                };
-                if (string.IsNullOrEmpty(Response.ContentType))
-                    Response.ContentType = "text/plain, charset=utf-8";
+                if (Response.ContentType != null
+                        && Response.ContentType.Count == 0)
+                    Response.ContentType = new List<string>
+                                               {
+                                                   "text/plain",
+                                                   "charset=utf-8"
+                                               };
 
             lock (Sync)
             {

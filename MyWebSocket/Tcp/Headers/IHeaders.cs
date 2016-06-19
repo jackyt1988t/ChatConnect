@@ -22,11 +22,6 @@ namespace MyWebSocket.Tcp
 			get;
 			set;
 		}
-		string ContentType
-		{
-			get;
-			set;
-		}
 		string ContentEncoding
 		{
 			get;
@@ -38,6 +33,11 @@ namespace MyWebSocket.Tcp
 			set;
 		}
 		List<string> CashControl
+		{
+			get;
+			set;
+		}
+		List<string> ContentType
 		{
 			get;
 			set;

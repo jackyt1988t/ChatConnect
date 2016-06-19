@@ -379,18 +379,14 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 ==============================================================*/
                         if (state == 5)
                         {
-                            if (!Writer.Empty)
-                                write();
-                            else
-                                state = 7;
+                            if (Tcp.Connected)
+                                Tcp.Close();
+                            state = 7;
                         }
                         if (state == 7)
                         {
                             Close();
-                                if (Tcp.Connected)
-                                    Tcp.Close();
-                            
-                                Result.Option = TaskOption.Delete;
+                            Result.Option = TaskOption.Delete;
                         }
             }
             catch (HTTPException err)

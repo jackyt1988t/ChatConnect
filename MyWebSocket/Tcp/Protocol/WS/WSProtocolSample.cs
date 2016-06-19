@@ -241,15 +241,17 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		
 		protected override void Connection(IHeader request, IHeader response)
 		{
+			OnEventConnect();
+
 			MD5 md5 = MD5.Create();
 			Regex regex = new Regex(@"\D");
 
 			string key1;
 			string key2;
 			if (!request.ContainsKeys("sec-websocket-key1", out key1, true))
-				throw new WSException("Отсутствует заголовок sec-webspcket-key1", WsError.PcodNotSuported, WSClose.UnsupportedData);
+				throw new WSException("Отсутствует заголовок sec-webspcket-key1", WsError.HandshakeError, WSClose.TLSHandshake);
 			if (!request.ContainsKeys("sec-websocket-key2", out key2, true))
-				throw new WSException("Отсутствует заголовок sec-webspcket-key2", WsError.PcodNotSuported, WSClose.UnsupportedData);
+				throw new WSException("Отсутствует заголовок sec-webspcket-key2", WsError.HandshakeError, WSClose.TLSHandshake);
 			
 			long space_1 = Regex.Matches(key1, @" ").Count;
 			long space_2 = Regex.Matches(key2, @" ").Count;
@@ -269,7 +271,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			md5.Clear();
 
 			Set101(Response);
-			OnEventConnect(request, response);
+			OnEventOpen(request, response);
 			byte[] buffer = response.ToByte();
 			if (Message(buffer, 0, buffer.Length))
 				Message(__data, 0, __data.Length);

@@ -76,8 +76,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 				ExcServer(new WSException("Ошибка сокета", exc.SocketErrorCode, WSClose.ServerError));
 			}
 		}
-		static
-		public void Set101(IHeader header)
+		static public void Set101(IHeader header)
 		{
 			header.StartString = "HTTP/1.1 101 Switching Protocols";
 			header.AddHeader("Upgrade", "WebSocket");
@@ -291,16 +290,20 @@ namespace MyWebSocket.Tcp.Protocol.WS
 
 		protected override void Connection(IHeader request, IHeader response)
 		{
+			OnEventConnect();
+
 			SHA1 sha1 = SHA1.Create();
 			string key;
 			if (!request.ContainsKeys("sec-websocket-key", out key, true))
-				throw new WSException("Отсутствует заголовок sec-webspcket-key", WsError.PcodNotSuported, WSClose.UnsupportedData);
+				throw new WSException("Отсутствует заголовок sec-websocket-key", WsError.HandshakeError, WSClose.TLSHandshake);
 			string hex = Convert.ToBase64String(sha1.ComputeHash(Encoding.UTF8.GetBytes(key + CHECKKEY)));
 			sha1.Clear();
 				Response.AddHeader("Sec-WebSocket-Accept", hex);
 
 			Set101(Response);
-			OnEventConnect(request, response);
+			
+			OnEventOpen(request, response);
+
 			byte[] buffer = response.ToByte();
 			Message(buffer, 0, buffer.Length);
 		}

@@ -7,52 +7,164 @@
 	WebSocket Протокол Sample - требует тестов https://tools.ietf.org/html/draft-ietf-hybi-thewebsocketprotocol-03 <br>
 	WebSocket Протокол №13(RFC6455) - требует тестов https://tools.ietf.org/html/rfc6455 <br>
 	ПланируетсЯ поддержка всех протоколов.
-	Пример простейшего WebSocket echo сервера <br> 
-	Данный пример показывает как запустить  WebSocket Сервер и зарегистировать обработчики событий
 </div>
+
+## С чего начать?
+
+<div>
+	Для того чтобы начать обрабатывать входящие подключения WebSocket клиентов необходимо подписаться на статическое
+	событие EventConnect класса ws, событие наступает если клиент инициирует переход c протокола http на websocket.
+	Был был указан заголвок Upgrade: websocket и версия websocket поддерживается данной реализацией.
+</div>
+
 ```C#
-using System;
-using System.Text;
 
-using ChatConnect.Tcp;
-using ChatConnect.Tcp.Protocol;
-using ChatConnect.Tcp.Protocol.WS;
+	using ChatConnect.Tcp;
+	using ChatConnect.Tcp.Protocol.WS;
 
-// Включить вывод отладочной информации
-//WS.Debug = true;
-			WS.EventConnect += (object obj, PEventArgs a) =>
-			{
-				// Объект WebSocket
-				WS WebSocket = obj as WS;
-				// Событие наступает когда приходят новые данные
-				string message = "";
-				WebSocket.EventData += (object sender, PEventArgs e) =>
-				{
-					WSData data = e.sender as WSData;
-					message += data.ToString();
-					WebSocket.Message(message);
-					message = "";
-				};
-				WebSocket.EventChunk += (object sender, PEventArgs e) =>
-				{
-					WSData data = e.sender as WSData;
-					message += Encoding.UTF8.GetString(data._Data);
-				};
-				// Событие наступает если произошла ошибка данных
-				WebSocket.EventError += (object sender, PEventArgs e) =>
-				{
-					Console.WriteLine(e.sender.ToString());
-				};
-				// Событие наступает если соединение было закрыто
-				WebSocket.EventClose += (object sender, PEventArgs e) =>
-				{
-					Console.WriteLine(e.sender.ToString());
-				};
-			};
-// Запуск серверами с указанным адресом и номером порта с 2 потоками обработки подключений
-WServer Server = new WServer("0.0.0.0", 8081, 2);
+	WS.EventConnect += (object obj, PEventArgs a) =>
+	{
+		Console.WriteLine("был выполнен переход на websocket");
+	};
+	
+	// Запуск Сервера
+	WServer Server = new WServer("0.0.0.0", 8081, 2);
 ```
-<div>Отладочная информация</div>
+
+## Как обрабатывать?
+
+<div>
+	Если после события EventConnect обработка заголвоков закончится успехом наступит событие EventOnOpen. заголвки
+	будут отправлены после обработки всех подписчиков на событие EventOnOpen данного экземпляра websocket.
+</div>
+
+```C#
+
+	using ChatConnect.Tcp.Protocol.WS;
+
+	WS.EventConnect += (object obj, PEventArgs a) =>
+	{
+		Console.WriteLine("был выполнен переход на websocket");
+		WS ws = obj as WS;
+		ws.EventOnOpen += (object obj, PEventArgs a) =>
+		{
+			Console.WriteLine("Заголвоки были получены и установлены");
+			Console.WriteLine("Входящие заголвоки:\r\n" + ws.Request.ToString());
+			Console.WriteLine("Исходящие заголвоки:\r\n" + ws.Response.ToString());
+		};
+	};
+
+```
+
+<div>
+	При получение днных могут произойти несколько событий, точнее два, это EventChunk и EventData. Событие EventChuck
+	наступает если удаленная сторона отправляет данные по частям, что предусмотрено всеми версиями websocket, например
+	в версии 13 удаленная сторона должна в первом фрейме указать Опкод данных(Text, Binnary) и бит FIN равным 0,
+	далее следует 0 или несколько фреймов где опкод равен(Continuation), а бит FIN равен 0 и последним всегда должен
+	приходить фрейм с опкодом(Continuation) и битом FIN равным 1, он же может быть одним единственным фреймом. Когда
+	все данные получены наступает событие EventData. 
+</div>
+
+```C#
+
+	using ChatConnect.Tcp.Protocol.WS;
+
+	WS.EventConnect += (object obj, PEventArgs a) =>
+	{
+		Console.WriteLine("был выполнен переход на websocket");
+		WS ws = obj as WS;
+		List<byte[]> Data = new List<byte[]>();
+		List<string> Text = new List<string>();
+		ws.EventData += (object obj, PEventArgs a) =>
+		{
+			// Информация о полученных данных
+			WSData data = e.sender as WSData;
+			Console.WriteLine("FIN: " + data.FIN);
+			Console.WriteLine("Опкод: " + data.Opcod);
+
+			if (data.Opcod == WSOpcod.Text)
+			{
+				Text.Add(data.ToString());
+
+				string message = string.Empty;
+				for (int i = 0; i < Text.Count; i++)
+				{
+					message += Text[i];
+				}
+
+				ws.Message(Text);
+			}
+			else if (data.Opcod == WSOpcod.Binnary)
+			{
+				Data.Add(data.ToByte());
+				// обрабатываем данные 
+			}
+
+		};
+		ws.EventChunk += (object obj, PEventArgs a) =>
+		{
+			if (data.Opcod == WSOpcod.Text)
+			{
+				Text.Add(data.ToString());
+				// обрабатываем данные если необходимо
+			}
+			else if (data.Opcod == WSOpcod.Binnary)
+			{
+				Data.Add(data.ToByte());
+				// обрабатываем данные если необходимо 
+			}
+		};
+	};
+
+```
+
+<div>
+	Последним всегда наступает событие EventClose было соединение закрыто чисто или произошла ошибка.
+</div>
+
+```C#
+
+	using ChatConnect.Tcp.Protocol.WS;
+
+	WS.EventConnect += (object obj, PEventArgs a) =>
+	{
+		Console.WriteLine("был выполнен переход на websocket");
+		WS ws = obj as WS;
+		ws.EventClose += (object obj, PEventArgs a) =>
+		{
+			Console.WriteLine(e.sender.ToString());
+		};
+	};
+
+```
+
+## Что с ошибками?
+
+<div>
+	Все критисекие ошибки будут записаны в файл log.log где раполагается запущенный сервер. Ошибки обрабатывается
+	в событие EventError
+</div>
+
+```C#
+
+	using ChatConnect.Tcp.Protocol.WS;
+
+	WS.EventConnect += (object obj, PEventArgs a) =>
+	{
+		Console.WriteLine("был выполнен переход на websocket");
+		WS ws = obj as WS;
+		ws.EventError += (object obj, PEventArgs a) =>
+		{
+			Console.WriteLine(e.sender.ToString());
+		};
+	};
+
+```
+
+<div>
+	Чтобы включить отладочную информацию необходимо установить свойство WS.Debug = true
+	Отладочная информация:
+</div>
 <img src="https://github.com/jackyt1988t/WebSocket/blob/master/MyWebSocketDebug.png" alt="Отладочная информация">
 <div>
 	Средствами сервера можно отдавать статические фалы по http протоколу
