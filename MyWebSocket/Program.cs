@@ -40,8 +40,7 @@ namespace MyWebSocket
 					{
 						for (int i = 0; i < Pollings.Count; i++)
 						{
-							Pollings[i].Message(message);
-							Pollings[i].Flush();
+							Pollings[i].Flush(message);
 						}
 					}
 					message = "";
@@ -90,8 +89,7 @@ namespace MyWebSocket
 							{
 								for (int i = 0; i < Pollings.Count; i++)
 								{
-									Pollings[i].Message(Http.Request._Body);
-									Pollings[i].Flush();
+									Pollings[i].Flush(Http.Request._Body);
 								}
 								if (!polling)
 								{

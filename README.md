@@ -7,7 +7,6 @@
 	WebSocket Протокол Sample - требует тестов https://tools.ietf.org/html/draft-ietf-hybi-thewebsocketprotocol-03 <br>
 	WebSocket Протокол №13(RFC6455) - требует тестов https://tools.ietf.org/html/rfc6455 <br>
 </div>
-    sadasdasd
 
 ## С чего начать?
 
@@ -155,56 +154,114 @@
 	Отладочная информация:
 </div>
 <img src="https://github.com/jackyt1988t/WebSocket/blob/master/MyWebSocketDebug.png" alt="Отладочная информация">
+
+# Средствами сервера можно обрабатывать HTTP запросы и устанавливать LongPolling соединения
+
+## С чего начать?
+
 <div>
-	Средствами сервера можно отдавать статические фалы по http протоколу
-	Как и для WebSocket необходимо зарегистрировать обработчик события полученного запроса
+	Для того чтобы начать обрабатывать входящие подключения HTTP необходимо подписаться на статическое
+	событие EventConnect класса HTTP, событие наступает когда устанавливается новое tcp/ip соеинение.
 </div>
+
+```C#
+	using ChatConnect.Tcp.Protocol.WS;
+	
+	HTTP.EventConnect += (object obj, PEventArgs a) =>
+	{
+		Console.WriteLine("Установлено новое http соедиение");
+	};
+```
+
+<div>
+	после того как будут получены заголвоки и не будет инициирован переход на протокол WebSocket, наступает
+	событие EventOnOpen, данное событие наступает перед началом приема данных(если таковые имеются). Так же
+	до данного события будут установлены некоторые заголвки:
+	Date
+    Server
+    Connection(если необходимо)
+    Content-Encoding(если в заголвоке Accept-Encoding указаны gzip или deflate)
+	Transfer-Encoding
+	
+	В данной реализации поддерживается сжатие gzip и deflate Чтобы не сжимать данные надо присвоить заголвоку 
+	Content-encoding null или пустую строку. По умолчанию данные отправляются в кодировке chunked, 
+	после отправки всех данных необходимо вызвать ф-цию Flush(), чтобы очистить все буфферы и если используется
+	кодмровка chuncked отправить заврешающий блок данных.
+</div>
+
+```C#
+	using ChatConnect.Tcp.Protocol.WS;
+	
+	HTTP.EventConnect += (object obj, PEventArgs a) =>
+	{
+		Console.WriteLine("Установлено новое http соедиение");
+		
+		HTTP http = obj as HTTP;
+		
+		ws.EventOnOpen += (object obj, PEventArgs a) =>
+		{
+			Console.WriteLine("Заголовки были получены и установлены");
+			Console.WriteLine("Входящие заголовки:\r\n" + ws.Request.ToString());
+			Console.WriteLine("Исходящие заголовки:\r\n" + ws.Response.ToString());
+			
+		};
+	};
+```
+
+<div>
+	После ролучения всех данных(если имеются) наступает событие EventData. ниже приведен пример обработки longpolling
+	и отправка статических файлов. Заголвоки можно изменить только до их отправки, иначе будет выброшено исключение,
+	информацию о котором можно будет прочитать в файле log.log в корневой папке с проектом.
+</div>
+
 ```C#
 // Список подписчиков
-			List<HTTP> Pollings = new List<HTTP>();
-			// Обрабатываем новый http запрос
-			HTTP.EventConnect += (object obj, PEventArgs a) =>
+	List<HTTP> Pollings = new List<HTTP>();
+	
+	HTTP.EventConnect += (object obj, PEventArgs a) =>
+	{
+		Console.WriteLine("HTTP");
+		HTTP Http = obj as HTTP;
+		bool polling = false;
+		// здесь можно проверить правильность заголовков
+		Http.EventOnOpen += (object sender, PEventArgs e) =>
+		{	
+			Console.WriteLine("OPEN");
+		};
+		
+		// Событие наступает когда приходят новые данные
+		Http.EventData += (object sender, PEventArgs e) =>
+		{
+			switch (Http.Request.Path)
 			{
-				// Объект Http
-				HTTP Http = obj as HTTP;
-				bool polling = false;
-				// Событие наступает когда приходят новые данные
-				Http.EventData += (object sender, PEventArgs e) =>
-				{
-					switch (Http.Request.Path)
+				case "/":
+					// асинхроноо отправляет файл
+					Http.File("Html/index.html");
+					break;
+				case "/message":
+					lock (Pollings)
 					{
-						case "/":
-							Http.File("Html/index.html");
-							break;
-						case "/message":
-							lock (Pollings)
-							{
-								for (int i = 0; i < Pollings.Count; i++)
-								{
-									Pollings[i].Response.StartString = "HTTP/1.1 200 OK";
-									Pollings[i].Response.ContentType = "text/plain; charset=utf-8";
-									Pollings[i].Message(Http.Request._Body);
-									Pollings[i].flush();
-								}
-								Http.Response.StartString = "HTTP/1.1 200 OK";
-								Http.Message(string.Empty);
-								Http.flush();
+						for (int i = 0; i < Pollings.Count; i++)
+						{
+							Pollings[i].Flush(Http.Request._Body);
 						}
-							break;
-						case "/subscribe":
-							polling = true;
-							lock (Pollings)
-								Pollings.Add(Http);
-							break;
-						default:
-							Http.File("Html" + Http.Request.Path);
-							break;
+						if (!polling)
+							Http.Flush("Данные получены");
+					}
+						break;
+					case "/subscribe":
+						polling = true;
+						lock (Pollings)
+							Pollings.Add(Http);
+						break;
+					default:
+						Http.File("Html" + Http.Request.Path);
+						break;
 					}
 				};
 				Http.EventError += (object sender, PEventArgs e) =>
 				{
-					HTTPException err = e.sender as HTTPException;
-					Console.WriteLine(err.Message);
+					Console.WriteLine("ERROR");
 				};
 				Http.EventClose += (object sender, PEventArgs e) =>
 				{
@@ -214,12 +271,6 @@
 							Pollings.Remove(Http);
 					}
 					Console.WriteLine("CLOSE");
-				};
-				// События наступает когда приходят заголовки
-				Http.EventOnOpen += (object sender, PEventArgs e) =>
-				{	
-					// здесь можно проверить заголовки и еcли необходимо закрыть cоединение
-					Console.WriteLine("*OPEN*");
 				};
 			};
 ```
