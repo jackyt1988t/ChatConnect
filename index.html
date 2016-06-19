@@ -31,81 +31,266 @@
     В данный момент поддерживается: <br>
     WebSocket Протокол Sample - требует тестов https://tools.ietf.org/html/draft-ietf-hybi-thewebsocketprotocol-03 <br>
     WebSocket Протокол №13(RFC6455) - требует тестов https://tools.ietf.org/html/rfc6455 <br>
-    ПланируетсЯ поддержка всех протоколов.
-    Пример простейшего WebSocket echo сервера <br> 
-    Данный пример показывает как запустить  WebSocket Сервер и зарегистировать обработчики событий
 </div>
 
-<div class="highlight highlight-source-cs"><pre><span class="pl-k">using</span> System<span class="pl-k">;</span>
-<span class="pl-k">using</span> System.Text<span class="pl-k">;</span>
-
-<span class="pl-k">using</span> ChatConnect.Tcp<span class="pl-k">;</span>
-<span class="pl-k">using</span> ChatConnect.Tcp.Protocol<span class="pl-k">;</span>
-<span class="pl-k">using</span> ChatConnect.Tcp.Protocol.WS<span class="pl-k">;</span>
-
-<span class="pl-c">// Включить вывод отладочной информации</span>
-WS.Debug = <span class="pl-c1">true</span>; 
-WS.EventConnect += (<span class="pl-k">object</span> obj, PEventArgs a) =&gt;
-{
-    <span class="pl-c">// Объект WebSocket</span>
-    WS WebSocket = obj <span class="pl-k">as</span> WS;
-    <span class="pl-c">// Событие наступает когда приходят новые данные</span>
-    WebSocket.EventData += (<span class="pl-k">object</span> sender, PEventArgs e) =&gt;
-    {
-        WSData data = e.sender <span class="pl-k">as</span> WSData;
-        <span class="pl-k">if</span> (data.Opcod != WSOpcod.Text)
-        {
-            <span class="pl-k">byte</span>[] raw = data.ToByte(); 
-        }
-        <span class="pl-k">else</span>
-        {
-            Console.WriteLine(data.ToString());
-            <span class="pl-c">// Отправляем текстовый фрейм</span>
-            WebSocket.Message(data.ToString());
-        }
-    };
-    <span class="pl-c">// Событие наступает если произошла ошибка данных</span>
-    WebSocket.EventError += (<span class="pl-k">object</span> sender, PEventArgs e) =&gt;
-    {
-        Console.WriteLine(e.sender.ToString());
-    };
-    <span class="pl-c">// Событие наступает если соединение было закрыто</span>
-    WebSocket.EventClose += (<span class="pl-k">object</span> sender, PEventArgs e) =&gt;
-    {
-        Console.WriteLine(e.sender.ToString());
-    };
-};
-<span class="pl-c">// Запуск серверами с указанным адресом и номером порта с 2 потоками обработки подключений</span>
-WServer Server = <span class="pl-k">new</span> WServer(<span class="pl-s"><span class="pl-pds">"</span>0.0.0.0<span class="pl-pds">"</span></span>, <span class="pl-c1">8081</span>, <span class="pl-c1">2</span>);</pre></div>
-
-<div>Отладочная информация</div>
-
-<p><img src="MyWebSocketDebug.png" alt="Отладочная информация"></p>
+<h2>
+<a id="С-чего-начать" class="anchor" href="#%D0%A1-%D1%87%D0%B5%D0%B3%D0%BE-%D0%BD%D0%B0%D1%87%D0%B0%D1%82%D1%8C" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>С чего начать?</h2>
 
 <div>
-    Средствами сервера можно отдавать статические фалы по http протоколу
-    Как и для WebSocket необходимо зарегистрировать обработчик события полученного запроса
+    Для того чтобы начать обрабатывать входящие подключения WebSocket клиентов необходимо подписаться на статическое
+    событие EventConnect класса ws, событие наступает если клиент инициирует переход c протокола http на websocket.
+    Был был указан заголвок Upgrade: websocket и версия websocket поддерживается данной реализацией.
 </div>
 
-<div class="highlight highlight-source-cs"><pre><span class="pl-c">// Обрабатываем новый http запрос</span>
-HTTP.EventConnect += (<span class="pl-k">object</span> obj, PEventArgs a) =&gt;
-{
-    <span class="pl-c">// Объект Http</span>
-    HTTP Http = obj <span class="pl-k">as</span> HTTP;
+<div class="highlight highlight-source-cs"><pre>
+    <span class="pl-k">using</span> ChatConnect.Tcp<span class="pl-k">;</span>
+    <span class="pl-k">using</span> ChatConnect.Tcp.Protocol.WS<span class="pl-k">;</span>
 
-    <span class="pl-k">switch</span> (Http.Request.Path)
+    WS.EventConnect += (<span class="pl-k">object</span> obj, PEventArgs a) =&gt;
     {
-        <span class="pl-k">case</span> <span class="pl-s"><span class="pl-pds">"</span>/<span class="pl-pds">"</span></span>:
-            <span class="pl-c">// отправляем index.html</span>
-            Http.File(<span class="pl-s"><span class="pl-pds">"</span>Html/index.html<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>html<span class="pl-pds">"</span></span>);
-            <span class="pl-k">break</span>;
-        <span class="pl-k">default</span>:
-            Http.File(<span class="pl-s"><span class="pl-pds">"</span>Html<span class="pl-pds">"</span></span> + Http.Request.Path, Http.Request.File);
-            <span class="pl-k">break</span>;
-    }
-    <span class="pl-c">// Вывод информации о полученных заголовках</span>
-    Console.WriteLine(Http.Request.ToString());
-};</pre></div>
+        Console.WriteLine(<span class="pl-s"><span class="pl-pds">"</span>был выполнен переход на websocket<span class="pl-pds">"</span></span>);
+    };
+
+    <span class="pl-c">// Запуск Сервера</span>
+    WServer Server = <span class="pl-k">new</span> WServer(<span class="pl-s"><span class="pl-pds">"</span>0.0.0.0<span class="pl-pds">"</span></span>, <span class="pl-c1">8081</span>, <span class="pl-c1">2</span>);</pre></div>
+
+<h2>
+<a id="Как-обрабатывать" class="anchor" href="#%D0%9A%D0%B0%D0%BA-%D0%BE%D0%B1%D1%80%D0%B0%D0%B1%D0%B0%D1%82%D1%8B%D0%B2%D0%B0%D1%82%D1%8C" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Как обрабатывать?</h2>
+
+<div>
+    Если после события EventConnect обработка заголвоков закончится успехом наступит событие EventOnOpen. заголвки
+    будут отправлены после обработки всех подписчиков на событие EventOnOpen данного экземпляра websocket.
+</div>
+
+<div class="highlight highlight-source-cs"><pre>
+    <span class="pl-k">using</span> ChatConnect.Tcp.Protocol.WS<span class="pl-k">;</span>
+
+    WS.EventConnect += (<span class="pl-k">object</span> obj, PEventArgs a) =&gt;
+    {
+        Console.WriteLine(<span class="pl-s"><span class="pl-pds">"</span>был выполнен переход на websocket<span class="pl-pds">"</span></span>);
+        WS ws = obj <span class="pl-k">as</span> WS;
+        ws.EventOnOpen += (<span class="pl-k">object</span> obj, PEventArgs a) =&gt;
+        {
+            Console.WriteLine(<span class="pl-s"><span class="pl-pds">"</span>Заголовки были получены и установлены<span class="pl-pds">"</span></span>);
+            Console.WriteLine(<span class="pl-s"><span class="pl-pds">"</span>Входящие заголовки:<span class="pl-cce">\r\n</span><span class="pl-pds">"</span></span> + ws.Request.ToString());
+            Console.WriteLine(<span class="pl-s"><span class="pl-pds">"</span>Исходящие заголовки:<span class="pl-cce">\r\n</span><span class="pl-pds">"</span></span> + ws.Response.ToString());
+        };
+    };
+</pre></div>
+
+<div>
+    При получение днных могут произойти несколько событий, точнее два, это EventChunk и EventData. Событие EventChuck
+    наступает если удаленная сторона отправляет данные по частям, что предусмотрено всеми версиями websocket, например
+    в версии 13 удаленная сторона должна в первом фрейме указать Опкод данных(Text, Binnary) и бит FIN равным 0,
+    далее следует 0 или несколько фреймов где опкод равен(Continuation), а бит FIN равен 0 и последним всегда должен
+    приходить фрейм с опкодом(Continuation) и битом FIN равным 1, он же может быть одним единственным фреймом. Когда
+    все данные получены наступает событие EventData.
+</div>
+
+<div class="highlight highlight-source-cs"><pre>
+    <span class="pl-k">using</span> ChatConnect.Tcp.Protocol.WS<span class="pl-k">;</span>
+
+    WS.EventConnect += (<span class="pl-k">object</span> obj, PEventArgs a) =&gt;
+    {
+        Console.WriteLine(<span class="pl-s"><span class="pl-pds">"</span>был выполнен переход на websocket<span class="pl-pds">"</span></span>);
+        WS ws = obj <span class="pl-k">as</span> WS;
+        List&lt;<span class="pl-k">byte</span>[]&gt; Data = <span class="pl-k">new</span> List&lt;<span class="pl-k">byte</span>[]&gt;();
+        List&lt;<span class="pl-k">string</span>&gt; Text = <span class="pl-k">new</span> List&lt;<span class="pl-k">string</span>&gt;();
+        ws.EventData += (<span class="pl-k">object</span> obj, PEventArgs a) =&gt;
+        {
+            <span class="pl-c">// Информация о полученных данных</span>
+            WSData data = e.sender <span class="pl-k">as</span> WSData;
+
+            <span class="pl-k">if</span> (data.Opcod == WSOpcod.Text)
+            {
+                Text.Add(data.ToString());
+                <span class="pl-c">// обрабатываем данные</span>
+            }
+            <span class="pl-k">else</span> <span class="pl-k">if</span> (data.Opcod == WSOpcod.Binnary)
+            {
+                Data.Add(data.ToByte());
+                <span class="pl-c">// обрабатываем данные </span>
+            }
+
+        };
+        ws.EventChunk += (<span class="pl-k">object</span> obj, PEventArgs a) =&gt;
+        {
+            <span class="pl-k">if</span> (data.Opcod == WSOpcod.Text)
+            {
+                Text.Add(data.ToString());
+            }
+            <span class="pl-k">else</span> <span class="pl-k">if</span> (data.Opcod == WSOpcod.Binnary)
+            {
+                Data.Add(data.ToByte());
+            }
+        };
+    };
+</pre></div>
+
+<div>
+    Последним всегда наступает событие EventClose было соединение закрыто чисто или произошла ошибка.
+</div>
+
+<div class="highlight highlight-source-cs"><pre>
+    <span class="pl-k">using</span> ChatConnect.Tcp.Protocol.WS<span class="pl-k">;</span>
+
+    WS.EventConnect += (<span class="pl-k">object</span> obj, PEventArgs a) =&gt;
+    {
+        Console.WriteLine(<span class="pl-s"><span class="pl-pds">"</span>был выполнен переход на websocket<span class="pl-pds">"</span></span>);
+        WS ws = obj <span class="pl-k">as</span> WS;
+        ws.EventClose += (<span class="pl-k">object</span> obj, PEventArgs a) =&gt;
+        {
+            Console.WriteLine(e.sender.ToString());
+        };
+    };
+</pre></div>
+
+<h2>
+<a id="Что-с-ошибками" class="anchor" href="#%D0%A7%D1%82%D0%BE-%D1%81-%D0%BE%D1%88%D0%B8%D0%B1%D0%BA%D0%B0%D0%BC%D0%B8" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Что с ошибками?</h2>
+
+<div>
+    Все критисекие ошибки будут записаны в файл log.log где раполагается запущенный сервер. Ошибки обрабатывается
+    в событие EventError
+</div>
+
+<div class="highlight highlight-source-cs"><pre>
+    <span class="pl-k">using</span> ChatConnect.Tcp.Protocol.WS<span class="pl-k">;</span>
+
+    WS.EventConnect += (<span class="pl-k">object</span> obj, PEventArgs a) =&gt;
+    {
+        Console.WriteLine(<span class="pl-s"><span class="pl-pds">"</span>был выполнен переход на websocket<span class="pl-pds">"</span></span>);
+        WS ws = obj <span class="pl-k">as</span> WS;
+        ws.EventError += (<span class="pl-k">object</span> obj, PEventArgs a) =&gt;
+        {
+            Console.WriteLine(e.sender.ToString());
+        };
+    };
+</pre></div>
+
+<div>
+    Чтобы включить отладочную информацию необходимо установить свойство WS.Debug = true
+    Отладочная информация:
+</div>
+
+<p><img src="/MyWebSocketDebug.png" alt="Отладочная информация"></p>
+
+<h1>
+<a id="Средствами-сервера-можно-обрабатывать-http-запросы-и-устанавливать-longpolling-соединения" class="anchor" href="#%D0%A1%D1%80%D0%B5%D0%B4%D1%81%D1%82%D0%B2%D0%B0%D0%BC%D0%B8-%D1%81%D0%B5%D1%80%D0%B2%D0%B5%D1%80%D0%B0-%D0%BC%D0%BE%D0%B6%D0%BD%D0%BE-%D0%BE%D0%B1%D1%80%D0%B0%D0%B1%D0%B0%D1%82%D1%8B%D0%B2%D0%B0%D1%82%D1%8C-http-%D0%B7%D0%B0%D0%BF%D1%80%D0%BE%D1%81%D1%8B-%D0%B8-%D1%83%D1%81%D1%82%D0%B0%D0%BD%D0%B0%D0%B2%D0%BB%D0%B8%D0%B2%D0%B0%D1%82%D1%8C-longpolling-%D1%81%D0%BE%D0%B5%D0%B4%D0%B8%D0%BD%D0%B5%D0%BD%D0%B8%D1%8F" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Средствами сервера можно обрабатывать HTTP запросы и устанавливать LongPolling соединения</h1>
+
+<h2>
+<a id="С-чего-начать-1" class="anchor" href="#%D0%A1-%D1%87%D0%B5%D0%B3%D0%BE-%D0%BD%D0%B0%D1%87%D0%B0%D1%82%D1%8C-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>С чего начать?</h2>
+
+<div>
+    Для того чтобы начать обрабатывать входящие подключения HTTP необходимо подписаться на статическое
+    событие EventConnect класса HTTP, событие наступает когда устанавливается новое tcp/ip соеинение.
+</div>
+
+<div class="highlight highlight-source-cs"><pre>    <span class="pl-k">using</span> ChatConnect.Tcp.Protocol.HTTP<span class="pl-k">;</span>
+
+    HTTP.EventConnect += (<span class="pl-k">object</span> obj, PEventArgs a) =&gt;
+    {
+        Console.WriteLine(<span class="pl-s"><span class="pl-pds">"</span>Установлено новое http соедиение<span class="pl-pds">"</span></span>);
+    };</pre></div>
+
+<div>
+    после того как будут получены заголвоки и не будет инициирован переход на протокол WebSocket, наступает
+    событие EventOnOpen, данное событие наступает перед началом приема данных(если таковые имеются). Так же
+    до данного события будут установлены некоторые заголвки:
+    Date
+    Server
+    Connection(если необходимо)
+    Content-Encoding(если в заголвоке Accept-Encoding указаны gzip или deflate)
+    Transfer-Encoding
+    
+    В данной реализации поддерживается сжатие gzip и deflate Чтобы не сжимать данные надо присвоить заголвоку 
+    Content-encoding null или пустую строку. По умолчанию данные отправляются в кодировке chunked, 
+    после отправки всех данных необходимо вызвать ф-цию Flush(), чтобы очистить все буфферы и если используется
+    кодмровка chuncked отправить заврешающий блок данных.
+</div>
+
+<div class="highlight highlight-source-cs"><pre>    <span class="pl-k">using</span> ChatConnect.Tcp.Protocol.HTTP<span class="pl-k">;</span>
+
+    HTTP.EventConnect += (<span class="pl-k">object</span> obj, PEventArgs a) =&gt;
+    {
+        Console.WriteLine(<span class="pl-s"><span class="pl-pds">"</span>Установлено новое http соедиение<span class="pl-pds">"</span></span>);
+
+        HTTP http = obj <span class="pl-k">as</span> HTTP;
+
+        ws.EventOnOpen += (<span class="pl-k">object</span> obj, PEventArgs a) =&gt;
+        {
+            Console.WriteLine(<span class="pl-s"><span class="pl-pds">"</span>Заголовки были получены и установлены<span class="pl-pds">"</span></span>);
+            Console.WriteLine(<span class="pl-s"><span class="pl-pds">"</span>Входящие заголовки:<span class="pl-cce">\r\n</span><span class="pl-pds">"</span></span> + ws.Request.ToString());
+            Console.WriteLine(<span class="pl-s"><span class="pl-pds">"</span>Исходящие заголовки:<span class="pl-cce">\r\n</span><span class="pl-pds">"</span></span> + ws.Response.ToString());
+
+        };
+    };</pre></div>
+
+<div>
+    После ролучения всех данных(если имеются) наступает событие EventData. ниже приведен пример обработки longpolling
+    и отправка статических файлов. Заголвоки можно изменить только до их отправки, иначе будет выброшено исключение,
+    информацию о котором можно будет прочитать в файле log.log в корневой папке с проектом.
+</div>
+
+<div class="highlight highlight-source-cs"><pre>    <span class="pl-k">using</span> ChatConnect.Tcp.Protocol.HTTP<span class="pl-k">;</span>
+
+    <span class="pl-c">// Список подписчиков longpolling</span>
+    List&lt;HTTP&gt; Pollings = <span class="pl-k">new</span> List&lt;HTTP&gt;();
+
+    HTTP.EventConnect += (<span class="pl-k">object</span> obj, PEventArgs a) =&gt;
+    {
+        Console.WriteLine(<span class="pl-s"><span class="pl-pds">"</span>HTTP<span class="pl-pds">"</span></span>);
+        HTTP Http = obj <span class="pl-k">as</span> HTTP;
+        <span class="pl-k">bool</span> polling = <span class="pl-c1">false</span>;
+        <span class="pl-c">// здесь можно проверить правильность заголовков</span>
+        Http.EventOnOpen += (<span class="pl-k">object</span> sender, PEventArgs e) =&gt;
+        {   
+            Console.WriteLine(<span class="pl-s"><span class="pl-pds">"</span>OPEN<span class="pl-pds">"</span></span>);
+        };
+
+        <span class="pl-c">// Событие наступает когда приходят новые данные</span>
+        Http.EventData += (<span class="pl-k">object</span> sender, PEventArgs e) =&gt;
+        {
+            <span class="pl-k">switch</span> (Http.Request.Path)
+            {
+                <span class="pl-k">case</span> <span class="pl-s"><span class="pl-pds">"</span>/<span class="pl-pds">"</span></span>:
+                    <span class="pl-c">// асинхроноо отправляет файл</span>
+                    Http.File(<span class="pl-s"><span class="pl-pds">"</span>Html/index.html<span class="pl-pds">"</span></span>);
+                    <span class="pl-k">break</span>;
+                <span class="pl-k">case</span> <span class="pl-s"><span class="pl-pds">"</span>/message<span class="pl-pds">"</span></span>:
+                    <span class="pl-k">lock</span> (Pollings)
+                    {
+                        <span class="pl-k">for</span> (<span class="pl-k">int</span> i = <span class="pl-c1">0</span>; i &lt; Pollings.Count; i++)
+                        {
+                            Pollings[i].Flush(Http.Request._Body);
+                        }
+                        <span class="pl-k">if</span> (!polling)
+                            Http.Flush(<span class="pl-s"><span class="pl-pds">"</span>Данные получены<span class="pl-pds">"</span></span>);
+                    }
+                        <span class="pl-k">break</span>;
+                    <span class="pl-k">case</span> <span class="pl-s"><span class="pl-pds">"</span>/subscribe<span class="pl-pds">"</span></span>:
+                        polling = <span class="pl-c1">true</span>;
+                        <span class="pl-k">lock</span> (Pollings)
+                            Pollings.Add(Http);
+                        <span class="pl-k">break</span>;
+                    <span class="pl-k">default</span>:
+                        Http.File(<span class="pl-s"><span class="pl-pds">"</span>Html<span class="pl-pds">"</span></span> + Http.Request.Path);
+                        <span class="pl-k">break</span>;
+                    }
+                };
+                Http.EventError += (<span class="pl-k">object</span> sender, PEventArgs e) =&gt;
+                {
+                    Console.WriteLine(<span class="pl-s"><span class="pl-pds">"</span>ERROR<span class="pl-pds">"</span></span>);
+                };
+                Http.EventClose += (<span class="pl-k">object</span> sender, PEventArgs e) =&gt;
+                {
+                    <span class="pl-k">if</span> (polling)
+                    {
+                        <span class="pl-k">lock</span> (Pollings)
+                            Pollings.Remove(Http);
+                    }
+                    Console.WriteLine(<span class="pl-s"><span class="pl-pds">"</span>CLOSE<span class="pl-pds">"</span></span>);
+                };
+            };</pre></div>
 
       <footer class="site-footer">
         <span class="site-footer-owner"><a href="https://github.com/jackyt1988t/WebSocket">Websocket</a> is maintained by <a href="https://github.com/jackyt1988t">jackyt1988t</a>.</span>
