@@ -165,7 +165,7 @@
 </div>
 
 ```C#
-	using ChatConnect.Tcp.Protocol.WS;
+	using ChatConnect.Tcp.Protocol.HTTP;
 	
 	HTTP.EventConnect += (object obj, PEventArgs a) =>
 	{
@@ -190,7 +190,7 @@
 </div>
 
 ```C#
-	using ChatConnect.Tcp.Protocol.WS;
+	using ChatConnect.Tcp.Protocol.HTTP;
 	
 	HTTP.EventConnect += (object obj, PEventArgs a) =>
 	{
@@ -215,7 +215,9 @@
 </div>
 
 ```C#
-// Список подписчиков
+	using ChatConnect.Tcp.Protocol.HTTP;
+	
+	// Список подписчиков longpolling
 	List<HTTP> Pollings = new List<HTTP>();
 	
 	HTTP.EventConnect += (object obj, PEventArgs a) =>
