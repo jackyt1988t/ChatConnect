@@ -379,7 +379,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 ==============================================================*/
                         if (state == 5)
                         {
-                            
                             state = 7;
                         }
                         if (state == 7)

@@ -92,13 +92,14 @@ namespace Example
                 Console.WriteLine("HTTP");
 
                 bool poll = false;
+				Console.WriteLine(poll.ToString());
                 HTTP Http = obj as HTTP;
                 Http.EventData += (object sender, PEventArgs e) =>
                 {
                     switch (Http.Request.Path)
                     {
                         case "/":
-                            Http.File("Html/index.html");
+                        Http.File("Html/index.html");
                         break;
                         case "/message":
                         lock (Array)
@@ -128,7 +129,7 @@ namespace Example
                         }
                         break;
                         default:
-                            Http.File("Html" + Http.Request.Path);
+                        Http.File("Html" + Http.Request.Path);
                         break;
                     }
                 };
@@ -138,7 +139,6 @@ namespace Example
                 };
                 Http.EventClose += (object sender, PEventArgs e) =>
                 {
-                    
                     if (poll)
                     {
                         poll = false;

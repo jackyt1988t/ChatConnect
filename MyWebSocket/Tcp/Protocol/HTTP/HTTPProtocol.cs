@@ -245,7 +245,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             // вермя до закрытия(  keep-alive  )
             if (Alive.Ticks < DateTime.Now.Ticks)
             {
-                if (State != States.work && State != States.Send)
+                if (State != States.work || State != States.Send)
                     close();
                 else if ( (Alive.Ticks + TimeSpan.TicksPerSecond * 30) < DateTime.Now.Ticks )
                     close();
@@ -415,7 +415,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                                      " " + Exception.Status.ToString();
                     
                     file(  "Html/" + Exception.Status.value.ToString() + 
-                                                        ".shtml", 6000  );
+                                                        ".html", 6000  );
                 }
                 else
                     close();
