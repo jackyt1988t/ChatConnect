@@ -48,9 +48,9 @@
 		WS ws = obj as WS;
 		ws.EventOnOpen += (object obj, PEventArgs a) =>
 		{
-			Console.WriteLine("Заголвоки были получены и установлены");
-			Console.WriteLine("Входящие заголвоки:\r\n" + ws.Request.ToString());
-			Console.WriteLine("Исходящие заголвоки:\r\n" + ws.Response.ToString());
+			Console.WriteLine("Заголовки были получены и установлены");
+			Console.WriteLine("Входящие заголовки:\r\n" + ws.Request.ToString());
+			Console.WriteLine("Исходящие заголовки:\r\n" + ws.Response.ToString());
 		};
 	};
 
@@ -79,8 +79,8 @@
 		{
 			// Информация о полученных данных
 			WSData data = e.sender as WSData;
-			Console.WriteLine("FIN: " + data.FIN);
-			Console.WriteLine("Опкод: " + data.Opcod);
+			Console.WriteLine("FIN: " + data.FIN.ToString());
+			Console.WriteLine("Опкод: " + data.Opcod.ToString());
 
 			if (data.Opcod == WSOpcod.Text)
 			{
