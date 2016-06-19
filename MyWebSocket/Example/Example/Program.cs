@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-
+ 
 using MyWebSocket.Tcp;
 using MyWebSocket.Tcp.Protocol;
 using MyWebSocket.Tcp.Protocol.WS;
@@ -24,7 +24,7 @@ namespace Example
 				{
 					WSData data = a.sender as WSData;
 
-					if (data.Opcod == WSOpcod.Text)
+					if (data.Opcod  ==  WSOpcod.Text)
 					{
 						Text.Add(data.ToString());
 
@@ -60,7 +60,7 @@ namespace Example
 				{
 					WSData data = a.sender as WSData;
 
-					if (data.Opcod == WSOpcod.Text)
+					if (data.Opcod  ==  WSOpcod.Text)
 					{
 						Text.Add(data.ToString());
 					}
@@ -105,7 +105,7 @@ namespace Example
 						{
 							for (int i = 0; i < Array.Count; i++)
 							{
-								Array[i].Message(Http.Request.Body);
+								Array[i].Message(Http.Request.Body, WSOpcod.Text, WSFin.Last);
 							}
 						}
 						lock (Polling)
@@ -119,7 +119,7 @@ namespace Example
 						}
 						break;
 						case "/subscribe":
-
+						
 						if (!poll)
 						{
 							poll = true;
@@ -138,6 +138,7 @@ namespace Example
 				};
 				Http.EventClose += (object sender, PEventArgs e) =>
 				{
+					
 					if (poll)
 					{
 						poll = false;
@@ -151,7 +152,7 @@ namespace Example
 					Console.WriteLine("Соединение Http Установлено");
 				};
 			};
-			WServer Server = new WServer("0.0.0.0", 8081, 2);
+					WServer Server = new WServer("0.0.0.0", 8081, 2);
 		}
 	}
 }

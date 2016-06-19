@@ -22,6 +22,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			__WSErrorMsg.Add(WsError.BodyFrameError, "Ошибка при получении тела фрейма WS");
 			__WSErrorMsg.Add(WsError.HandshakeError, "Ошибка заголвоков протокола WS");
 			__WSErrorMsg.Add(WsError.BufferLimitLength, "Превышена допустимая длинна буфера данных");
+			__WSErrorMsg.Add(WsError.CriticalError, "Произошла критическая ошибка программы");
 
 			__SocketErrorMsg = new Dictionary<SocketError, string>();
 			__SocketErrorMsg.Add(SocketError.AccessDenied, "Произведена попытка доступа к объекту Socket способом, запрещенным его разрешениями доступа");

@@ -21,7 +21,7 @@
 	using ChatConnect.Tcp;
 	using ChatConnect.Tcp.Protocol.WS;
 
-	WS.EventConnect += (object obj, PEventArgs a) =>
+	WS.EventConnect += (object o, PEventArgs e) =>
 	{
 		Console.WriteLine("был выполнен переход на websocket");
 	};
@@ -41,10 +41,10 @@
 
 	using ChatConnect.Tcp.Protocol.WS;
 
-	WS.EventConnect += (object obj, PEventArgs a) =>
+	WS.EventConnect += (object o, PEventArgs e) =>
 	{
 		Console.WriteLine("был выполнен переход на websocket");
-		WS ws = obj as WS;
+		WS ws = o as WS;
 		ws.EventOnOpen += (object obj, PEventArgs a) =>
 		{
 			Console.WriteLine("Заголовки были получены и установлены");
@@ -68,10 +68,10 @@
 
 	using ChatConnect.Tcp.Protocol.WS;
 
-	WS.EventConnect += (object obj, PEventArgs a) =>
+	WS.EventConnect += (object o, PEventArgs e) =>
 	{
 		Console.WriteLine("был выполнен переход на websocket");
-		WS ws = obj as WS;
+		WS ws = o as WS;
 		List<byte[]> Data = new List<byte[]>();
 		List<string> Text = new List<string>();
 			ws.EventData += (object obj, PEventArgs a) =>
@@ -114,10 +114,10 @@
 
 	using ChatConnect.Tcp.Protocol.WS;
 
-	WS.EventConnect += (object obj, PEventArgs a) =>
+	WS.EventConnect += (object o, PEventArgs e) =>
 	{
 		Console.WriteLine("был выполнен переход на websocket");
-		WS ws = obj as WS;
+		WS ws = o as WS;
 		ws.EventClose += (object obj, PEventArgs a) =>
 		{
 			Console.WriteLine(e.sender.ToString());
@@ -137,10 +137,10 @@
 
 	using ChatConnect.Tcp.Protocol.WS;
 
-	WS.EventConnect += (object obj, PEventArgs a) =>
+	WS.EventConnect += (object o, PEventArgs e) =>
 	{
 		Console.WriteLine("был выполнен переход на websocket");
-		WS ws = obj as WS;
+		WS ws = o as WS;
 		ws.EventError += (object obj, PEventArgs a) =>
 		{
 			Console.WriteLine(e.sender.ToString());
@@ -168,7 +168,7 @@
 ```C#
 	using ChatConnect.Tcp.Protocol.HTTP;
 	
-	HTTP.EventConnect += (object obj, PEventArgs a) =>
+	HTTP.EventConnect += (object o, PEventArgs e) =>
 	{
 		Console.WriteLine("Установлено новое http соедиение");
 	};
@@ -193,11 +193,11 @@
 ```C#
 	using ChatConnect.Tcp.Protocol.HTTP;
 	
-	HTTP.EventConnect += (object obj, PEventArgs a) =>
+	HTTP.EventConnect += (object o, PEventArgs e) =>
 	{
 		Console.WriteLine("Установлено новое http соедиение");
 		
-		HTTP http = obj as HTTP;
+		HTTP http = o as HTTP;
 		
 		ws.EventOnOpen += (object obj, PEventArgs a) =>
 		{
@@ -254,9 +254,12 @@
 					}
 					break;
 				case "/subscribe":
-					poll = true;
-					lock (Pollings)
-						Pollings.Add(Http);
+					if (!poll)
+					{
+						poll = true;
+						lock (Polling)
+							Polling.Add(Http);
+					}
 					break;
 				default:
 					Http.File(  "Html" + Http.Request.Path  );
