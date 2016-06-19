@@ -79,6 +79,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		}
 		public override void Write(byte[] buffer, int start, int length)
 		{
+			if (buffer.Length < (length - start))
+				throw new IOException("MAXLENGTH");
+
 			lock (__Sync)
 			{
 				_Frame.Handl++;
@@ -105,6 +108,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				if (!string.IsNullOrEmpty(
 									header.ContentEncoding))
 					_Frame.bpart += length;
+				if (length > 0)
+				{
 					// оптравить форматированные данные
 					if (header.TransferEncoding != "chunked")
 						base.Write(  buffer, start, length  );
@@ -118,6 +123,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						base.Write(  buffer, start, length  );
 						End();
 					}
+				}
 			}
 		}
 	}
