@@ -40,8 +40,6 @@ namespace MyWebSocket
 					{
 						for (int i = 0; i < Pollings.Count; i++)
 						{
-							Pollings[i].Response.AddHeader("Control", "no-cache");
-							Pollings[i].Response.ContentType = "text/plain; charset=utf-8";
 							Pollings[i].Message(message);
 							Pollings[i].Flush();
 						}
@@ -92,14 +90,11 @@ namespace MyWebSocket
 							{
 								for (int i = 0; i < Pollings.Count; i++)
 								{
-									Pollings[i].Response.AddHeader("Control", "no-cache");
-									Pollings[i].Response.ContentType = "text/plain; charset=utf-8";
 									Pollings[i].Message(Http.Request._Body);
 									Pollings[i].Flush();
 								}
 								if (!polling)
 								{
-									Http.Response.AddHeader("Control", "no-cache");
 									Http.Message("Работает...");
 									Http.Flush();
 								}

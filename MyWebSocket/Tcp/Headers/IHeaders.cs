@@ -37,7 +37,11 @@ namespace MyWebSocket.Tcp
 			get;
 			set;
 		}
-
+		List<string> CashControl
+		{
+			get;
+			set;
+		}
 		List<string> AcceptEncoding
 		{
 			get;

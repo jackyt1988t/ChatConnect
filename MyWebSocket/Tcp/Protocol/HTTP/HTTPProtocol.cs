@@ -1,7 +1,10 @@
 ﻿using System;
+
 using System.IO;
 using System.IO.Compression;
-    using System.Net.Sockets;
+        using System.Net.Sockets;
+            using System.Threading;
+            using System.Collections.Generic;
 
 namespace MyWebSocket.Tcp.Protocol.HTTP
 {
@@ -108,6 +111,13 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                         {
                             recive = sr.Read(buffer, recive, chunk - recive);
                         }
+                        while ( Writer.Length > 128000 )
+                        {
+                            if (State == States.work || State == States.Send)
+                                Thread.Sleep(20);
+                            else
+                                return;
+                        }
                         if (!Message(buffer, 0, chunk))
                             return;
                     }
@@ -118,6 +128,13 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                         while ((length - recive) > 0)
                         {
                             recive = sr.Read(buffer, recive, length - recive);
+                        }
+                        while ( Writer.Length > 128000 )		
+                        {
+                            if (State == States.work || State == States.Send)
+                                Thread.Sleep(20);
+                            else
+                                return;
                         }
                         if (!Message(buffer, 0, length))
                             return;
@@ -144,10 +161,22 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             }
             if (string.IsNullOrEmpty(Response.StartString))
                 Response.StartString  =  "HTTP/1.1 200 OK";
+            
+                if (Response.CashControl != null
+                        && Response.CashControl.Count == 0)
+                    Response.CashControl = new List<string> 
+                                               { 
+                                                   "no-case", 
+                                                   "no-store" 
+                                               };
+                if (string.IsNullOrEmpty(Response.ContentType))
+                    Response.ContentType = "text/plain, charset=utf-8";
+
             lock (Sync)
             {
-                if (State == States.Close 
-                     || State == States.Disconnect)
+                if (Response.IsEnd 
+                    && (State == States.Close 
+                         || State == States.Disconnect))
                     result = false;
                 else
                 {
@@ -188,7 +217,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 {
                     try
                     {
-                        __Writer.Eof();
+                        if (State != States.Close
+                             || State != States.Disconnect)
+                            __Writer.Eof();
                     }
                     catch (IOException exc)
                     {
@@ -204,8 +235,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             // вермя до закрытия(  keep-alive  )
             if (Alive.Ticks < DateTime.Now.Ticks)
             {
-                if (  State != States.work
-                       && State != States.Send  )
+                if (State != States.work && State != States.Send)
+                    close();
+                else if ( (Alive.Ticks + TimeSpan.TicksPerSecond * 30) < DateTime.Now.Ticks )
                     close();
             }
             

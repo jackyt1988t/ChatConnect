@@ -54,7 +54,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		{
 			Tcp = http.Tcp;
 			if (http.Reader.Length > 0)
-				http.Reader.CopyTo(Reader,
+				http.Reader.CopyTo(reader,
 						 (int)http.Reader.Length);
 
 			Policy.SetPolicy(0, 1, 1, 1, 0, 32000);

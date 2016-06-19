@@ -9,20 +9,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
     abstract class HTTP : BaseProtocol
     {
         /// <summary>
-        /// true если соединение небыло
-        /// закрыто
-        /// </summary>	 
-        public bool Loop
-        {
-            get
-            {
-                if (state < 5)
-                    return true;
-                else
-                    return false;
-            }
-        }
-        /// <summary>
         /// Объект синхронизации данных
         /// </summary>
         public object Sync
@@ -31,9 +17,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             protected set;
         }
         volatile
-                int state;
+        int state;
         override
-                public States State
+        public States State
         {
             protected set
             {
@@ -188,7 +174,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 = States.Connection;
             Result = new TaskResult();
                 Request = new Header();
-                 Response = new Header();
+                Response = new Header();
 
         }
         async public void File(string path, int chunk = 1000 * 64)
@@ -235,17 +221,39 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         /// <summary>
         /// Очищает записывающий буффер данных
         /// </summary>
-        /// <returns>true в случае успеха</returns>
-        public bool Flush()
+        public void Flush()
         {
-            lock (Sync)
-                return Response.SetEnd();
+            Response.SetEnd();
         }
-        /// <summary>
-        /// Отправляет указанную строку уд. стороне
-        /// </summary>
-        /// <returns>true в случае успеха</returns>
-        public bool Message(string message)
+		/// <summary>
+		/// Очищает записывающий буффер данных
+		/// Отправляет указанную строку уд. стороне
+		/// </summary>
+		public void Flush(string message)
+		{
+			lock (Sync)
+			{
+				Message(message);
+				Flush();
+			}
+		}
+		/// <summary>
+		/// Очищает записывающий буффер данных
+		/// Отправляет указанный массив данных уд. стороне
+		/// </summary>
+		public void Flush(byte[] message)
+		{
+			lock (Sync)
+			{
+				Message(message);
+				Flush();
+			}
+		}
+		/// <summary>
+		/// Отправляет указанную строку уд. стороне
+		/// </summary>
+		/// <returns>true в случае успеха</returns>
+		public bool Message(string message)
         {
             return Message(Encoding.UTF8.GetBytes(message));
         }
@@ -437,7 +445,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                     SocketError error;
                     if ((error = Read()) != SocketError.Success)
                     {
-                        if (error != SocketError.WouldBlock
+						// проверка является данная ошибка критической
+						if (error != SocketError.WouldBlock
                          && error != SocketError.NoBufferSpaceAvailable)
                         {
                             Response.SetClose();

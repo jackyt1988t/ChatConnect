@@ -83,7 +83,26 @@ namespace MyWebSocket.Tcp
 				AddHeader("Transfer-Encoding", value.ToString());
 			}
 		}
+		List<string> cashcontrol;
+		public List<string> CashControl
+		{
+			get
+			{
+				return cashcontrol;
+			}
+			set
+			{
+				cashcontrol = value;
 
+				string header = string.Empty;
+				for (int i = 0; i < value.Count; i++)
+				{
+					header += value[i] + ",";
+				}
+				header.TrimEnd( new char[] { ',' } );
+				AddHeader(  "Cash-Control", header  );
+			}
+		}
 		List<string> acceptencoding;
 		public List<string> AcceptEncoding
 		{
@@ -93,7 +112,15 @@ namespace MyWebSocket.Tcp
 			}
 			set
 			{
-				AddHeader("Accept-Encoding", value.ToString());
+				acceptencoding = value;
+
+				string header = string.Empty;
+				for (int i = 0; i < value.Count; i++)
+				{
+					header  +=  value[i] + ","; 
+				}
+				header.TrimEnd( new char[] { ',' } );
+				AddHeader("Accept-Encoding", header);
 			}
 		}
 
@@ -327,6 +354,10 @@ namespace MyWebSocket.Tcp
 					break;
 				case "content-type":
 					contenttype = value.ToLower();
+					break;
+				case "cash-control":
+					cashcontrol =
+						ReplaseValues(value, ",");
 					break;
 				case "content-length":
 					contentlength = int.Parse(value);
