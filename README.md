@@ -6,7 +6,6 @@
 	В данный момент поддерживается: <br>
 	WebSocket Протокол Sample - требует тестов https://tools.ietf.org/html/draft-ietf-hybi-thewebsocketprotocol-03 <br>
 	WebSocket Протокол №13(RFC6455) - требует тестов https://tools.ietf.org/html/rfc6455 <br>
-	ПланируетсЯ поддержка всех протоколов.
 </div>
 
 ## С чего начать?
@@ -57,12 +56,12 @@
 ```
 
 <div>
-	При получение днных могут произойти несколько событий, точнее два, это EventChunk и EventData. Событие EventChuck
-	наступает если удаленная сторона отправляет данные по частям, что предусмотрено всеми версиями websocket, например
-	в версии 13 удаленная сторона должна в первом фрейме указать Опкод данных(Text, Binnary) и бит FIN равным 0,
-	далее следует 0 или несколько фреймов где опкод равен(Continuation), а бит FIN равен 0 и последним всегда должен
-	приходить фрейм с опкодом(Continuation) и битом FIN равным 1, он же может быть одним единственным фреймом. Когда
-	все данные получены наступает событие EventData. 
+    При получение днных могут произойти несколько событий, точнее два, это EventChunk и EventData. Событие EventChuck
+    наступает если удаленная сторона отправляет данные по частям, что предусмотрено всеми версиями websocket, например
+    в версии 13 удаленная сторона должна в первом фрейме указать Опкод данных(Text, Binnary) и бит FIN равным 0,
+    далее следует 0 или несколько фреймов где опкод равен(Continuation), а бит FIN равен 0 и последним всегда должен
+    приходить фрейм с опкодом(Continuation) и битом FIN равным 1, он же может быть одним единственным фреймом. Когда
+    все данные получены наступает событие EventData.
 </div>
 
 ```C#
@@ -79,20 +78,11 @@
 		{
 			// Информация о полученных данных
 			WSData data = e.sender as WSData;
-			Console.WriteLine("FIN: " + data.FIN.ToString());
-			Console.WriteLine("Опкод: " + data.Opcod.ToString());
 
 			if (data.Opcod == WSOpcod.Text)
 			{
 				Text.Add(data.ToString());
-
-				string message = string.Empty;
-				for (int i = 0; i < Text.Count; i++)
-				{
-					message += Text[i];
-				}
-
-				ws.Message(Text);
+				// обрабатываем данные
 			}
 			else if (data.Opcod == WSOpcod.Binnary)
 			{
@@ -106,12 +96,10 @@
 			if (data.Opcod == WSOpcod.Text)
 			{
 				Text.Add(data.ToString());
-				// обрабатываем данные если необходимо
 			}
 			else if (data.Opcod == WSOpcod.Binnary)
 			{
 				Data.Add(data.ToByte());
-				// обрабатываем данные если необходимо 
 			}
 		};
 	};
