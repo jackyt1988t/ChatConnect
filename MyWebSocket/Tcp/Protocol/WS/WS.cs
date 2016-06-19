@@ -5,7 +5,7 @@ using System.Text;
 
 namespace MyWebSocket.Tcp.Protocol.WS
 {
-	abstract class WS : BaseProtocol
+	public abstract class WS : BaseProtocol
 	{
 		private static readonly string S_WORK = "work";
 		private static readonly string S_SEND = "send";

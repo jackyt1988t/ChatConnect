@@ -4,7 +4,7 @@ using System.Net.Sockets;
 namespace MyWebSocket.Tcp.Protocol.WS
 {
     [Serializable]
-    class WSException : Exception
+    public class WSException : Exception
     {
 		public int Number
         {

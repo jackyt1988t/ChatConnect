@@ -1,6 +1,6 @@
 ﻿namespace MyWebSocket.Tcp
 {
-	interface IAgregator
+	public interface IAgregator
 	{
         /// <summary>
         /// 

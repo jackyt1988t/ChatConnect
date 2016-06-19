@@ -3,7 +3,7 @@
 	/// <summary>
 	/// Коды состояния http
 	/// </summary>
-	static class HTTPCode
+	public static class HTTPCode
 	{
 #region 1xx Инфо
 		/// <summary>

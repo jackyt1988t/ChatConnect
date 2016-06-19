@@ -1,6 +1,6 @@
 ﻿namespace MyWebSocket.Tcp.Protocol.WS
 {
-	enum WsError : int 
+	public enum WsError : int 
 	{
 		PongBodyIncorrect = 0,
 		PingNotResponse = 1,

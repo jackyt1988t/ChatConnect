@@ -1,6 +1,6 @@
 ﻿namespace MyWebSocket.Tcp
 {
-    enum TaskProtocol : int
+    public enum TaskProtocol : int
     {
 		HTTP = 0,
 		WSN13 = 1,

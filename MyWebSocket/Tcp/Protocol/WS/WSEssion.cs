@@ -3,7 +3,7 @@ using System.Net;
 
 namespace MyWebSocket.Tcp.Protocol.WS
 {
-	class WSEssion
+	public class WSEssion
 	{
 		/// <summary>
 		/// Продолжительность текущей сессии

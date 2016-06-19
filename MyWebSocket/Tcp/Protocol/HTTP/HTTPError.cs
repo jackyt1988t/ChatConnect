@@ -3,7 +3,7 @@
 namespace MyWebSocket.Tcp.Protocol.HTTP
 {
     [Serializable]
-    class HTTPException : Exception
+    public class HTTPException : Exception
     {
 		public codexxx Status
 		{

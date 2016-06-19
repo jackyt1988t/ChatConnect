@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace MyWebSocket.Tcp
 {
-    interface IHeader
+    public interface IHeader
     {
 		int ContentLength
 		{

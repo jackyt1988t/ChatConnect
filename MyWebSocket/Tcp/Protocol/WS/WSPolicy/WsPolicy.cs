@@ -1,6 +1,6 @@
 ﻿namespace MyWebSocket.Tcp.Protocol.WS
 {
-	class WsPolicy
+	public class WsPolicy
 	{
 		public int Bit1
 		{

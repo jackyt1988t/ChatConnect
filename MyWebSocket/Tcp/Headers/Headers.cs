@@ -7,7 +7,7 @@ namespace MyWebSocket.Tcp
 	/// <summary>
 	/// Содержит информацию о заголвоках
 	/// </summary>
-    class Header : IHeader
+    public class Header : IHeader
     {
 #region Распространенные Заголовки http
 

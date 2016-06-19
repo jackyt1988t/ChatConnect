@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace MyWebSocket.Tcp.Protocol.WS
 {
-	static class WSErrorMsg
+	public static class WSErrorMsg
 	{
 		static Dictionary<WsError, string> __WSErrorMsg;
 		static Dictionary<SocketError, string> __SocketErrorMsg;

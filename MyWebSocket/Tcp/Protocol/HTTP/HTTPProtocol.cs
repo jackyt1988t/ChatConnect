@@ -83,21 +83,22 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         protected override void file(string path, int chunk)
         {
             FileInfo fileinfo = new FileInfo(path);
-            if (Response.ContentType == null
-                    || Response.ContentType.Count == 0)
-            {
-                Response.ContentType = new List<string>()
-                                       {
-                                           "text/" + fileinfo.Extension.Substring(1),
-                                           "charset=utf-8"
-                                       };
-            }
+            
             if (!fileinfo.Exists)
             {
                 throw new HTTPException("Указанный файл не найден " + path, HTTPCode._404_);
             }
             else
             {
+                if (Response.ContentType == null
+                    || Response.ContentType.Count == 0)
+                {
+                    Response.ContentType = new List<string>()
+                                           {
+                                               "text/" + fileinfo.Extension.Substring( 01 ),
+                                               "charset=utf-8"
+                                           };
+                }
                 using (FileStream sr = fileinfo.OpenRead())
                 {
                     int i = 0;
@@ -414,7 +415,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                                      " " + Exception.Status.ToString();
                     
                     file(  "Html/" + Exception.Status.value.ToString() + 
-                                                        ".html", 6000  );
+                                                        ".shtml", 6000  );
                 }
                 else
                     close();

@@ -1,6 +1,6 @@
 ﻿namespace MyWebSocket.Tcp.Protocol.WS
 {
-	enum WSClose
+	public enum WSClose
 	{
 		Normal		  = 1000,
 		GoingAway	  = 1001,

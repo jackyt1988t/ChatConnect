@@ -6,7 +6,7 @@ using System.Net.Sockets;
 
 namespace MyWebSocket.Tcp.Protocol.HTTP
 {
-    abstract class HTTP : BaseProtocol
+    public abstract class HTTP : BaseProtocol
     {
         /// <summary>
         /// Объект синхронизации данных
@@ -225,35 +225,35 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         {
             Response.SetEnd();
         }
-		/// <summary>
-		/// Очищает записывающий буффер данных
-		/// Отправляет указанную строку уд. стороне
-		/// </summary>
-		public void Flush(string message)
-		{
-			lock (Sync)
-			{
-				Message(message);
-				Flush();
-			}
-		}
-		/// <summary>
-		/// Очищает записывающий буффер данных
-		/// Отправляет указанный массив данных уд. стороне
-		/// </summary>
-		public void Flush(byte[] message)
-		{
-			lock (Sync)
-			{
-				Message(message);
-				Flush();
-			}
-		}
-		/// <summary>
-		/// Отправляет указанную строку уд. стороне
-		/// </summary>
-		/// <returns>true в случае успеха</returns>
-		public bool Message(string message)
+        /// <summary>
+        /// Очищает записывающий буффер данных
+        /// Отправляет указанную строку уд. стороне
+        /// </summary>
+        public void Flush(string message)
+        {
+            lock (Sync)
+            {
+                Message(message);
+                Flush();
+            }
+        }
+        /// <summary>
+        /// Очищает записывающий буффер данных
+        /// Отправляет указанный массив данных уд. стороне
+        /// </summary>
+        public void Flush(byte[] message)
+        {
+            lock (Sync)
+            {
+                Message(message);
+                Flush();
+            }
+        }
+        /// <summary>
+        /// Отправляет указанную строку уд. стороне
+        /// </summary>
+        /// <returns>true в случае успеха</returns>
+        public bool Message(string message)
         {
             return Message(Encoding.UTF8.GetBytes(message));
         }
@@ -379,13 +379,14 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 ==============================================================*/
                         if (state == 5)
                         {
-                            if (Tcp.Connected)
-                                Tcp.Close();
+                            
                             state = 7;
                         }
                         if (state == 7)
                         {
                             Close();
+                            if (Tcp.Connected)
+                                Tcp.Close( 0 );
                             Result.Option = TaskOption.Delete;
                         }
             }
@@ -424,12 +425,12 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         /// </summary>
         private void read()
         {
-			/*
+            /*
                 Если функция Poll Вернет true проверяем наличие данных, если данных нет значит соединение
                 было закрыто. Если есть данные читаем данные из сокета проверяем на наличие ошибок, если
                 выполнение произошло с ошибкой, обрабатываем.
             */
-			if (Tcp.Poll(0, SelectMode.SelectRead))
+            if (Tcp.Poll(0, SelectMode.SelectRead))
             {
                 if (Tcp.Available == 0)
                 {
@@ -441,8 +442,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                     SocketError error;
                     if ((error = Read()) != SocketError.Success)
                     {
-						// проверка является данная ошибка критической
-						if (error != SocketError.WouldBlock
+                        // проверка является данная ошибка критической
+                        if (error != SocketError.WouldBlock
                          && error != SocketError.NoBufferSpaceAvailable)
                         {
                             Response.SetClose();
@@ -531,11 +532,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             if (e != null)
                 e(this, new PEventArgs(s, m, null));
         }
-		/// <summary>
-		/// Потокобезопасный запуск события Close
-		/// желательно запускать в обработчике Close
-		/// </summary>
-		protected void OnEventClose()
+        /// <summary>
+        /// Потокобезопасный запуск события Close
+        /// желательно запускать в обработчике Close
+        /// </summary>
+        protected void OnEventClose()
         {
             string s = "close";
             string m = "Соединение было закрыто";

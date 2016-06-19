@@ -10,7 +10,7 @@ using MyWebSocket.Tcp.Protocol.HTTP;
 
 namespace MyWebSocket.Tcp
 {
-	class Agregator
+	public class Agregator
 	{
 		public IProtocol Protocol;		
 		private static ConcurrentQueue<Agregator> Container;

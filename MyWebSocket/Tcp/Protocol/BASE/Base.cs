@@ -4,7 +4,7 @@ using System.Net.Sockets;
 
 namespace MyWebSocket.Tcp.Protocol
 {
-	class BaseProtocol : IProtocol, IDisposable
+	public class BaseProtocol : IProtocol, IDisposable
 	{
 		/// <summary>
 		/// Длинна чтения сокета

@@ -1,6 +1,6 @@
 ﻿namespace MyWebSocket.Tcp.Protocol.HTTP
 {
-	internal interface codexxx
+	public interface codexxx
 	{
 		int value
 		{

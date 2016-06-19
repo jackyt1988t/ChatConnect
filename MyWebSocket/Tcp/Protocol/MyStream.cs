@@ -6,7 +6,7 @@ namespace MyWebSocket.Tcp.Protocol
 	/// <summary>
 	/// Кольцевой поток данных
 	/// </summary>
-	class MyStream : Stream
+	public class MyStream : Stream
 	{
 		/// <summary>
 		/// Длинна потока

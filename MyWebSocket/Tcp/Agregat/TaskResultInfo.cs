@@ -1,6 +1,6 @@
 ﻿namespace MyWebSocket.Tcp
 {
-	class TaskResult
+	public class TaskResult
 	{
 		public bool Jump
 		{

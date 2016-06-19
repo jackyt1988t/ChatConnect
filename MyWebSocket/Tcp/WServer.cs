@@ -6,7 +6,7 @@ using MyWebSocket.Log;
 
 namespace MyWebSocket.Tcp
 {
-	class WServer
+	public class WServer
 	{
 		public static int Pool = 100; 
 		public static int SendSize = 16 * 1000;

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace MyWebSocket.Tcp.Protocol.WS
 {
-	class ErrorWS
+	public class ErrorWS
 	{
 		public object Sync;
 		public WSException Error

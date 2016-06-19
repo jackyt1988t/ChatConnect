@@ -3,7 +3,7 @@ using MyWebSocket.Tcp.Protocol.WS;
 
 namespace MyWebSocket.Tcp.Protocol
 {
-	interface IProtocol : IAgregator
+	public interface IProtocol : IAgregator
 	{
 		Socket Tcp
         {
