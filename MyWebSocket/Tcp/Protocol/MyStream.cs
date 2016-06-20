@@ -265,13 +265,17 @@ namespace MyWebSocket.Tcp.Protocol
 		/// <returns></returns>
 		unsafe public override int Read(byte[] buffer, int pos, int len)
 		{
-			int i;
+			int i = 0;
+			if (pos < 0)
+				throw new IOException();
+			if (len < 0)
+				throw new IOException();
+			if ((pos + len) > buffer.Length)
+				throw new IOException();
 			lock (__Sync)
 			{
-				if (Empty)
-					return 0;
-				if (Length < len)
-					throw new IOException();
+				if (len  > Length)
+					len = Length;
 				fixed (byte* source = buffer, target = _buffer)
 				{
 
@@ -307,6 +311,12 @@ namespace MyWebSocket.Tcp.Protocol
 		/// <param name="len">количество которое необходимо прочитать</param>
 		unsafe public override void Write(byte[] buffer, int pos, int len)
 		{
+			if (pos < 0)
+				throw new IOException();
+			if (len < 0)
+				throw new IOException();
+			if ((pos + len) > buffer.Length)
+				throw new IOException();
 			lock (__Sync)
 			{
 				int i;
