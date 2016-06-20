@@ -253,7 +253,7 @@ namespace MyWebSocket.Tcp.Protocol
 			{
 				if (Empty)
 					return -1;
-				return _buffer[_p_r++];
+				return _buffer[PointR++];
 			}
 		}
 		/// <summary>
