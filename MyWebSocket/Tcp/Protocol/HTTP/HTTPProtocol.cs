@@ -243,18 +243,14 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         {
             OnEventWork();
             // вермя до закрытия(  keep-alive  )
-            if (Alive.Ticks < DateTime.Now.Ticks)
+            if (Alive.Ticks < DateTime.Now.Ticks && Writer.Empty)
             {
-                if (State != States.work || State != States.Send)
-                    close();
-                else if ( (Alive.Ticks + TimeSpan.TicksPerSecond * 30) < DateTime.Now.Ticks )
                     close();
             }
-            
         }
         protected override void Data()
         {
-            if ( __Reader._Frame.GetHead && __Reader._Frame.GetBody )
+            if (__Reader._Frame.GetHead && __Reader._Frame.GetBody)
             {
                 __Reader._Frame.Clear();
                 __Writer._Frame.Clear();
