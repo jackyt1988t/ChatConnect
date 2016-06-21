@@ -15,7 +15,7 @@ namespace MyWebSocket.Tcp.Protocol
 		{
 			get
 			{
-				return _len;
+				return __len;
 			}
 		}
 		/// <summary>
@@ -25,7 +25,10 @@ namespace MyWebSocket.Tcp.Protocol
 		{
 			get
 			{
-				return (_p_r == _p_w);
+				if (loop)
+					return false;
+				else
+					return (__p_r == __p_w);
 			}
 		}
 		/// <summary>
@@ -35,13 +38,13 @@ namespace MyWebSocket.Tcp.Protocol
 		{
 			get
 			{
-				if (_p_w < _p_r)
-					return (_p_r - _p_w) - 1;
+				if (loop)
+					return (__p_r - __p_w);
 				else
-					return (_len - _p_w) + _p_r;
+					return (__len - __p_w) + __p_r;
 			}
 		}		
-		long _p_w;
+		long __p_w;
 		/// <summary>
 		/// Указатель на текущую позицию чтения данных
 		/// </summary>
@@ -49,7 +52,7 @@ namespace MyWebSocket.Tcp.Protocol
 		{
 			get
 			{
-				return _p_r;
+				return __p_r;
 			}
 			protected set
 			{
@@ -58,13 +61,16 @@ namespace MyWebSocket.Tcp.Protocol
 					if (value > Count)
 						throw new IOException();
 					if (value < Count)
-						_p_r = value;
+					{
+						__p_r = 0;
+						_loop = false;
+					}
 					else
-						_p_r = 0;
+						__p_r = value;
 				}
 			}
 		}
-		long _p_r;
+		long __p_r;
 		/// <summary>
 		/// Указатель на текущую позицию записи данных
 		/// </summary>
@@ -72,7 +78,7 @@ namespace MyWebSocket.Tcp.Protocol
 		{
 			get
 			{
-				return _p_w;
+				return __p_w;
 			}
 			protected set
 			{
@@ -80,10 +86,13 @@ namespace MyWebSocket.Tcp.Protocol
 				{
 					if (value > Count)
 						throw new IOException();
-					if (value < Count)
-						_p_w = value;
+					if (value == Count)
+					{
+						__p_w = 0;
+						_loop = true;
+					}
 					else
-						_p_w = 0;
+						__p_w = value;
 				}
 			}
 		}
@@ -109,10 +118,10 @@ namespace MyWebSocket.Tcp.Protocol
 			{
 				lock (__Sync)
 				{
-					if (_p_w < _p_r)
-						return (_len - _p_r) + _p_w;
+					if (loop)
+						return (__len - __p_r) + __p_w;
 					else
-						return (_p_w - _p_r);
+						return (__p_w - __p_r);
 				}
 			}
 		}
@@ -157,21 +166,25 @@ namespace MyWebSocket.Tcp.Protocol
 					{
 						if (value > Length)
 							throw new IOException();
-						if (value + _p_r < Count)
-							_p_r = value + _p_r;
+						if ((value + __p_r) < Count)
+							__p_r = value + __p_r;
 						else
-							_p_r = value - (Count - _p_r);
+						{
+							_loop = false;
+							__p_r = value - (Count - __p_r);
+						}
 					}
 				}
 			}
 		}
-		protected long _len;
+		private bool _loop;
+		protected long __len;
 		protected byte[] _buffer;
 		
 		public MyStream(int length) : 
 			base()
 		{
-			_len = length;
+			__len = length;
 			__Sync = new object();
 			_buffer = new byte[length];
 		}
@@ -181,8 +194,9 @@ namespace MyWebSocket.Tcp.Protocol
 		/// </summary>
 		public virtual void Reset()
 		{
-			_p_r = 0;
-			_p_w = 0;
+			__p_r = 0;
+			__p_w = 0;
+			_loop = false;
 		}
 		/// <summary>
 		/// изменяет емкость(длинну) кольцевого потока
@@ -196,9 +210,10 @@ namespace MyWebSocket.Tcp.Protocol
 				byte[] buffer = new byte[length];
 				this.Read(  buffer, 0, recive  );
 
-				_p_r = 0;
-				_p_w = recive;
-				_len = length;
+				__p_r = 0;
+				_loop = false;
+				__p_w = recive;
+				__len = length;
 				_buffer = buffer;
 			}
 		}
@@ -221,10 +236,13 @@ namespace MyWebSocket.Tcp.Protocol
 			{
 				if (value > Clear)
 					throw new IOException();
-				if (PointW + value < _len)
-					PointW = value + PointW;
+				if (__p_w + value < __len)
+					__p_w = value + __p_w;
 				else
-					PointW = value - (Count - PointW);
+				{
+					_loop = true;
+					__p_w = value - (__len - __p_w);
+				}
 			}
 		}
 		#endregion
