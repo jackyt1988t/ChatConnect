@@ -25,7 +25,7 @@ namespace MyWebSocket.Tcp.Protocol
 		{
 			get
 			{
-				if (loop)
+				if (_loop)
 					return false;
 				else
 					return (__p_r == __p_w);
@@ -38,36 +38,10 @@ namespace MyWebSocket.Tcp.Protocol
 		{
 			get
 			{
-				if (loop)
+				if (_loop)
 					return (__p_r - __p_w);
 				else
 					return (__len - __p_w) + __p_r;
-			}
-		}		
-		long __p_w;
-		/// <summary>
-		/// Указатель на текущую позицию чтения данных
-		/// </summary>
-		public long PointR
-		{
-			get
-			{
-				return __p_r;
-			}
-			protected set
-			{
-				lock (__Sync)
-				{
-					if (value > Count)
-						throw new IOException();
-					if (value < Count)
-					{
-						__p_r = 0;
-						_loop = false;
-					}
-					else
-						__p_r = value;
-				}
 			}
 		}
 		long __p_r;
@@ -96,6 +70,32 @@ namespace MyWebSocket.Tcp.Protocol
 				}
 			}
 		}
+		long __p_w;
+		/// <summary>
+		/// Указатель на текущую позицию чтения данных
+		/// </summary>
+		public long PointR
+		{
+			get
+			{
+				return __p_r;
+			}
+			protected set
+			{
+				lock (__Sync)
+				{
+					if (value > Count)
+						throw new IOException();
+					if (value == Count)
+					{
+						__p_r = 0;
+						_loop = false;
+					}
+					else
+						__p_r = value;
+				}
+			}
+		}
 		public object __Sync
 		{
 			get;
@@ -118,7 +118,7 @@ namespace MyWebSocket.Tcp.Protocol
 			{
 				lock (__Sync)
 				{
-					if (loop)
+					if (_loop)
 						return (__len - __p_r) + __p_w;
 					else
 						return (__p_w - __p_r);
@@ -293,7 +293,7 @@ namespace MyWebSocket.Tcp.Protocol
 			lock (__Sync)
 			{
 				if (len  > Length)
-					len = Length;
+					len = (int)Length;
 				fixed (byte* source = buffer, target = _buffer)
 				{
 
