@@ -185,8 +185,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             lock (Sync)
             {
                 if (Response.IsEnd 
-                    && (State == States.Close 
-                         || State == States.Disconnect))
+                    && (State == States.Error
+                         || State == States.Close 
+                             || State == States.Disconnect))
                     result = false;
                 else
                 {
@@ -227,8 +228,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 {
                     try
                     {
-                        if (State != States.Close
-                             || State != States.Disconnect)
+                        if (State != States.Error
+                             ||State != States.Close
+                               || State != States.Disconnect)
                             __Writer.Eof();
                     }
                     catch (IOException exc)
