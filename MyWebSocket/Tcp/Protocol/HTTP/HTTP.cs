@@ -371,8 +371,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 ==============================================================*/
                         if (state == 4)
                         {
-                            Error(Exception);
-                            Interlocked.CompareExchange(ref state,-1, 4);
+                            if (Response.IsRes)
+                                close();
+                            else
+                            	state = -1;
+                                Error(Exception);
                         }
                 /*============================================================
                                         Закрываем соединеие						   
