@@ -19,9 +19,9 @@ namespace UnitTestMyStream
 
 			stream.Position = 1024;
 			stream.SetLength( 1024 );
-
 			stream.Position = 1024;
 
+			Assert.AreEqual(stream.Clear, 1024, "Успех");
 			Assert.AreEqual(stream.Length, 0, "Успех");
 		}
 	}
