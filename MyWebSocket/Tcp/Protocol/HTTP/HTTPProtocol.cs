@@ -80,7 +80,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         /// </summary>
         /// <param name="path"></param>
         /// <param name="chunk"></param>
-        protected override void file(string path, int chunk)
+        protected override void file( string path, int chunk )
         {
             FileInfo fileinfo = new FileInfo(path);
             
@@ -398,8 +398,15 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         }
         protected override void Error(HTTPException error)
         {
+			Response.ClearHeaders();
             OnEventError(error);
-
+			if (string.IsNullOrEmpty(Response.StartString))
+			{
+				if (error.Status.value == 404)
+					File("Html/404.html");
+				else
+					close();
+			}
         }
         protected override void Connection()
         {

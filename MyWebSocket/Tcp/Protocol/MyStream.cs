@@ -9,6 +9,69 @@ namespace MyWebSocket.Tcp.Protocol
 	public class MyStream : Stream
 	{
 		/// <summary>
+		/// Хранилище
+		/// </summary>
+		internal byte[] Buffer
+		{
+			get
+			{
+				return _buffer;
+			}
+		}
+		long __p_r;
+		/// <summary>
+		/// Указатель на текущую позицию записи данных
+		/// </summary>
+		internal long PointW
+		{
+			get
+			{
+				return __p_w;
+			}
+			set
+			{
+				lock (__Sync)
+				{
+					if (value < 0 || value > Count)
+						throw new ArgumentOutOfRangeException("value");
+					if (value == Count)
+					{
+						__p_w = 0;
+						_loop = true;
+					}
+					else
+						__p_w = value;
+				}
+			}
+		}
+		long __p_w;
+		/// <summary>
+		/// Указатель на текущую позицию чтения данных
+		/// </summary>
+		internal long PointR
+		{
+			get
+			{
+				return __p_r;
+			}
+			set
+			{
+				lock (__Sync)
+				{
+					if (value < 0 || value > Count)
+						throw new ArgumentOutOfRangeException("value");
+					if (value == Count)
+					{
+						__p_r = 0;
+						_loop = false;
+					}
+					else
+						__p_r = value;
+				}
+			}
+		}
+
+		/// <summary>
 		/// Длинна потока
 		/// </summary>
 		public long Count
@@ -44,69 +107,10 @@ namespace MyWebSocket.Tcp.Protocol
 					return (__len - __p_w) + __p_r;
 			}
 		}
-		long __p_r;
-		/// <summary>
-		/// Указатель на текущую позицию записи данных
-		/// </summary>
-		public long PointW
-		{
-			get
-			{
-				return __p_w;
-			}
-			protected set
-			{
-				lock (__Sync)
-				{
-					if (value < 0 || value > Count)
-						throw new ArgumentOutOfRangeException("value");
-					if (value == Count)
-					{
-						__p_w = 0;
-						_loop = true;
-					}
-					else
-						__p_w = value;
-				}
-			}
-		}
-		long __p_w;
-		/// <summary>
-		/// Указатель на текущую позицию чтения данных
-		/// </summary>
-		public long PointR
-		{
-			get
-			{
-				return __p_r;
-			}
-			protected set
-			{
-				lock (__Sync)
-				{
-					if (value < 0 || value > Count)
-						throw new ArgumentOutOfRangeException("value");
-					if (value == Count)
-					{
-						__p_r = 0;
-						_loop = false;
-					}
-					else
-						__p_r = value;
-				}
-			}
-		}
 		public object __Sync
 		{
 			get;
 			private set;
-		}
-		public byte[] Buffer
-		{
-			get
-			{
-				return _buffer;
-			}
 		}
 		/// <summary>
 		/// Длинна не прочитанных байт. Чтобы узнать длинну потока
@@ -125,6 +129,9 @@ namespace MyWebSocket.Tcp.Protocol
 				}
 			}
 		}
+		/// <summary>
+		/// Показывет возможночть чтения
+		/// </summary>
 		public override bool CanRead
 		{
 			get
@@ -132,6 +139,9 @@ namespace MyWebSocket.Tcp.Protocol
 				return true;
 			}
 		}
+		/// <summary>
+		/// Показывает возможность записи
+		/// </summary>
 		public override bool CanWrite
 		{
 			get
@@ -139,6 +149,9 @@ namespace MyWebSocket.Tcp.Protocol
 				return true;
 			}
 		}
+		/// <summary>
+		/// Показывает возможность поиска
+		/// </summary>
 		public override bool CanSeek
 		{
 			get

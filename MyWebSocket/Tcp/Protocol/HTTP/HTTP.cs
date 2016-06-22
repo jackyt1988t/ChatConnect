@@ -8,33 +8,41 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 {
     public abstract class HTTP : BaseProtocol
     {
-        /// <summary>
-        /// Объект синхронизации данных
-        /// </summary>
-        public object Sync
+		volatile int state;
+		/// <summary>
+		/// Информация о текщем сотстоянии
+		/// </summary>
+		override public States State
+		{
+			protected set
+			{
+				state = (int)value;
+			}
+			get
+			{
+				return (States)state;
+			}
+		}
+
+		/// <summary>
+		/// Объект синхронизации данных
+		/// </summary>
+		public object Sync
         {
             get;
             protected set;
         }
-        volatile
-        int state;
-        override
-        public States State
-        {
-            protected set
-            {
-                state = (int)value;
-            }
-            get
-            {
-                return (States)state;
-            }
-        }
+		/// <summary>
+		/// Слстояние обработки потоком
+		/// </summary>
         public TaskResult Result
         {
             get;
             protected set;
         }
+		/// <summary>
+		/// Последняя зафиксировання ошибка
+		/// </summary>
         public HTTPException Exception
         {
             get;
@@ -371,10 +379,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 ==============================================================*/
                         if (state == 4)
                         {
-                            if (Response.IsRes)
+                            if (Response.IsRes 
+								  || Exception.Status.value == 500)
                                 close();
                             else
-                            	state = -1;
+                            	Interlocked.Exchange(ref state, -1);
                                 Error(Exception);
                         }
                 /*============================================================
@@ -415,11 +424,13 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         {
             lock (Sync)
             {
-                if (state < 4)
+					
+				if (Exception != null)
+					state = 7;
+                else if (state < 4)
                     state = 4;
-                else if (state < 7)
-                    state = 7;
-                Exception = err;
+					Exception = err;
+					
             }
         }
         /// <summary>

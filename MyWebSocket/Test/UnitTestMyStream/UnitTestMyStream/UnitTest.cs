@@ -25,7 +25,7 @@ namespace UnitTestMyStream
 			Assert.AreEqual(stream.Length, 1024, "Length");
 			try
 			{
-				strem.Read(null, 0, 0);
+				stream.Read(null, 0, 0);
 			}
 			catch (ArgumentNullException err)
 			{
@@ -39,7 +39,7 @@ namespace UnitTestMyStream
 				error = false;
 			try
 			{
-				strem.Read(new byte[1], -1, 0);
+				stream.Read(new byte[1], -1, 0);
 			}
 			catch (ArgumentOutOfRangeException err)
 			{
@@ -53,7 +53,7 @@ namespace UnitTestMyStream
 				error = false;
 			try
 			{
-				strem.Read(new byte[1], 0, -1);
+				stream.Read(new byte[1], 0, -1);
 			}
 			catch (ArgumentOutOfRangeException err)
 			{
@@ -67,7 +67,7 @@ namespace UnitTestMyStream
 				error = false;
 			try
 			{
-				strem.Read(new byte[1], 0, 22);
+				stream.Read(new byte[1], 0, 22);
 			}
 			catch (ArgumentOutOfRangeException err)
 			{
@@ -81,7 +81,7 @@ namespace UnitTestMyStream
 				error = false;
 			try
 			{
-				strem.Write(null, 0, 0);
+				stream.Write(null, 0, 0);
 			}
 			catch (ArgumentNullException err)
 			{
@@ -95,7 +95,7 @@ namespace UnitTestMyStream
 				error = false;
 			try
 			{
-				strem.Write(new byte[1], -1, 0);
+				stream.Write(new byte[1], -1, 0);
 			}
 			catch (ArgumentOutOfRangeException err)
 			{
@@ -109,7 +109,7 @@ namespace UnitTestMyStream
 				error = false;
 			try
 			{
-				strem.Write(new byte[1], 0, -1);
+				stream.Write(new byte[1], 0, -1);
 			}
 			catch (ArgumentOutOfRangeException err)
 			{
@@ -123,7 +123,7 @@ namespace UnitTestMyStream
 				error = false;
 			try
 			{
-				strem.Write(new byte[1], 0, 22);
+				stream.Write(new byte[1], 0, 22);
 			}
 			catch (ArgumentOutOfRangeException err)
 			{
@@ -139,6 +139,7 @@ namespace UnitTestMyStream
 		[TestMethod]
 		public void TestLength()
 		{
+			bool error = false;
 			byte[] buffer = new byte[1024];
 			MyStream stream = new MyStream(1024);
 
@@ -154,7 +155,7 @@ namespace UnitTestMyStream
 
 			try
 			{
-				strem.Position = -1;
+				stream.Position = -1;
 			}
 			catch (ArgumentOutOfRangeException err)
 			{
@@ -173,7 +174,7 @@ namespace UnitTestMyStream
 			byte[] buffer = new byte[1024];
 			for (int i = 0; i < 1024; i++)
 			{
-				buffer[i] = i;
+				buffer[i] = (byte)i;
 			}
 			MyStream stream = new MyStream(1024);
 
@@ -192,7 +193,7 @@ namespace UnitTestMyStream
 			stream.Read(buffer, 0, 1024);
 			for (int i = 0; i < 1024; i++)
 			{
-				if (buffer[i] != i)
+				if (buffer[i] != (byte)i)
 				{
 					Assert.Fail("неверное значение в массиве");
 					return;
