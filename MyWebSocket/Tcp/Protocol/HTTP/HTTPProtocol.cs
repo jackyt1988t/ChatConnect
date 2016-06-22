@@ -229,7 +229,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                     try
                     {
                         if (State != States.Error
-                             ||State != States.Close
+                             || State != States.Close
                                || State != States.Disconnect)
                             __Writer.Eof();
                     }
@@ -399,25 +399,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         protected override void Error(HTTPException error)
         {
             OnEventError(error);
-            if (Response.IsRes)
-                close();
-            else
-            {
-                if (Exception.Status.value >= 500)
-                    close();
-                else if (Exception.Status.value >= 400)
-                {
-                    Response.ClearHeaders();
-                    Response.StartString = "HTTP/1.1 " + 
-                                     Exception.Status.value.ToString() +  
-                                     " " + Exception.Status.ToString();
-                    
-                    file(  "Html/" + Exception.Status.value.ToString() + 
-                                                        ".html", 6000  );
-                }
-                else
-                    close();
-            }
 
         }
         protected override void Connection()
