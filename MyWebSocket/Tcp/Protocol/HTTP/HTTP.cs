@@ -470,7 +470,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         /// <summary>
         /// Отправляет сообщение
         /// </summary>
-        /// <param name="data">Данные</param>
         private void write()
         {
             /*
@@ -486,7 +485,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                     {
                         // проверка является данная ошибка критической
                         if (error != SocketError.WouldBlock
-                         && error != SocketError.NoBufferSpaceAvailable)
+							  && error != SocketError.NoBufferSpaceAvailable)
                         {
                             Response.SetClose();
                             exc(new HTTPException("Ошибка записи http данных: " + error.ToString(), HTTPCode._500_));

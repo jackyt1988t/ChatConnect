@@ -1,4 +1,4 @@
-unction init() {
+function init() {
 	var body = document.body;
 	while (body.childNodes.length > 0) {
 		body.removeChild(body.childNodes[0]);
@@ -61,23 +61,26 @@ function initws()
         }
         wsock.onclose = function (event) {
             info.innerText = "Отключен";
+            setTimeout(function () {
+                wsock = new WebSocket(str);
+            }, 1000);
         }
-	wsock.onerror = function (error) { 
-		info.innerText = "Ошибка" + error.message;
-	}
+	    wsock.onerror = function (error) { 
+		    info.innerText = "Ошибка" + error.message;
+	    }
         wsock.onmessage = function (event) {
-		if (typeof(event.data) === 'object') {
-		//Binnary
-		}
-		else {
-			var div  =  document.createElement('div');
-			div.style.backgroundColor = 'yellow';
-			div.innerText = event.data;
-			elem.appendChild(div);
-		}
-	};
-	_send.onclick = function () {
-		wsock.send(_text.value, user);
-			   _text.value = '';
+		    if (typeof(event.data) === 'object') {
+		    //Binnary
+		    }
+		    else {
+			    var div  =  document.createElement('div');
+			    div.style.backgroundColor = 'yellow';
+			    div.innerText = event.data;
+			    elem.appendChild(div);
+		    }
+	    };
+	    _send.onclick = function () {
+		    wsock.send(_text.value, user);
+			           _text.value = '';
 	}
 }

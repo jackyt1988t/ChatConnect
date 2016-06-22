@@ -134,7 +134,7 @@ namespace Example
                 };
                 Http.EventError += (object sender, PEventArgs e) =>
                 {
-                    Console.WriteLine("ERROR");
+                    Console.WriteLine("ERROR ." + e.sender.ToString());
                 };
                 Http.EventClose += (object sender, PEventArgs e) =>
                 {

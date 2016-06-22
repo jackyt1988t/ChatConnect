@@ -101,7 +101,7 @@ namespace MyWebSocket.Tcp
 			set
 			{
 				cashcontrol = value;
-				AddHeader("Cash-Control", SplitValues(",", value));
+				AddHeader("Cash-Control", SplitValues(", ", value));
 			}
 		}
 		List<string> contenttype;
@@ -118,7 +118,7 @@ namespace MyWebSocket.Tcp
 			set
 			{
 				contenttype = value;
-				AddHeader("Content-Type", SplitValues(";", value));
+				AddHeader("Content-Type", SplitValues("; ", value));
 			}
 		}
 		List<string> acceptencoding;
@@ -135,7 +135,7 @@ namespace MyWebSocket.Tcp
 			set
 			{
 				acceptencoding = value;
-				AddHeader("Accept-Encoding", SplitValues(",", value));
+				AddHeader("Accept-Encoding", SplitValues(", ", value));
 			}
 		}
 
@@ -421,9 +421,11 @@ namespace MyWebSocket.Tcp
 			string value = string.Empty;
 			for (int i = 0; i < values.Count; i++)
 			{
-				value += values[i] + separat;
+				if ( i == values.Count - 1 )
+					value += values[i];
+				else
+					value += values[i] + separat;
 			}
-			value.TrimEnd(separat.ToCharArray());
 			return value;
 		}
 		private List<string> ReplaseValues(string value, string separat)

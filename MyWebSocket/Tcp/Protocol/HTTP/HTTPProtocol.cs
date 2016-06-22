@@ -167,15 +167,17 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             if (string.IsNullOrEmpty(Response.StartString))
                 Response.StartString  =  "HTTP/1.1 200 OK";
             
-                if (Response.CashControl != null
-                        && Response.CashControl.Count == 0)
+                if (Response.CashControl == null
+                        || Response.CashControl.Count == 0)
                     Response.CashControl = new List<string> 
-                                               { 
-                                                   "no-case", 
-                                                   "no-store" 
-                                               };
-                if (Response.ContentType != null
-                        && Response.ContentType.Count == 0)
+                                               {
+												   "no-store", 
+                                                   "no-cache", 
+                                                   
+
+											   };
+                if (Response.ContentType == null
+                        || Response.ContentType.Count == 0)
                     Response.ContentType = new List<string>
                                                {
                                                    "text/plain",
