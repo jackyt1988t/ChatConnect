@@ -45,7 +45,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         
         static HTTPProtocol()
         {
-            ALIVE = 40;
+            ALIVE = 25;
             HTTPWriter.MINRESIZE = MINLENGTHBUFFER;
             HTTPWriter.MAXRESIZE = MAXLENGTHBUFFER * 64;
         }
@@ -171,11 +171,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                         || Response.CashControl.Count == 0)
                     Response.CashControl = new List<string> 
                                                {
-												   "no-store", 
+                                                   "no-store", 
                                                    "no-cache", 
                                                    
 
-											   };
+                                               };
                 if (Response.ContentType == null
                         || Response.ContentType.Count == 0)
                     Response.ContentType = new List<string>
@@ -188,25 +188,25 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             {
                 if (Response.IsEnd 
                       || (State == States.Error
-                          || State == States.Close 
-                               || State == States.Disconnect))
+                            || State == States.Close 
+                                 || State == States.Disconnect))
                     result = false;
                 else
                 {
                     try
                     {
-                        switch (Response.ContentEncoding)
-                        {
-                            case "gzip":
-                                __Arhiv.Write(buffer, start, write);
-                                break;
-                            case "deflate":
-                                __Arhiv.Write(buffer, start, write);
-                                break;
-                            default:
-                                __Writer.Write(buffer, start, write);
-                                break;
-                        }
+                            switch ( Response.ContentEncoding )
+                            {
+                                case "gzip":
+                                    __Arhiv.Write(buffer, start, write);
+                                    break;
+                                case "deflate":
+                                    __Arhiv.Write(buffer, start, write);
+                                    break;
+                                default:
+                                    __Writer.Write(buffer, start, write);
+                                    break;
+                            }
                     }
                     catch (IOException exc)
                     {
@@ -400,18 +400,18 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         }
         protected override void Error(HTTPException error)
         {
-			Response.ClearHeaders();
+            Response.ClearHeaders();
             OnEventError(error);
-			if (string.IsNullOrEmpty(Response.StartString))
-			{
-				if (error.Status.value  ==  404)
-				{
-					Response.StartString = "HTTP/1.1 404 " + error.Status.ToString();
-					File("Html/404.html");
-				}
-				else
-					close();
-			}
+            if (string.IsNullOrEmpty(Response.StartString))
+            {
+                if (error.Status.value  ==  404)
+                {
+                    Response.StartString = "HTTP/1.1 404 " + error.Status.ToString();
+                    File("Html/404.html");
+                }
+                else
+                    close();
+            }
         }
         protected override void Connection()
         {
