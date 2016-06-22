@@ -231,8 +231,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                     try
                     {
                         if (State != States.Error
-                             || State != States.Close
-                               || State != States.Disconnect)
+                              && State != States.Close
+                                   && State != States.Disconnect)
                             __Writer.Eof();
                     }
                     catch (IOException exc)
