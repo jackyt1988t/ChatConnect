@@ -2,7 +2,7 @@
 
 namespace MyWebSocket.Tcp.Protocol.HTTP
 {
-	class HTTPFrame
+	public class HTTPFrame
 	{
 		public const int DATA = 0;
 		public const int CHUNK = 1; 
@@ -16,6 +16,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         public int ststr;
         public int param;
         public int value;
+		public long alleng;
         public bool GetBody;
         public bool GetHead;
         public string StStr;

@@ -5,7 +5,7 @@ using MyWebSocket.Tcp.Protocol;
 namespace UnitTestMyStream
 {
 	[TestClass]
-	public class UnitTest
+	public class UnitTestMyStream
 	{
 		[TestMethod]
 		public void TestWrite()

@@ -2,7 +2,7 @@
 
 namespace MyWebSocket.Tcp.Protocol.HTTP
 {
-	class HTTPReader : MyStream
+	public class HTTPReader : MyStream
 	{
 		const int LF = 0x0A;
 		const int CR = 0x0D;
@@ -109,6 +109,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				read++;
 				PointR++;
 				_Frame.bpart++;
+				_Frame.alleng++;
 
 				if (_Frame.bpart == _Frame.bleng)
 				{
@@ -276,6 +277,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				}
 					PointR++;
 					_Frame.hleng++;
+					_Frame.alleng++;
+				
 				if (_Frame.GetHead && header.IsReq )
 					return read;
 			}
