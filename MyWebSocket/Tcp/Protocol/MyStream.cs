@@ -59,7 +59,7 @@ namespace MyWebSocket.Tcp.Protocol
 				lock (__Sync)
 				{
 					if (value > Count)
-						throw new IOException();
+						throw new ArgumentOutOfRangeException("value");
 					if (value == Count)
 					{
 						__p_w = 0;
@@ -85,7 +85,7 @@ namespace MyWebSocket.Tcp.Protocol
 				lock (__Sync)
 				{
 					if (value > Count)
-						throw new IOException();
+						throw new ArgumentOutOfRangeException("value");
 					if (value == Count)
 					{
 						__p_r = 0;
@@ -162,10 +162,12 @@ namespace MyWebSocket.Tcp.Protocol
 			{
 				lock (__Sync)
 				{
-					if (value > 0)
+					if (value < 0)
+						throw new ArgumentOutOfRangeException("value");
+					else
 					{
 						if (value > Length)
-							throw new IOException();
+							throw new IOException("Превышена допустимая длинна");
 						if ((value + __p_r) < Count)
 							__p_r = value + __p_r;
 						else
@@ -204,8 +206,12 @@ namespace MyWebSocket.Tcp.Protocol
 		/// <param name="length">емкость потока</param>
 		public virtual void Resize(int length)
 		{
+			if (length < 0)
+				throw new ArgumentOutOfRangeException("length");
 			lock (__Sync)
 			{
+				if (length < Length)
+					throw new IOException("Не хватает места для перезаписи");
 				int recive = (int)Length;
 				byte[] buffer = new byte[length];
 				this.Read(  buffer, 0, recive  );
@@ -235,7 +241,7 @@ namespace MyWebSocket.Tcp.Protocol
 			lock (__Sync)
 			{
 				if (value > Clear)
-					throw new IOException();
+					throw new IOException("Недостаточно свободного места");
 				if (__p_w + value < __len)
 					__p_w = value + __p_w;
 				else
@@ -284,12 +290,14 @@ namespace MyWebSocket.Tcp.Protocol
 		unsafe public override int Read(byte[] buffer, int pos, int len)
 		{
 			int i = 0;
+			if (buffer == null)
+				throw new ArgumentNullException("buffer");
 			if (pos < 0)
-				throw new IOException();
+				throw new ArgumentOutOfRangeException("pos");
 			if (len < 0)
-				throw new IOException();
+				throw new ArgumentOutOfRangeException("len");
 			if ((pos + len) > buffer.Length)
-				throw new IOException();
+				throw new ArgumentOutOfRangeException("len+pos);
 			lock (__Sync)
 			{
 				if (len  > Length)
@@ -329,17 +337,19 @@ namespace MyWebSocket.Tcp.Protocol
 		/// <param name="len">количество которое необходимо прочитать</param>
 		unsafe public override void Write(byte[] buffer, int pos, int len)
 		{
+			if (buffer == null)
+				throw new ArgumentNullException("buffer");
 			if (pos < 0)
-				throw new IOException();
+				throw new ArgumentOutOfRangeException("pos");
 			if (len < 0)
-				throw new IOException();
+				throw new ArgumentOutOfRangeException("len");
 			if ((pos + len) > buffer.Length)
-				throw new IOException();
+				throw new ArgumentOutOfRangeException("len+pos);
 			lock (__Sync)
 			{
 				int i;
 				if (len > Clear)
-					throw new IOException();
+					throw new IOException("Недостаточно свободного места");
 				fixed (byte* source = _buffer, target = buffer)
 				{
 					byte* pt = target + pos;
