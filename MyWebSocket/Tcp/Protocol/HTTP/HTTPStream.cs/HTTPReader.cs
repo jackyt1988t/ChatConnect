@@ -11,27 +11,46 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		const int STSTR = 1024;
 		const int PARAM = 1024;
 		const int VALUE = 1024;
-		
+
+		/// <summary>
+		/// Допустимая длинна заголовков
+		/// </summary>
+		public static int LENHEAD;
+		/// <summary>
+		/// Допустимая длинна блока Transfer-Encoding
+		/// </summary>
 		public static int LENCHUNK;
-		public static readonly byte[] ENDCHUNCK;
-		public static readonly byte[] EOFCHUNCK;
 
+		/// <summary>
+		/// Заголвоки запрос
+		/// </summary>
 		public Header header;
+		/// <summary>
+		/// Информация о записи
+		/// </summary>
 		public HTTPFrame _Frame;
-
+		/// <summary>
+		/// Статический конструктор
+		/// </summary>
 		static HTTPReader()
 		{
+			LENHEAD = 36000;
 			LENCHUNK = 64000;
-			ENDCHUNCK =
-				new byte[] { 0x0D, 0x0A };
-			EOFCHUNCK = 
-				new byte[] { 0x30, 0x0D, 0x0A, 0x0D, 0x0A };
 		}
+		/// <summary>
+		/// Создает кольцевой поток указанной емкости
+		/// </summary>
+		/// <param name="length">длинна потока</param>
 		public HTTPReader(int length) :
 			base(length)
 		{
 			_Frame = new HTTPFrame();
 		}
+		/// <summary>
+		/// считывает из потока тело http запроса и записывает их в header.Body
+		/// </summary>
+		/// <returns>-1 если тело не былио получено</returns>
+		/// <exception cref="HTTPException">Ошибка http протокола</exception>
 		public override int ReadBody()
 		{
 			if (_Frame.Handl == 0)
@@ -48,9 +67,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				@char = Buffer[PointR];
 				switch ( _Frame.Handl )
 				{
+					// Записывает тело запроса
 					case 1:
 						header.Body[_Frame.bpart] = (byte)@char;
 						break;
+					// Записывает окончание запроса
 					case 2:
 						if (@char == CR)
 						{
@@ -60,6 +81,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						else
 							_Frame.Param += char.ToLower((char)@char);
 						break;
+					// Проверяет правильность окончания длинны
 					case 3:
 						if (@char != LF)
 							throw new HTTPException("отсутсвует символ[LF]", HTTPCode._400_);
@@ -131,9 +153,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// считывает из потока заголовки http запроса и записывает их в header
 		/// </summary>
 		/// <returns>-1 если заголвки не были получены</returns>
-		/// <exception cref="HTTPException"></exception>
-		/// <exception cref="HeadersException"></exception>
-
+		/// <exception cref="HTTPException">Ошибка http протокола</exception>
 		public override int ReadHead()
 		{
 			int read = 0;
@@ -141,7 +161,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			
 			while (!Empty)
 			{
-				if ( _Frame.hleng > 36000 )
+				if (_Frame.hleng > LENHEAD)
 					throw new HTTPException( "Превышена длинна заголовков", HTTPCode._400_ );
 
 				@char = Buffer[PointR];
