@@ -15,14 +15,10 @@ namespace UnitTestMyStream
 			MyStream stream = new MyStream(1024);
 			
 			stream.Write(buffer, 0, 1024);
-
-			stream.Read(buffer, 0, 512);
-
+				stream.Read(buffer, 0, 512);
 			stream.Write(buffer, 0, 512);
-
-			stream.Read(buffer, 0, 512);
-			stream.Read(buffer, 0, 512);
-
+				stream.Read(buffer, 0, 512);
+				stream.Read(buffer, 0, 512);
 			stream.Write(buffer, 0, 1024);
 
 			Assert.AreEqual(stream.Clear, 0, "Clear");
@@ -146,16 +142,12 @@ namespace UnitTestMyStream
 			byte[] buffer = new byte[1024];
 			MyStream stream = new MyStream(1024);
 
-			stream.SetLength(1024);
-
-			stream.Position = 512;
-
-			stream.SetLength(512);
-
-			stream.Position = 512;
-			stream.Position = 512;
-
-			stream.SetLength(1024);
+				stream.SetLength(1024);
+					stream.Position = 512;
+				stream.SetLength(512);
+					stream.Position = 512;
+					stream.Position = 512;
+				stream.SetLength(1024);
 
 			Assert.AreEqual(stream.Clear, 0, "Clear");
 			Assert.AreEqual(stream.Length, 1024, "Length");
@@ -185,11 +177,11 @@ namespace UnitTestMyStream
 			}
 			MyStream stream = new MyStream(1024);
 
-			stream.SetLength(1024);
-			stream.Position = 512;
-			stream.SetLength(512);
-			stream.Position = 512;
-			stream.Position = 512;
+				stream.SetLength(1024);
+					stream.Position = 512;
+				stream.SetLength(512);
+					stream.Position = 512;
+					stream.Position = 512;
 			stream.Write(buffer, 0, 1024);
 			
 			stream.Resize(2048);
