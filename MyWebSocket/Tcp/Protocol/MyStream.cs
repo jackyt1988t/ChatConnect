@@ -58,7 +58,7 @@ namespace MyWebSocket.Tcp.Protocol
 			{
 				lock (__Sync)
 				{
-					if (value > Count)
+					if (value < 0 || value > Count)
 						throw new ArgumentOutOfRangeException("value");
 					if (value == Count)
 					{
@@ -84,7 +84,7 @@ namespace MyWebSocket.Tcp.Protocol
 			{
 				lock (__Sync)
 				{
-					if (value > Count)
+					if (value < 0 || value > Count)
 						throw new ArgumentOutOfRangeException("value");
 					if (value == Count)
 					{
