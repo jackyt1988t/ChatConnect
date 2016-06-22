@@ -187,9 +187,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             lock (Sync)
             {
                 if (Response.IsEnd 
-                    && (State == States.Error
-                         || State == States.Close 
-                             || State == States.Disconnect))
+                      || (State == States.Error
+                          || State == States.Close 
+                               || State == States.Disconnect))
                     result = false;
                 else
                 {
@@ -249,7 +249,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             // вермя до закрытия(  keep-alive  )
             if (Alive.Ticks < DateTime.Now.Ticks && Writer.Empty)
             {
-                    close();
+                close();
             }
         }
         protected override void Data()
@@ -404,8 +404,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             OnEventError(error);
 			if (string.IsNullOrEmpty(Response.StartString))
 			{
-				if (error.Status.value == 404)
+				if (error.Status.value  ==  404)
+				{
+					Response.StartString = "HTTP/1.1 404 " + error.Status.ToString();
 					File("Html/404.html");
+				}
 				else
 					close();
 			}

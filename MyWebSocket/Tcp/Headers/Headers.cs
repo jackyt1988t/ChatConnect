@@ -269,7 +269,7 @@ namespace MyWebSocket.Tcp
 		/// </summary>
 		public void ClearHeaders()
 		{
-			StartString = null;
+			StartString = string.Empty;
 			foreach (KeyValuePair<string, string> header in ContainerHeaders)
 			{
 				Analizating(header.Key, string.Empty);

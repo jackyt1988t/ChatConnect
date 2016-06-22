@@ -1,10 +1,17 @@
-function init() {
+ï»¿function init() {
     var body = document.body;
     while (body.childNodes.length > 0) {
         body.removeChild(body.childNodes[0]);
     }
-    var win = {
-        width: document.documentElement.clientWidth - 32
+    if (document.documentElement.clientWidth < 500) {
+        var win = {
+            width: 500 - 32
+        }
+    }
+    else {
+        var win = {
+            width: document.documentElement.clientWidth - 32
+        }
     }
     var info = document.getElementById("info");
     var elem = document.getElementById("elem");
@@ -49,42 +56,47 @@ function init() {
 function initxhr() {
     init();
     subscribe();
-    // àäðåñ ñåðâåðà
-    var str = 'http://12.0.0.1:8081/message';
+    // Ð°Ð´Ñ€ÐµÑ ÑÐµÑ€Ð²ÐµÑ€Ð°
+    var str = 'http://127.0.0.1:8081/message';
     var elem = document.getElementById("elem");
     var text = document.getElementById("text");
     var send = document.getElementById("send");
 
     var _xhr = new XMLHttpRequest();
         send.onclick = function () {
-            _xhr.open('GET', str, true);
-            _xhr.send(_text.value);
-                      _text.value = '';
-    }
+            if (text.value !== 'undefined' && text.value !== '') {
+                _xhr.open('POST', str, true);
+                _xhr.send(text.value);
+                          text.value = '';
+            }
+        };
 }
 function subscribe() {
-    var str = 'http://12.0.0.1:8081/subscribe';
+    var str = 'http://127.0.0.1:8081/subscribe';
     var info = document.getElementById("info");
     var elem = document.getElementById("elem");
 
     var _xhr = new XMLHttpRequest();
-        _xhr.open('GET', str, true);
-        info.innerText = "Ñîåäèíåí";
-        _xhr.onreadystatechange = function () {
-        if (_xhr.readyState === 4) {
-            if (_xhr.status === 200) {
-                var div = document.createElement('div');
-                div.style.backgroundColor = 'yellow';
-                div.innerText = _xhr.responseText;
-                elem.appendChild(div);
-            }
-            info.innerText = "Îòêëþ÷åí";
-            setTimeout(function () {
-                _xhr.open('GET', str, true);
-                info.innerText = "Ñîåäèíåí";
-                _xhr.send();
-            }, 1000);
-        }
-    }
-        _xhr.send(null);
+        var handler = function () {
+            info.innerText = "Ð¡Ð¾ÐµÐ´Ð¸Ð½ÐµÐ½";
+            _xhr.open('GET', str, true);
+            if (_xhr.msCaching)
+                _xhr.msCaching = 'disabled';
+            _xhr.onreadystatechange = function () {
+                if (_xhr.readyState === 4) {
+                    if (_xhr.status === 200) {
+                        var div = document.createElement('div');
+                        div.style.backgroundColor = 'yellow';
+                        div.innerText = _xhr.responseText;
+                        elem.appendChild(div);
+                    }
+                    info.innerText = "ÐžÑ‚ÐºÐ»ÑŽÑ‡ÐµÐ½";
+                    setTimeout(function () {
+                        handler();
+                    }, 1000);
+                }
+            };
+            _xhr.send(null);
+        };
+        handler();
 }

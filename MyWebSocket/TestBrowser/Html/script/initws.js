@@ -50,7 +50,7 @@ function initws()
 {
 	init();
 	// адрес сервера
-	var str = 'ws://12.0.0.1:8081';
+	var str = 'ws://127.0.0.1:8081';
 	var info = document.getElementById("info");
     var elem = document.getElementById("elem");
 	var _text = document.getElementById("text");
@@ -79,8 +79,10 @@ function initws()
 			    elem.appendChild(div);
 		    }
 	    };
-	    _send.onclick = function () {
-		    wsock.send(_text.value, user);
-			           _text.value = '';
+        _send.onclick = function () {
+            if (_text.value !== 'undefined' && _text.value !== '') {
+                wsock.send(_text.value);
+                           _text.value = '';
+            }
 	}
 }
