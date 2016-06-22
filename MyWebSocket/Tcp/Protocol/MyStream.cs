@@ -297,7 +297,7 @@ namespace MyWebSocket.Tcp.Protocol
 			if (len < 0)
 				throw new ArgumentOutOfRangeException("len");
 			if ((pos + len) > buffer.Length)
-				throw new ArgumentOutOfRangeException("len+pos);
+				throw new ArgumentOutOfRangeException("len + pos");
 			lock (__Sync)
 			{
 				if (len  > Length)
@@ -344,7 +344,7 @@ namespace MyWebSocket.Tcp.Protocol
 			if (len < 0)
 				throw new ArgumentOutOfRangeException("len");
 			if ((pos + len) > buffer.Length)
-				throw new ArgumentOutOfRangeException("len+pos);
+				throw new ArgumentOutOfRangeException("len + pos");
 			lock (__Sync)
 			{
 				int i;
