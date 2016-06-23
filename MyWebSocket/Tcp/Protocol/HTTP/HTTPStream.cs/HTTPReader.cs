@@ -262,16 +262,16 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					case 3:
 						if (@char == CR)
 							_Frame.Handl = 5;
+						else if (@char == CN)
+                            				_Frame.Handl = 2;
+						else if (@char = SPACE)
+							_Frame.Handl = 3;
 						else
 						{
 							_Frame.Handl = 1;
-							if (@char == CN)
-                            	_Frame.Handl = 2;
-							else
-							{
-								_Frame.param++;
-								_Frame.Param += char.ToLower((char)@char);
-							}
+								
+							_Frame.param++;
+							_Frame.Param += char.ToLower((char)@char);
 						}
 						break;
 					// проверяет правильность окончания заголовка
