@@ -205,23 +205,23 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						if (@char == SPACE)
 						{
 							_Frame.Handl = 2;
+							break;
 						}
 						else
 						{
 							_Frame.param = 0;
 							_Frame.value = 0;
-							_Frame.Handl = 4;
 							header.AddHeader(_Frame.Param, _Frame.Value);
 									 _Frame.Param = string.Empty;
 									 _Frame.Value = string.Empty;
 							
-							if (@char != CR)
-								if (!ReadParam())
-									return -1;
-							else
-								_Frame.Handl = 5;
-
 						}
+
+						if (@char != CR)
+							if (!ReadValue())
+								return -1;
+						else
+							_Frame.Handl = 5;
 						break;
 					case 6:
 						if (@char == LF)
