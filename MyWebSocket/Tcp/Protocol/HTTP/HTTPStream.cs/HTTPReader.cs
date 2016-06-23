@@ -185,8 +185,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						if (@char == CR)
 						{
 							_Frame.Handl = 4;
-							header.StartString = _Frame.StStr;
-								   _Frame.StStr = string.Empty;
 						}
 						else
 						{
@@ -243,15 +241,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						if (_Frame.value > VALUE)
 							throw new HTTPException( "Длинна значения заголовка", HTTPCode._400_ );
 						if (@char == CR)
-						{
-							_Frame.param = 0;
-							_Frame.value = 0;
-							_Frame.Handl = 4;
-							header.AddHeader(_Frame.Param, 
-                                                                         _Frame.Value);
-							_Frame.Param = string.Empty;
-							_Frame.Value = string.Empty;
-						}
+							_Frame.Handl = 6;
 						else
 						{
 							_Frame.value++;
@@ -260,19 +250,39 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						break;
 					// проверяет получены или нет заголвоки
 					case 3:
-						if (@char == CR)
+						header.StartString = _Frame.StStr;
+								     _Frame.StStr = string.Empty;
+
+						if (@char != CR)
+							goto case 1;
+						else
 							_Frame.Handl = 5;
-						else if (@char == CN)
-                            				_Frame.Handl = 2;
-						else if (@char = SPACE)
-							_Frame.Handl = 3;
+					case 7:
+						if (@char == SPACE)
+						{
+							_Frame.Handl = 2;
+						}
 						else
 						{
-							_Frame.Handl = 1;
-								
-							_Frame.param++;
-							_Frame.Param += char.ToLower((char)@char);
+							_Frame.param = 0;
+							_Frame.value = 0;
+							_Frame.Handl = 4;
+							header.AddHeader(_Frame.Param, _Frame.Value);
+									 _Frame.Param = string.Empty;
+									 _Frame.Value = string.Empty;
+							
+						if (@char != CR)
+							goto case 1;
+						else
+							_Frame.Handl = 5;
+
 						}
+						break;
+					case 6:
+						if (@char == LF)
+							_Frame.Handl = 7;
+						else
+							throw new HTTPException( "Отсутствует символ [LF]", HTTPCode._400_ );
 						break;
 					// проверяет правильность окончания заголовка
 					case 4:
