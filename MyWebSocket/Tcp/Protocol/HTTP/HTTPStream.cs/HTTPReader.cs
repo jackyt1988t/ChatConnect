@@ -8,10 +8,18 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		const int CR = 0x0D;
 		const int CN = 0x3A;
 		const int SPACE = 0x20; 
-		const int STSTR = 1024;
-		const int PARAM = 1024;
-		const int VALUE = 1024;
-
+		/// <summary>
+		/// Допустимая длинна с. с.
+		/// </summary>
+		public static int STSTR;
+		/// <summary>
+		/// Допустимая длинна парметра
+		/// </summary>
+		public static int PARAM;
+		/// <summary>
+		/// Допустимая длинна значения
+		/// </summary>
+		public static int VALUE;
 		/// <summary>
 		/// Допустимая длинна заголовков
 		/// </summary>
@@ -34,6 +42,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// </summary>
 		static HTTPReader()
 		{
+			STSTR = 1024;
+			PARAM = 1024;
+			VALUE = 1024;
 			LENHEAD = 36000;
 			LENCHUNK = 64000;
 		}
