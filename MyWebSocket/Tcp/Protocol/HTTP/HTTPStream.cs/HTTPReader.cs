@@ -165,7 +165,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				_Frame.bpart++;
 				_Frame.alleng++;
 			}
-			return _Frame.bleng;
+			return -1;
 		}
 		/// <summary>
 		/// считывает из потока заголовки http запроса и записывает их в header
