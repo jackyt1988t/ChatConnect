@@ -225,18 +225,12 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					case 1:
 						if (_Frame.param > PARAM)
 							throw new HTTPException( "Длинна параметра заголовка", HTTPCode._400_ );
-						
+						if (@char < 33
+						 || @char > 125)
+							throw new HTTPException( "Символ параметра заголовка", HTTPCode._400_ );
 						if (@char == CN)
 						{
                            				_Frame.Handl = 2;
-						}
-						else if (@char == CR)
-						{
-							_Frame.param = 0;
-							_Frame.Handl = 4;
-							header.AddHeader(_Frame.Param, 
-                                                                         _Frame.Value);
-							_Frame.Param = string.Empty;
 						}
 						else
 						{
