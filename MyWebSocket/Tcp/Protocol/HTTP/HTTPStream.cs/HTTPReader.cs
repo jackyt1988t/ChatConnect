@@ -64,14 +64,16 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// <exception cref="HTTPException">Ошибка http протокола</exception>
 		public override int ReadBody()
 		{
+			// нет тела запроса
 			if (_Frame.Handl == 0)
 			{
 				header.SetEnd();
-				_Frame.GetBody = true;
-				return 0;
+				_Frame.GetBody = 
+					       true;
+						
+				return _Frame.bleng;
 			}
 
-			int read = 0;
 			int @char = 0;
 			while (!Empty)
 			{
@@ -80,7 +82,27 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				{
 					// Записывает тело запроса
 					case 1:
-						header.Body[_Frame.bpart] = (byte)@char;
+						int read = Read(header.body, _Frame.bpart,
+									     _Frame.bleng - _Frame.bpart);
+
+									     _Frame.bleng  += read;
+									     _Frame.alleng += read;
+						if (_Frame.bpart != _Frame.bleng)
+							return -1;
+						else
+						{
+							header.SegmentsBuffer.Enqueue(header.Body);
+							if (!string.IsNullOrEmpty( _Frame.Param ))
+								_Frame.Handl = 4;
+							else
+							{
+								header.SetEnd();
+								_Frame.GetBody = 
+								       	       true;
+
+								return _Frame.bleng;
+							}
+						}
 						break;
 					// Записывает окончание запроса
 					case 2:
@@ -139,26 +161,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							throw new HTTPException("отсутсвует символ[LF]", HTTPCode._400_);
 
 				}
-				read++;
 				PointR++;
 				_Frame.bpart++;
 				_Frame.alleng++;
-
-				if (_Frame.bpart == _Frame.bleng)
-				{
-					header.SegmentsBuffer.Enqueue(header.Body);
-					if (!string.IsNullOrEmpty(  _Frame.Param  ))
-						_Frame.Handl = 4;
-					else
-					{
-						header.SetEnd();
-						_Frame.GetBody = true;
-						return read;
-					}
-				}
 			}
-			read = -1;
-			return read;
+			return _Frame.bleng;
 		}
 		/// <summary>
 		/// считывает из потока заголовки http запроса и записывает их в header
