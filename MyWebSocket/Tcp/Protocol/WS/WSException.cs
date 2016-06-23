@@ -6,12 +6,12 @@ namespace MyWebSocket.Tcp.Protocol.WS
     [Serializable]
     public class WSException : Exception
     {
-		public int Number
+		public int Num
         {
             get;
             private set;
         }
-		public string Errors
+		public string Error
 		{
 			get;
 			private set;
@@ -34,26 +34,26 @@ namespace MyWebSocket.Tcp.Protocol.WS
         public WSException(string message, int num) :
             base(message)
 			{
-				Number = num;
+				Num = num;
 			}
 		public WSException(string message, WsError num, WSClose close) :
 			base( message )
 			{
 				Close = close;
-				Number = (int)num;
-				Errors = WSErrorMsg.Error(num);
+				Num = (int)num;
+				Error = WSErrors.WSErrorInfo(num);
 			}
 		public WSException(string message, SocketError num, WSClose close) :
 			base( message )
 			{
 				Close = close;
-				Number = (int)num;				
-				Errors = WSErrorMsg.Error(num);
+				Num = (int)num;				
+				Error = SocketErrors.SocketErrorInfo(num);
 			}
 			
 		public override string ToString()
 		{
-			return "Код ошибки: " + Number + "("+ Close.ToString() +"). Сообщение об ошибке: " + Errors;	
+			return "Код ошибки: " + Num + "("+ Close.ToString() +"). Сообщение об ошибке: " + Error;	
 		}
     }
 }

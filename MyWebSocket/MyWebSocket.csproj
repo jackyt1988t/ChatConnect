@@ -91,7 +91,6 @@
     <Compile Include="Tcp\Headers\Except.cs" />
     <Compile Include="Tcp\Headers\Headers.cs" />
     <Compile Include="Tcp\Headers\IHeaders.cs" />
-    <Compile Include="Tcp\PoolObj\PoolObj.cs" />
     <Compile Include="Tcp\Protocol\BASE\Base.cs" />
     <Compile Include="Tcp\Protocol\EventArg.cs" />
     <Compile Include="Tcp\Protocol\HTTP\HTTP.cs" />
@@ -99,16 +98,17 @@
     <Compile Include="Tcp\Protocol\HTTP\HTTPCode\HTTPCodeXXX.cs" />
     <Compile Include="Tcp\Protocol\HTTP\HTTPCode\HTTPICodeXXX.cs" />
     <Compile Include="Tcp\Protocol\HTTP\HTTPFrame\HTTPFrame.cs" />
-    <Compile Include="Tcp\Protocol\HTTP\HTTPProtocol.cs">
+    <Compile Include="Tcp\Protocol\HTTP\HTTPProtocolSample.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
     <Compile Include="Tcp\Protocol\HTTP\HTTPStream.cs\HTTPReader.cs" />
-    <Compile Include="Tcp\Protocol\HTTP\HTTPError.cs" />
+    <Compile Include="Tcp\Protocol\HTTP\HTTPException.cs" />
     <Compile Include="Tcp\Protocol\HTTP\HTTPStream.cs\HTTPWriter.cs" />
     <Compile Include="Tcp\Protocol\IProtocol.cs" />
     <Compile Include="Tcp\Protocol\MyStream.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
+    <Compile Include="Tcp\Protocol\SocketErrors.cs" />
     <Compile Include="Tcp\Protocol\WS\WSClose\CloseWS.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
@@ -120,7 +120,7 @@
     <Compile Include="Tcp\Protocol\WS\WSEnum.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
-    <Compile Include="Tcp\Protocol\WS\WSErrors.cs" />
+    <Compile Include="Tcp\Protocol\WS\WSError\WSError.cs" />
     <Compile Include="Tcp\Protocol\WS\WSEssion.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
@@ -136,7 +136,7 @@
     <Compile Include="Tcp\Protocol\WS\WSPingControl.cs" />
     <Compile Include="Tcp\Protocol\WS\WSPolicy\WsPolicy.cs" />
     <Compile Include="Tcp\Protocol\WS\WSProtocolSample.cs" />
-    <Compile Include="Tcp\Protocol\StateEnum.cs" />
+    <Compile Include="Tcp\Protocol\Enum.cs" />
     <Compile Include="Tcp\Protocol\WS\WSProtocolN13.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
@@ -175,7 +175,9 @@
     <Content Include="TestBrowser\Html\index.html" />
     <Content Include="TestBrowser\Html\script\initws.js" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Tcp\Protocol\HTTP\HTTPError\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

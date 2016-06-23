@@ -30,11 +30,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		public static int LENCHUNK;
 
 		/// <summary>
-		/// Заголвоки запроса
+		/// Инфыормация о заголвоках входящего запроса
 		/// </summary>
 		public Header header;
 		/// <summary>
-		/// Информация о записи
+		/// Информация о текщем состоянии чтения запроса
 		/// </summary>
 		public HTTPFrame _Frame;
 		/// <summary>
@@ -82,11 +82,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				{
 					// Записывает тело запроса
 					case 1:
-						int read = Read(header.Body, _Frame.bpart,
-													_Frame.bleng - _Frame.bpart);
+						int __read = Read(header.Body, _Frame.bpart,
+													   _Frame.bleng - _Frame.bpart);
 
-													_Frame.bleng  += read;
-													_Frame.alleng += read;
+						_Frame.bpart  += __read;
+						_Frame.alleng += __read;
 						if (_Frame.bpart != _Frame.bleng)
 							return -1;
 						else
@@ -247,7 +247,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						if (@char == LF)
 							_Frame.Handl = 7;
 						else
-							throw new HTTPException( "Отсутствует символ [LF]", HTTPCode._400_ );
+							throw new HTTPException( "Отсутствует символ [LF] в окончании значения заголвока", HTTPCode._400_ );
 						break;
 					// проверяет правильность окончания заголовка
 					case 4:
