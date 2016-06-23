@@ -259,7 +259,7 @@ namespace MyWebSocket.Tcp
 		public void AddHeader(string key, string value)
 		{
 			key = key.Trim(new char[] { ' ' });
-			value = value.TrimStart(new char[] { ' ' });
+			value = value.Trim(new char[] { ' ' });
 			
 			Analizating(key, value);
 			ReplaceHeader(key, value);

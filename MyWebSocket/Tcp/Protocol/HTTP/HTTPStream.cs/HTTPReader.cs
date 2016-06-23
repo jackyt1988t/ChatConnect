@@ -82,11 +82,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				{
 					// Записывает тело запроса
 					case 1:
-						int read = Read(header.body, _Frame.bpart,
-									     _Frame.bleng - _Frame.bpart);
+						int read = Read(header.Body, _Frame.bpart,
+													_Frame.bleng - _Frame.bpart);
 
-									     _Frame.bleng  += read;
-									     _Frame.alleng += read;
+													_Frame.bleng  += read;
+													_Frame.alleng += read;
 						if (_Frame.bpart != _Frame.bleng)
 							return -1;
 						else
@@ -148,14 +148,13 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						else
 						{
 							_Frame.Param += char.ToLower((char)@char);
-							return read;
 						}
 						break;
 					case 7:
 						if (@char == LF)
 						{
 							_Frame.Pcod = 0;
-							return read;
+							return _Frame.bleng;
 						}
 						else
 							throw new HTTPException("отсутсвует символ[LF]", HTTPCode._400_);
@@ -198,38 +197,52 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						if (!ReadValue())
 							return -1;
 						break;
+					case 8:
+						if (@char != SPACE)
+						{
+							if (!ReadValue())
+								return -1;
+						}
+						break;
 					// проверяет получены или нет заголвоки
 					case 3:
 						header.StartString = _Frame.StStr;
-								     _Frame.StStr = string.Empty;
+											 _Frame.StStr = string.Empty;
 
 						if (@char != CR)
+						{
 							if (!ReadParam())
 								return -1;
+						}
 						else
 							_Frame.Handl = 5;
+						break;
+					// проверяет перенос заголвока, 
+					// проверяет получены или нет заголвоки
 					case 7:
 						if (@char == SPACE)
 						{
-							_Frame.Handl = 2;
-							break;
+							_Frame.Handl = 8;
 						}
 						else
 						{
 							_Frame.param = 0;
 							_Frame.value = 0;
 							header.AddHeader(_Frame.Param, _Frame.Value);
-									 _Frame.Param = string.Empty;
-									 _Frame.Value = string.Empty;
-							
-						}
+											 _Frame.Param = string.Empty;
+											 _Frame.Value = string.Empty;
 
 						if (@char != CR)
-							if (!ReadValue())
+						{
+							if (!ReadParam())
 								return -1;
+						}
 						else
 							_Frame.Handl = 5;
+						
+						}
 						break;
+					// проверяет правильность окончания заголовка 
 					case 6:
 						if (@char == LF)
 							_Frame.Handl = 7;
@@ -259,15 +272,13 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						if (header.ContentLength > 0)
 						{
 							_Frame.Handl = 1;
-							_Frame.bleng = header.ContentLength;
-							header.Body = new byte[header.ContentLength];
-							
+							_Frame.bleng = header.ContentLength;	
 						}
 						// данные будут приходить по кускам
 						if ( !string.IsNullOrEmpty(header.TransferEncoding) )
 						{
 							_Frame.Handl = 2;
-							if (_Frame.bleng  >  0)
+							if (_Frame.bleng > 0)
 								throw new HTTPException( "Длинна тела задана не явно", HTTPCode._400_ );
 							
 						}
@@ -277,23 +288,17 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					_Frame.hleng++;
 					_Frame.alleng++;
 				
-				if (_Frame.GetHead && header.IsReq )
+				if (_Frame.GetHead && header.IsReq)
 					return _Frame.hleng;
 			}
 
 			return -1;
 		}
-		public static void ParsePath(string strdata, IHeader header)
-		{
-			int index = strdata.LastIndexOf('.');
-			if (index == -1)
-				header.File = "html";
-			else
-				header.File = strdata.Substring(index + 1);
-		}
 		private bool ReadParam()
 		{
-			_Frame.Handle = 1;
+			_Frame.Handl = 1;
+
+			int @char = 0;
 			while (!Empty)
 			{
 				@char = Buffer[PointR];
@@ -304,7 +309,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					throw new HTTPException( "Символ параметра заголовка", HTTPCode._400_ );
 				if (@char == CN)
 				{
-                           		_Frame.Handl = 2;
+                    _Frame.Handl = 2;
 					return true;
 				}
 				else
@@ -316,22 +321,27 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				_Frame.hleng++;
 				_Frame.alleng++;
 			}
-			return false:
+			return false;
 		}
 		private bool ReadValue()
 		{
-			_Frame.Handle = 2;
+			_Frame.Handl = 2;
+
+			int @char = 0;
 			while (!Empty)
 			{
+				@char = Buffer[PointR];
 				if (_Frame.value > VALUE)
 					throw new HTTPException( "Длинна значения заголовка", HTTPCode._400_ );
 				if (@char == CR)
+				{
 					_Frame.Handl = 6;
-					return;
+					return true;
+				}
 				else
 				{
 					_Frame.value++;
-					_Frame.Value += ( char ) @char;
+					_Frame.Value += ( char )@char;
 				}
 				PointR++;
 				_Frame.hleng++;
@@ -341,7 +351,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		}
 		private bool ReadStStr()
 		{
-			_Frame.Handle = 0;
+			_Frame.Handl = 0;
+
+			int @char = 0;
 			while (!Empty)
 			{
 				@char = Buffer[PointR];
@@ -359,29 +371,26 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					if (@char == SPACE)
 					{
 						_Frame.Hand++;
-						if (_Frame.Hand == 2)
-							ParsePath( header.Path, header );
 						if (_Frame.Hand >= 3)
 							header.Http +=
 								char.ToLower((char)@char);
-						}
-						else
+					}
+					else
+					{
+						switch (_Frame.Hand)
 						{
-							switch (_Frame.Hand)
-							{
-								case 1:
-									header.Path +=
-										char.ToLower((char)@char);
-										break;
-								case 2:
-									header.Http +=
-										char.ToLower((char)@char);
+							case 1:
+								header.Path +=
+									char.ToLower((char)@char);
 									break;
-								case 0:
-									header.Method +=
-										char.ToUpper((char)@char);
-									break;
-							}
+							case 2:
+								header.Http +=
+									char.ToLower((char)@char);
+								break;
+							case 0:
+								header.Method +=
+									char.ToUpper((char)@char);
+								break;
 						}
 					}
 				}
