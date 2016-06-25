@@ -89,7 +89,7 @@ namespace MyWebSocket.Tcp
             get;
             set;
         }
-        string StartString
+        string StrStr
         {
             get;
             set;

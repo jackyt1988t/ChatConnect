@@ -73,12 +73,12 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			}
 			catch (SocketException exc)
 			{
-				ExcServer(new WSException("Ошибка сокета", exc.SocketErrorCode, WSClose.ServerError));
+				ErrorServer(new WSException("Ошибка сокета", exc.SocketErrorCode, WSClose.ServerError));
 			}
 		}
 		static public void Set101(IHeader header)
 		{
-			header.StartString = "HTTP/1.1 101 Switching Protocols";
+			header.StrStr = "HTTP/1.1 101 Switching Protocols";
 			header.AddHeader("Upgrade", "WebSocket");
 			header.AddHeader("Connection", "Upgrade");
 		}

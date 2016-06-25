@@ -3,21 +3,12 @@ using System.IO;
 
 namespace MyWebSocket.Tcp.Protocol
 {
+#region property internal
 	/// <summary>
 	/// Кольцевой поток данных
 	/// </summary>
 	public class MyStream : Stream
 	{
-		/// <summary>
-		/// Хранилище
-		/// </summary>
-		internal byte[] Buffer
-		{
-			get
-			{
-				return _buffer;
-			}
-		}
 		long __p_r;
 		/// <summary>
 		/// Указатель на текущую позицию записи данных
@@ -70,7 +61,20 @@ namespace MyWebSocket.Tcp.Protocol
 				}
 			}
 		}
+		/// <summary>
+		/// Хранилище
+		/// </summary>
+		internal byte[] Buffer
+		{
+			get
+			{
+				return _buffer;
+			}
+		}
 
+#endregion
+
+#region	property public
 		/// <summary>
 		/// Длинна потока
 		/// </summary>
@@ -192,10 +196,25 @@ namespace MyWebSocket.Tcp.Protocol
 				}
 			}
 		}
+
+#endregion
+
 		private bool _loop;
+		/// <summary>
+		/// длинна потока
+		/// </summary>
 		protected long __len;
+		/// <summary>
+		/// хранилише данных
+		/// </summary>
 		protected byte[] _buffer;
-		
+
+#region constructor
+
+		/// <summary>
+		/// Создает новый кольцевой буффер
+		/// </summary>
+		/// <param name="length">длинна кольцевого буффера</param>
 		public MyStream(int length) : 
 			base()
 		{
@@ -203,6 +222,9 @@ namespace MyWebSocket.Tcp.Protocol
 			__Sync = new object();
 			_buffer = new byte[length];
 		}
+
+#endregion
+
 #region virtual
 		/// <summary>
 		/// сбрасывает поток в начальное положение

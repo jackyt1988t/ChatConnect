@@ -349,7 +349,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 															   || error == SocketError.ConnectionAborted)
 							CloseServer( WSClose.Abnormal, string.Empty, false );
 						else
-							ExcServer(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
+							ErrorServer(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
 						return false;
 					}
 				}
@@ -467,12 +467,12 @@ override
 			}
 			catch (WSException err)
 			{
-				ExcServer(err);
+				ErrorServer(err);
 				Reader.Reset();
 			}
 			catch (Exception exc)
 			{
-				ExcServer(new WSException("Критическая. " + exc.Message, WsError.CriticalError, WSClose.ServerError));
+				ErrorServer(new WSException("Критическая. " + exc.Message, WsError.CriticalError, WSClose.ServerError));
 				Log.Loging.AddMessage(exc.Message + Log.Loging.NewLine + exc.StackTrace, "log.log", Log.Log.Fatal);
 			}
 			return TaskResult;
@@ -513,7 +513,7 @@ override
 														   || error == SocketError.ConnectionAborted)
 								CloseServer( WSClose.Abnormal, string.Empty, false );
 							else
-							ExcServer(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
+							ErrorServer(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
 						}
 					}
 				}	
@@ -539,10 +539,10 @@ override
 						{
 							/*         Текущее подключение было закрыто сброшено или разорвано          */
 							if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
-														   || error == SocketError.ConnectionAborted)
+																   || error == SocketError.ConnectionAborted)
 								CloseServer( WSClose.Abnormal, string.Empty, false );
 							else
-								ExcServer(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
+								ErrorServer(new WSException("Ошибка записи данных.", error, WSClose.ServerError));
 						}
 					}
 			}
@@ -631,7 +631,7 @@ override
 		/// Обрабатывает происходящие ошибки и назначает оьраьотчики
 		/// </summary>
 		/// <param name="err">Ошибка WebSocket</param>
-		protected void ExcServer(WSException err)
+		protected void ErrorServer(WSException err)
 		{
 			lock (Sync)
 			{

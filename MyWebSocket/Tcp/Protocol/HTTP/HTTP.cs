@@ -1,8 +1,9 @@
 ﻿using System;
+using System.IO;
 using System.Net.Sockets;
-        using System.Text;
-        using System.Threading;
-        using System.Threading.Tasks;
+		using System.Text;
+		using System.Threading;
+		using System.Threading.Tasks;
 
 namespace MyWebSocket.Tcp.Protocol.HTTP
 {
@@ -164,7 +165,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             }
         }
 
-        private bool _filewrite;
         private object SyncEvent = new object();
         private event PHandlerEvent __EventWork;
         private event PHandlerEvent __EventData;
@@ -187,32 +187,24 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         }
         async public void File(string path, int chunk = 1000 * 64)
         {
-            lock (Sync)
-            {
-                if (_filewrite)
-                    throw new HTTPException("Дождитесь окончания записи файла");
-                _filewrite = true;
-            }
             await Task.Run(() =>
             {
-                try
-                {
-                    file(path, chunk);
-                }
-                catch (HTTPException err)
-                {
-                    exc(err);
-                }
-                catch (Exception err)
-                {
-                    exc(new HTTPException("Ошибка при чтении файла " + path, HTTPCode._500_, err));
-                }
-                finally
-                {
-                    Flush();
-                    lock (Sync)
-                        _filewrite = false;
-                }
+				try
+				{
+					file(path, chunk);
+				}
+				catch (HTTPException err)
+				{
+					exc(err);
+				}
+				catch (IOException err)
+				{
+					exc(new HTTPException("Ошибка при чтении файла " + path, HTTPCode._500_, err));
+				}
+				finally
+				{
+					Flush();
+				}
             });
         }
 
@@ -377,29 +369,26 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                     400 или ошибке сервера 500 указываем серверу после 
                     отправки данных закрыть моединение. 					   
                 ==============================================================*/
-                        if (state == 4)
-                        {
-                            if (Response.IsRes 
-								  || Exception.Status.value == 500)
-                                close();
-                            else
-                            	Interlocked.Exchange(ref state, -1);
-                                Error(Exception);
-                        }
+								if (state == 4)
+								{
+									/////Ошибка/////
+									Error(Exception);
+									Interlocked.Exchange( ref state, -1 );
+								}
                 /*============================================================
                                         Закрываем соединеие						   
                 ==============================================================*/
-                        if (state == 5)
-                        {
-                            state = 7;
-                        }
-                        if (state == 7)
-                        {
-                            Close();
-                            if (Tcp.Connected)
-                                Tcp.Close( 0 );
-                            Result.Option = TaskOption.Delete;
-                        }
+								if (state == 5)
+								{
+									state = 7;
+								}
+								if (state == 7)
+								{
+									Close();
+									if (Tcp.Connected)
+										Tcp.Close( 0 );
+									Result.Option  =  TaskOption.Delete;
+								}
             }
             catch (HTTPException err)
             {
@@ -424,13 +413,16 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         {
             lock (Sync)
             {
-					
-				if (Exception != null)
+				if (state > 3 
+					 || Exception != null)
 					state = 7;
-                else if (state < 4)
-                    state = 4;
-					Exception = err;
-					
+				else
+				{
+					state = 4;
+					Response.SetEnd();
+				}
+
+						Exception  =  err;
             }
         }
         /// <summary>
@@ -447,8 +439,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             {
                 if (Tcp.Available == 0)
                 {
-                    Response.SetClose();
-                    exc(new HTTPException("Ошибка чтения http данных. Соединение закрыто.", HTTPCode._500_));
+					close();
                 }
                 else
                 {
@@ -459,9 +450,15 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                         if (error != SocketError.WouldBlock
                          && error != SocketError.NoBufferSpaceAvailable)
                         {
-                            Response.SetClose();
-                            exc(new HTTPException("Ошибка чтения http данных: " + error.ToString(), HTTPCode._500_));
-
+							/*         Текущее подключение было закрыто сброшено или разорвано          */
+							if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
+																   || error == SocketError.ConnectionAborted)
+								close();
+							else
+							{
+								Response.SetEnd();
+								exc(new HTTPException("Ошибка чтения http данных: " + error.ToString(), HTTPCode._500_));
+							}
                         }
                     }
                 }
@@ -487,18 +484,22 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                         if (error != SocketError.WouldBlock
 							  && error != SocketError.NoBufferSpaceAvailable)
                         {
-                            Response.SetClose();
-                            exc(new HTTPException("Ошибка записи http данных: " + error.ToString(), HTTPCode._500_));
+							/*         Текущее подключение было закрыто сброшено или разорвано          */
+							if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
+																   || error == SocketError.ConnectionAborted)
+								close();
+							else
+							{
+								Response.SetEnd();
+								exc(new HTTPException("Ошибка чтения http данных: " + error.ToString(), HTTPCode._500_));
+							}
 
-                        }
+						}
                     }
                 }
             }
-                        else
-                        {
-                            Response.SetClose();
-                            exc(new HTTPException("Ошибка записи http данных. Соединение закрыто.", HTTPCode._500_));
-                        }
+							else
+								close();
         }
         /// <summary>
         /// Потокобезопасный запуск события Work

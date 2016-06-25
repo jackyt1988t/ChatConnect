@@ -217,7 +217,7 @@ namespace MyWebSocket.Tcp
             get;
             set;
         }
-        public string StartString
+        public string StrStr
         {
             get;
             set;
@@ -269,7 +269,7 @@ namespace MyWebSocket.Tcp
 		/// </summary>
 		public void ClearHeaders()
 		{
-			StartString = string.Empty;
+			StrStr = string.Empty;
 			foreach (KeyValuePair<string, string> header in ContainerHeaders)
 			{
 				Analizating(header.Key, string.Empty);
@@ -357,7 +357,7 @@ namespace MyWebSocket.Tcp
 			/// <returns>строка заголовков</returns>
 			public override string ToString()
 			{				
-				string request = StartString + "\r\n";
+				string request = StrStr + "\r\n";
 				foreach (KeyValuePair<string, string> keyvalue in ContainerHeaders)
 				{
 					request += keyvalue.Key + ": " + keyvalue.Value + "\r\n";

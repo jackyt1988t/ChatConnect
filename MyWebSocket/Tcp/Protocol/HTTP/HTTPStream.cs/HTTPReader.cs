@@ -7,7 +7,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		const int LF = 0x0A;
 		const int CR = 0x0D;
 		const int CN = 0x3A;
-		const int SPACE = 0x20; 
+		const int SP = 0x20; 
 		/// <summary>
 		/// Допустимая длинна с. с.
 		/// </summary>
@@ -69,7 +69,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			{
 				header.SetEnd();
 				_Frame.GetBody = 
-					       true;
+							   true;
 						
 				return _Frame.bleng;
 			}
@@ -197,18 +197,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						if (!ReadValue())
 							return -1;
 						break;
-					case 8:
-						if (@char != SPACE)
-						{
-							if (!ReadValue())
-								return -1;
-						}
-						break;
 					// проверяет получены или нет заголвоки
 					case 3:
-						header.StartString = _Frame.StStr;
-											 _Frame.StStr = string.Empty;
-
+						header.StrStr = _Frame.StStr;
+										_Frame.StStr = string.Empty;
+						//////Окончание//////
 						if (@char != CR)
 						{
 							if (!ReadParam())
@@ -216,22 +209,24 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						}
 						else
 							_Frame.Handl = 5;
+						//////Окончание//////
 						break;
 					// проверяет перенос заголвока, 
 					// проверяет получены или нет заголвоки
 					case 7:
-						if (@char == SPACE)
+						if (@char == SP)
 						{
-							_Frame.Handl = 8;
+							_Frame.Handl = 2;
 						}
 						else
 						{
-							_Frame.param = 0;
-							_Frame.value = 0;
-							header.AddHeader(_Frame.Param, _Frame.Value);
-											 _Frame.Param = string.Empty;
-											 _Frame.Value = string.Empty;
-
+						// добавляем заголвоки и очищаем зависимости
+						_Frame.param = 0;
+						_Frame.value = 0;
+						header.AddHeader(_Frame.Param, _Frame.Value);
+										 _Frame.Param = string.Empty;
+										 _Frame.Value = string.Empty;
+						//////Окончание//////
 						if (@char != CR)
 						{
 							if (!ReadParam())
@@ -239,7 +234,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						}
 						else
 							_Frame.Handl = 5;
-						
+						//////Окончание//////
 						}
 						break;
 					// проверяет правильность окончания заголовка 
@@ -284,9 +279,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						}
 						break;
 				}
-					PointR++;
-					_Frame.hleng++;
-					_Frame.alleng++;
+				PointR++;
+				_Frame.hleng++;
+				_Frame.alleng++;
 				
 				if (_Frame.GetHead && header.IsReq)
 					return _Frame.hleng;
@@ -368,28 +363,24 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				{
 					_Frame.ststr++;
 					_Frame.StStr += char.ToLower((char)@char);
-					if (@char == SPACE)
+					if (@char == SP)
 					{
 						_Frame.Hand++;
 						if (_Frame.Hand >= 3)
-							header.Http +=
-								char.ToLower((char)@char);
+							header.Http += char.ToLower((char)@char);
 					}
 					else
 					{
 						switch (_Frame.Hand)
 						{
 							case 1:
-								header.Path +=
-									char.ToLower((char)@char);
+								header.Path += char.ToLower((char)@char);
 									break;
 							case 2:
-								header.Http +=
-									char.ToLower((char)@char);
+								header.Http += char.ToLower((char)@char);
 								break;
 							case 0:
-								header.Method +=
-									char.ToUpper((char)@char);
+								header.Method += char.ToUpper((char)@char);
 								break;
 						}
 					}

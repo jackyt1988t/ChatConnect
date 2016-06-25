@@ -79,51 +79,47 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         /// 
         /// </summary>
         /// <param name="path"></param>
-        /// <param name="chunk"></param>
-        protected override void file( string path, int chunk )
+        /// <param name="_chunk"></param>
+        protected override void file( string path, int _chunk )
         {
+			Header response = Response;
             FileInfo fileinfo = new FileInfo(path);
             
             if (!fileinfo.Exists)
             {
-                throw new HTTPException("Указанный файл не найден " + path, HTTPCode._404_);
+                throw new HTTPException("Файл не найден " + path, HTTPCode._404_);
             }
             else
             {
-                if (Response.ContentType == null
-                    || Response.ContentType.Count == 0)
+                if (response.ContentType == null
+                    || response.ContentType.Count == 0)
                 {
-                    Response.ContentType = new List<string>()
+					string extension = 
+							fileinfo.Extension.Substring(1);
+					response.ContentType = new List<string>()
                                            {
-                                               "text/" + fileinfo.Extension.Substring( 01 ),
+                                               "text/" + extension,
                                                "charset=utf-8"
                                            };
                 }
-                using (FileStream sr = fileinfo.OpenRead())
+                using (FileStream stream = fileinfo.OpenRead())
                 {
                     int i = 0;
-                    int _count = (int)(sr.Length / chunk);
-                    int length = (int)(sr.Length - _count * chunk);
+                    int _count = (int)(stream.Length / _chunk);
+                    int length = (int)(stream.Length - _count * _chunk);
 
-                    if (string.IsNullOrEmpty(Response.TransferEncoding))
-                        Response.ContentLength  =  (   int   )sr.Length;
+                    if (string.IsNullOrEmpty(response.TransferEncoding))
+						response.ContentLength  =  ( int )stream.Length;
                     
                     while (i++ < _count)
                     {
                         int recive = 0;
-                        byte[] buffer = new byte[chunk];
-                        while ((chunk - recive) > 0)
+                        byte[] buffer = new byte[_chunk];
+                        while ((_chunk - recive) > 0)
                         {
-                            recive = sr.Read(buffer, recive, chunk - recive);
+                            recive = stream.Read(buffer, recive, _chunk - recive);
                         }
-                        while ( Writer.Length > 128000 )
-                        {
-                            if (State == States.work || State == States.Send)
-                                Thread.Sleep(20);
-                            else
-                                return;
-                        }
-                        if (!Message(buffer, 0, chunk))
+                        if (response.IsEnd    ||    !Message(  buffer, 0, _chunk  ))
                             return;
                     }
                     if (length > 0)
@@ -132,16 +128,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                         byte[] buffer = new byte[length];
                         while ((length - recive) > 0)
                         {
-                            recive = sr.Read(buffer, recive, length - recive);
+                            recive = stream.Read(buffer, recive, length - recive);
                         }
-                        while ( Writer.Length > 128000 )		
-                        {
-                            if (State == States.work || State == States.Send)
-                                Thread.Sleep(20);
-                            else
-                                return;
-                        }
-                        if (!Message(buffer, 0, length))
+                        if (response.IsEnd    ||    !Message(  buffer, 0, length  ))
                             return;
                     }
                 }
@@ -158,44 +147,40 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         public override bool Message(byte[] buffer, int start, int write)
         {
             bool result = true;
-            if ( buffer == null)
-            {
-                 start = 0;
-                 write = 0;
-                 buffer = new byte[0];
-            }
-            if (string.IsNullOrEmpty(Response.StartString))
-                Response.StartString  =  "HTTP/1.1 200 OK";
-            
-                if (Response.CashControl == null
-                        || Response.CashControl.Count == 0)
-                    Response.CashControl = new List<string> 
-                                               {
-                                                   "no-store", 
-                                                   "no-cache", 
-                                                   
+			Header response = Response;
+			if (!response.IsRes)
+			{
+				if (string.IsNullOrEmpty(response.StrStr))
+					response.StrStr  =  "HTTP/1.1 200 OK";
+				
+				if (response.CashControl == null
+					 || response.CashControl.Count == 0)
+					response.CashControl = new List<string>
+											   {
+												   "no-store",
+												   "no-cache",
 
-                                               };
-                if (Response.ContentType == null
-                        || Response.ContentType.Count == 0)
-                    Response.ContentType = new List<string>
-                                               {
-                                                   "text/plain",
-                                                   "charset=utf-8"
-                                               };
 
+											   };
+				if (response.ContentType == null
+					 || response.ContentType.Count == 0)
+					response.ContentType = new List<string>
+											   {
+												   "text/plain",
+												   "charset=utf-8"
+											   };
+			}
             lock (Sync)
             {
-                if (Response.IsEnd 
-                      || (State == States.Error
-                            || State == States.Close 
-                                 || State == States.Disconnect))
+                if (response.IsEnd 
+                     || (State == States.Close 
+                          || State == States.Disconnect))
                     result = false;
                 else
                 {
                     try
                     {
-                            switch ( Response.ContentEncoding )
+                            switch (response.ContentEncoding )
                             {
                                 case "gzip":
                                     __Arhiv.Write(buffer, start, write);
@@ -212,7 +197,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                     {
                         close();
                         result = false;
-                        Log.Loging.AddMessage(exc.Message + Log.Loging.NewLine + exc.StackTrace, "log.log", Log.Log.Debug);
+                        Log.Loging.AddMessage(exc.Message + "/r/n" + exc.StackTrace, "log.log", Log.Log.Debug);
                     }
                 }
             }
@@ -223,22 +208,22 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         {
             lock (Sync)
             {
-                if (__Arhiv != null)
+				Header response = Response;
+				if (__Arhiv != null)
                     __Arhiv.Dispose();
                 // Отправить блок данных chunked 0CRLFCRLF
-                if (Response.TransferEncoding == "chunked")
+                if (response.TransferEncoding == "chunked")
                 {
                     try
                     {
-                        if (State != States.Error
-                              && State != States.Close
-                                   && State != States.Disconnect)
+                        if (State != States.Close
+                                && State != States.Disconnect)
                             __Writer.Eof();
                     }
                     catch (IOException exc)
                     {
                         close();
-                        Log.Loging.AddMessage(exc.Message + Log.Loging.NewLine + exc.StackTrace, "log.log", Log.Log.Debug);
+                        Log.Loging.AddMessage(exc.Message + "/r/n" + exc.StackTrace, "log.log", Log.Log.Debug);
                     }
                 }
             }
@@ -359,7 +344,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                         __Arhiv = new GZipStream(__Writer, CompressionLevel.Fastest, true);
                     else if (Response.ContentEncoding == "deflate")
                         __Arhiv = new DeflateStream(__Writer, CompressionLevel.Fastest, true);
-                }
+					Log.Loging.AddMessage("Http заголовки успешно обработаны", "log.log", Log.Log.Info);
+				}
             }
             /*
                 ----------------------------------------------------------------------------------
@@ -379,16 +365,20 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 if (__Reader.ReadBody() == -1)
                     return;
 
-                switch (__Reader._Frame.Pcod)
+				switch (__Reader._Frame.Pcod)
                 {
                     case HTTPFrame.DATA:
-                        if (Result.Jump)
-                            Result.Option = TaskOption.Protocol;
+                        if (!Result.Jump)
+						{
+							OnEventData();
+							Log.Loging.AddMessage("Все данные Http запроса получены", "log.log", Log.Log.Info);
+						}
                         else
-                            OnEventData();
+                            Result.Option = TaskOption.Protocol;
                         break;
                     case HTTPFrame.CHUNK:
                             OnEventChunk();
+							Log.Loging.AddMessage("Часть данных Http запроса получена", "log.log", Log.Log.Info);
                         break;
                 }
             }
@@ -400,19 +390,40 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         }
         protected override void Error(HTTPException error)
         {
-            Response.ClearHeaders();
             OnEventError(error);
-            if (string.IsNullOrEmpty(Response.StartString))
-            {
-                if (error.Status.value  ==  404)
-                {
-                    Response.StartString = "HTTP/1.1 404 " + error.Status.ToString();
-                    File("Html/404.html");
-                }
-                else
-                    close();
-            }
-        }
+			
+			if (!Response.IsRes 
+				 || (Response.IsRes && Response.TransferEncoding == "chunked"))
+			{
+				Header response = Response;
+
+				__Reader._Frame.Clear();
+				__Writer._Frame.Clear();
+				__Reader.header = Request = new Header();
+				__Writer.header = Response = new Header();
+				
+				if ( response.IsRes && response.TransferEncoding == "chunked" )
+				{
+					try
+					{
+						if (State != States.Close
+							 && State != States.Disconnect)
+							__Writer.Eof();
+					}
+					catch (IOException exc)
+					{
+						close();
+						Log.Loging.AddMessage(exc.Message + "/r/n" + exc.StackTrace, "log.log", Log.Log.Info);
+					}
+				}
+						Response.StrStr = "HTTP/1.1 " + error.Status.value
+																	.ToString()
+												+ " " + error.Status.ToString();
+				
+						File("Html/" + error.Status.value.ToString() + ".html");
+						Log.Loging.AddMessage("Информация об ошибке готова к отправке", "log.log", Log.Log.Info);
+			}
+		}
         protected override void Connection()
         {
             OnEventConnect();
