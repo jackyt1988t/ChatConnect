@@ -392,11 +392,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         {
             OnEventError(error);
 			
-			if (!Response.IsRes 
-				 || (Response.IsRes && Response.TransferEncoding == "chunked"))
+			Header response = Response;
+			if (response.IsRes || response.TransferEncoding != "chunked"))
+				close();
+			else
 			{
-				Header response = Response;
-
 				__Reader._Frame.Clear();
 				__Writer._Frame.Clear();
 				__Reader.header = Request = new Header();
