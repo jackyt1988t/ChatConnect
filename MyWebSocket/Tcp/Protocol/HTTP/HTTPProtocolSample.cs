@@ -391,39 +391,39 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         protected override void Error(HTTPException error)
         {
             OnEventError(error);
-            
-            if (!Response.IsRes 
-                 || (Response.IsRes && Response.TransferEncoding == "chunked"))
-            {
-                Header response = Response;
-
-                __Reader._Frame.Clear();
-                __Writer._Frame.Clear();
-                __Reader.header = Request = new Header();
-                __Writer.header = Response = new Header();
-                
-                if ( response.IsRes && response.TransferEncoding == "chunked" )
-                {
-                    try
-                    {
-                        if (State != States.Close
-                             && State != States.Disconnect)
-                            __Writer.Eof();
-                    }
-                    catch (IOException exc)
-                    {
-                        close();
-                        Log.Loging.AddMessage(exc.Message + "/r/n" + exc.StackTrace, "log.log", Log.Log.Info);
-                    }
-                }
-                        Response.StrStr = "HTTP/1.1 " + error.Status.value
-                                                                    .ToString()
-                                                + " " + error.Status.ToString();
-                
-                        File("Html/" + error.Status.value.ToString() + ".html");
-                        Log.Loging.AddMessage("Информация об ошибке готова к отправке", "log.log", Log.Log.Info);
-            }
-        }
+			
+			Header response = Response;
+			if (response.IsRes || response.TransferEncoding != "chunked"))
+				close();
+			else
+			{
+				__Reader._Frame.Clear();
+				__Writer._Frame.Clear();
+				__Reader.header = Request = new Header();
+				__Writer.header = Response = new Header();
+				
+				if ( response.IsRes && response.TransferEncoding == "chunked" )
+				{
+					try
+					{
+						if (State != States.Close
+							 && State != States.Disconnect)
+							__Writer.Eof();
+					}
+					catch (IOException exc)
+					{
+						close();
+						Log.Loging.AddMessage(exc.Message + "/r/n" + exc.StackTrace, "log.log", Log.Log.Info);
+					}
+				}
+						Response.StrStr = "HTTP/1.1 " + error.Status.value
+																	.ToString()
+												+ " " + error.Status.ToString();
+				
+						File("Html/" + error.Status.value.ToString() + ".html");
+						Log.Loging.AddMessage("Информация об ошибке готова к отправке", "log.log", Log.Log.Info);
+			}
+		}
         protected override void Connection()
         {
             OnEventConnect();
