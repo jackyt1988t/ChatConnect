@@ -82,11 +82,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         /// <param name="_chunk"></param>
         protected override void file( string path, int _chunk )
         {
-			Header response = null;
-			lock (ObSync)
-				response = Response;
-			
-			FileInfo fileinfo = new FileInfo(path);
+            Header response = null;
+            lock (ObSync)
+                response = Response;
+            
+            FileInfo fileinfo = new FileInfo(path);
             
             if (!fileinfo.Exists)
             {
@@ -150,12 +150,12 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         public override bool Message(byte[] buffer, int start, int write)
         {
             bool result = true;
-			Header response = null;
+            Header response = null;
 
-			lock (ObSync)
-				response = Response;
+            lock (ObSync)
+                response = Response;
 
-			if (!response.IsRes)
+            if (!response.IsRes)
             {
                 if (string.IsNullOrEmpty(response.StrStr))
                     response.StrStr  =  "HTTP/1.1 200 OK";
@@ -215,9 +215,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         {
             lock (ObSync)
             {
-				Header response = null;
-				lock (ObSync)
-					response = Response;
+                Header response = null;
+                lock (ObSync)
+                    response = Response;
 
                 if (__Arhiv != null)
                     __Arhiv.Dispose();
@@ -253,27 +253,26 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             {
                 __Reader._Frame.Clear();
                 __Writer._Frame.Clear();
-				lock (ObSync)
-				{
-					__Reader.header = Request;
-					__Writer.header = Response;
-				}
-			}
+                lock (ObSync)
+                {
+                    __Reader.header = Request;
+                    __Writer.header = Response;
+                }
+            }
 
-            /*
-                ----------------------------------------------------------------------------------
-                Обрабатываем заголвоки запроса. Если заголвоки не были получены, читаем данные из
-                кольцевого потока данных. Проверяем доступные методы обработки. При переходе на
-                Websocket меняем протокол. 
+			/*
+                ----------------------------------------------------------------------------------------------------------
+                Обрабатываем заголвоки запроса. Если заголвоки не были получены, читаем данные из кольцевого потока
+				данных. Проверяем доступные методы обработки. При переходе на Websocket, переходисм на протокол  WS. 
                 Устанавливаем заголвоки:
                 Date
                 Server
                 Connection(если необходимо)
                 Cintent-Encoding(если в заголвоке Accept-Encoding указаны gzip или deflate)
-                Запускаем событие EventOpen
-                ----------------------------------------------------------------------------------  
+                Когда все заголвоки будут получены и пройдут первоначальную обработку произойдет событие EventOpen.
+                ----------------------------------------------------------------------------------------------------------  
             */
-            if (!__Reader._Frame.GetHead)
+			if (!__Reader._Frame.GetHead)
             {
                 if (__Reader.ReadHead() == -1)
                     return;
@@ -361,17 +360,15 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 }
             }
             /*
-                ----------------------------------------------------------------------------------
-                Обрабатываем тело запроса. Если тело не было получено, читаем данные из кольцевого 
-                потока данных. При заголвоке Transfer-Encoding тело будет приходяить по частям и
-                будет полность получено после 0 данных и насупить событие EventData, до этого 
-                момента будет насупать событие EventChunk, ечли был указан заголвок Content-Length
-                событие EventChunk происходить не будет, а событие EventData произойдет только 
-                тогда когда все данные будут получены. Максимальный размер блока данных chuncked
-                можно указать задав значение HTTPReader.LENCHUNK. В случае с Content-Length можно
-                обработать заголвок в соыбтие EventOpen и при привышении допустимого значения
-                закрыть соединение.
-                ----------------------------------------------------------------------------------  
+                ----------------------------------------------------------------------------------------------------------
+					Обрабатываем тело запроса. Если тело не было получено, читаем данные из кольцевого потока данных. 
+					При заголвоке Transfer-Encoding тело будет приходяить по частям и будет полность получено после 0
+					данных и насупить событие EventData, до этого момента будет насупать событие EventChunk, ечли был
+					указан заголвок Content-Length событие EventChunk происходить не будет, а событие EventData 
+					произойдет только тогда когда все данные будут получены. Максимальный размер блока данных chuncked 
+					можно указать задав значение HTTPReader.LENCHUNK. В случае с Content-Length можно обработать 
+					заголвок в соыбтие EventOpen и при привышении допустимого значения закрыть соединение.
+                ----------------------------------------------------------------------------------------------------------  
             */
             if (!__Reader._Frame.GetBody)
             {
@@ -405,42 +402,42 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         {
             OnEventError(error);
 
-			Header response = null;
-			lock (ObSync)
-				response = Response;
-			
-			if (response.IsRes || response.TransferEncoding != "chunked")
-				close();
-			else
-			{
-				__Reader._Frame.Clear();
-				__Writer._Frame.Clear();
-				lock (ObSync)
-				{
-					__Reader.header = Request = new Header();
-					__Writer.header = Response = new Header();
-				}
-				if (response.IsRes && response.TransferEncoding == "chunked")
-				{
-					try
-					{
-						if (State != States.Close
-							 && State != States.Disconnect)
-							__Writer.Eof();
-					}
-					catch (IOException exc)
-					{
-						Log.Loging.AddMessage(exc.Message + "/r/n" + exc.StackTrace, "log.log", Log.Log.Info);
-					}
-				}
-						Response.StrStr = "HTTP/1.1 " + error.Status.value
-																	.ToString()
-												+ " " + error.Status.ToString();
-				
-						File("Html/" + error.Status.value.ToString() + ".html");
-						Log.Loging.AddMessage("Информация об ошибке готова к отправке", "log.log", Log.Log.Info);
-			}
-		}
+            Header response = null;
+            lock (ObSync)
+                response = Response;
+            
+            if (response.IsRes || response.TransferEncoding != "chunked")
+                close();
+            else
+            {
+                __Reader._Frame.Clear();
+                __Writer._Frame.Clear();
+                lock (ObSync)
+                {
+                    __Reader.header = Request = new Header();
+                    __Writer.header = Response = new Header();
+                }
+                if (response.IsRes && response.TransferEncoding == "chunked")
+                {
+                    try
+                    {
+                        if (State != States.Close
+                             && State != States.Disconnect)
+                            __Writer.Eof();
+                    }
+                    catch (IOException exc)
+                    {
+                        Log.Loging.AddMessage(exc.Message + "/r/n" + exc.StackTrace, "log.log", Log.Log.Info);
+                    }
+                }
+                        Response.StrStr = "HTTP/1.1 " + error.Status.value
+                                                                    .ToString()
+                                                + " " + error.Status.ToString();
+                
+                        File("Html/" + error.Status.value.ToString() + ".html");
+                        Log.Loging.AddMessage("Информация об ошибке готова к отправке", "log.log", Log.Log.Info);
+            }
+        }
         protected override void Connection()
         {
             OnEventConnect();
