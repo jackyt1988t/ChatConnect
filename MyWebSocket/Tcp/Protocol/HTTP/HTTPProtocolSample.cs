@@ -176,6 +176,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                                                    "text/plain",
                                                    "charset=utf-8"
                                                };
+                Log.Loging.AddMessage("Http заголовки успешно обработаны: \r\n" +
+                                      "Исходящие заг:\r\n" + Response.ToString(), "log.log", Log.Log.Info);
             }
             lock (ObSync)
             {
@@ -245,6 +247,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             if (Alive.Ticks < DateTime.Now.Ticks && Writer.Empty)
             {
                 close();
+                        Log.Loging.AddMessage( "Соединеине Keep-Alive вермя истекло", "log.log", Log.Log.Info );
             }
         }
         protected override void Data()
@@ -260,19 +263,19 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 }
             }
 
-			/*
-                ----------------------------------------------------------------------------------------------------------
-                Обрабатываем заголвоки запроса. Если заголвоки не были получены, читаем данные из кольцевого потока
-				данных. Проверяем доступные методы обработки. При переходе на Websocket, переходисм на протокол  WS. 
+            /*--------------------------------------------------------------------------------------------------------
+            
+                Обрабатываем заголвоки запроса. Если заголвоки не были получены, читаем данные из кольцевого 
+                потока данных. Проверяем доступные методы обработки. При переходе на Websocket, меняем протокол WS 
                 Устанавливаем заголвоки:
                 Date
                 Server
                 Connection(если необходимо)
                 Cintent-Encoding(если в заголвоке Accept-Encoding указаны gzip или deflate)
-                Когда все заголвоки будут получены и пройдут первоначальную обработку произойдет событие EventOpen.
-                ----------------------------------------------------------------------------------------------------------  
-            */
-			if (!__Reader._Frame.GetHead)
+                Когда все заголвоки будут получены и пройдут первоначальную обработку произойдет событие EventOpen
+
+            --------------------------------------------------------------------------------------------------------*/
+            if (!__Reader._Frame.GetHead)
             {
                 if (__Reader.ReadHead() == -1)
                     return;
@@ -356,20 +359,22 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                         __Arhiv = new GZipStream(__Writer, CompressionLevel.Fastest, true);
                     else if (Response.ContentEncoding == "deflate")
                         __Arhiv = new DeflateStream(__Writer, CompressionLevel.Fastest, true);
-                    Log.Loging.AddMessage("Http заголовки успешно обработаны", "log.log", Log.Log.Info);
+                    Log.Loging.AddMessage( "Http заголовки успешно обработаны: \r\n" +
+                                           "Полученые заг:\r\n" + Request.ToString() +
+                                           "Исходящие заг:\r\n" + Response.ToString(), "log.log", Log.Log.Info );
                 }
             }
-            /*
-                ----------------------------------------------------------------------------------------------------------
-					Обрабатываем тело запроса. Если тело не было получено, читаем данные из кольцевого потока данных. 
-					При заголвоке Transfer-Encoding тело будет приходяить по частям и будет полность получено после 0
-					данных и насупить событие EventData, до этого момента будет насупать событие EventChunk, ечли был
-					указан заголвок Content-Length событие EventChunk происходить не будет, а событие EventData 
-					произойдет только тогда когда все данные будут получены. Максимальный размер блока данных chuncked 
-					можно указать задав значение HTTPReader.LENCHUNK. В случае с Content-Length можно обработать 
-					заголвок в соыбтие EventOpen и при привышении допустимого значения закрыть соединение.
-                ----------------------------------------------------------------------------------------------------------  
-            */
+            /*--------------------------------------------------------------------------------------------------------
+
+                Обрабатываем тело запроса. Если тело не было получено, читаем данные из кольцевого потока данных.
+                При заголвоке Transfer-Encoding тело будет приходяить по частям и будет полность получено после 0
+                данных и насупить событие EventData, до этого момента будет насупать событиеEventChunk, если был 
+                указан заголвок Content-Length событие EventChunk происходить не будет, а событие EventData 
+                произойдет только тогда когда все данные будут получены. Максимальный размер блока данных chuncked
+                можно указать задав значение HTTPReader.LENCHUNK. В случае с Content-Length можно обработать 
+                заголвок в соыбтие EventOpen и при привышении допустимого значения закрыть соединение.
+            
+            --------------------------------------------------------------------------------------------------------*/
             if (!__Reader._Frame.GetBody)
             {
                 if (__Reader.ReadBody() == -1)
@@ -381,7 +386,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                         if (!Result.Jump)
                         {
                             OnEventData();
-                            Log.Loging.AddMessage("Все данные Http запроса получены", "log.log", Log.Log.Info);
+                            Log.Loging.AddMessage( "Все данные Http запроса получены", "log.log", Log.Log.Info );
                         }
                         else
                             Result.Option = TaskOption.Protocol;
@@ -405,16 +410,15 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             Header response = null;
             lock (ObSync)
                 response = Response;
-            
+
+                        Log.Loging.AddMessage("Информация об ошибке:\r\n" + 
+                                              "произошла Ошибка протокола Http:"+ error.Message, "log.log", Log.Log.Info);
             if (response.IsRes || response.TransferEncoding != "chunked")
                 close();
             else
             {
-                __Reader._Frame.Clear();
-                __Writer._Frame.Clear();
                 lock (ObSync)
                 {
-                    __Reader.header = Request = new Header();
                     __Writer.header = Response = new Header();
                 }
                 if (response.IsRes && response.TransferEncoding == "chunked")
@@ -427,7 +431,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                     }
                     catch (IOException exc)
                     {
-                        Log.Loging.AddMessage(exc.Message + "/r/n" + exc.StackTrace, "log.log", Log.Log.Info);
+                        Log.Loging.AddMessage( exc.Message + "/r/n" + exc.StackTrace, "log.log", Log.Log.Info );
                     }
                 }
                         Response.StrStr = "HTTP/1.1 " + error.Status.value

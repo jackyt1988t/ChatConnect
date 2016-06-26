@@ -33,6 +33,7 @@ namespace MyWebSocket.Tcp
 					   thr.Start();
 				Thread.Sleep(1000);
 			}
+			Log.Loging.Mode = Log.Log.Debug;
 			while (true)
 			{
 				Socket socket = null;

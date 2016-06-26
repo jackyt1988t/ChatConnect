@@ -303,12 +303,14 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                         }
                         else
                         {
+							Exception  =  null;
 							if (Response.Close)
 								close();
 							else
 							{
 								Request = new Header();
 								Response = new Header();
+								
 								Interlocked.CompareExchange(ref state, 0, 2);
 							}
                         }
