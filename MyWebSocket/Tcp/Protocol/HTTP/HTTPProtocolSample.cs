@@ -160,21 +160,19 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 if (string.IsNullOrEmpty(response.StrStr))
                     response.StrStr  =  "HTTP/1.1 200 OK";
                 
-                if (response.CashControl == null
-                     || response.CashControl.Count == 0)
-                    response.CashControl = new List<string>
-                                               {
-                                                   "no-store",
-                                                   "no-cache",
-
-
-                                               };
                 if (response.ContentType == null
                      || response.ContentType.Count == 0)
                     response.ContentType = new List<string>
                                                {
                                                    "text/plain",
                                                    "charset=utf-8"
+                                               };
+				if (response.CacheControl == null
+                     || response.CacheControl.Count == 0)
+                    response.CacheControl = new List<string>
+                                               {
+                                                   "no-store",
+                                                   "no-cache",
                                                };
                 Log.Loging.AddMessage("Http заголовки успешно обработаны: \r\n" +
                                       "Исходящие заг:\r\n" + Response.ToString(), "log.log", Log.Log.Info);

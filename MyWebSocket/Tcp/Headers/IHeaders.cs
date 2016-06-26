@@ -32,7 +32,7 @@ namespace MyWebSocket.Tcp
 			get;
 			set;
 		}
-		List<string> CashControl
+		List<string> CacheControl
 		{
 			get;
 			set;
