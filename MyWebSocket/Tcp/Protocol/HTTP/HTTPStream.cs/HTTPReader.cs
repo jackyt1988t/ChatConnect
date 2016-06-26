@@ -82,6 +82,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				{
 					// Записывает тело запроса
 					case 1:
+						if (header.Body == null)
+							header.Body = new byte[_Frame.bleng];
+						
 						int __read = Read(header.Body, _Frame.bpart,
 													   _Frame.bleng - _Frame.bpart);
 

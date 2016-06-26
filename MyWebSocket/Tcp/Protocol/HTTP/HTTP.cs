@@ -9,26 +9,10 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 {
     public abstract class HTTP : BaseProtocol
     {
-		volatile int state;
-		/// <summary>
-		/// Информация о текщем сотстоянии
-		/// </summary>
-		override public States State
-		{
-			protected set
-			{
-				state = (int)value;
-			}
-			get
-			{
-				return (States)state;
-			}
-		}
-
 		/// <summary>
 		/// Объект синхронизации данных
 		/// </summary>
-		public object Sync
+		public object ObSync
         {
             get;
             protected set;
@@ -50,10 +34,26 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             protected set;
         }
 
-        /// <summary>
-        /// Событие которое наступает при проходе по циклу
-        /// </summary>
-        public event PHandlerEvent EventWork
+		volatile int state;
+		/// <summary>
+		/// Информация о текщем сотстоянии объекта
+		/// </summary>
+		override public States State
+		{
+			protected set
+			{
+				state = (int)value;
+			}
+			get
+			{
+					return (States)state;
+			}
+		}
+
+		/// <summary>
+		/// Событие которое наступает при проходе по циклу
+		/// </summary>
+		public event PHandlerEvent EventWork
         {
             add
             {
@@ -177,7 +177,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 
         public HTTP()
         {
-            Sync = new object();
+            ObSync = new object();
             State
                 = States.Connection;
             Result = new TaskResult();
@@ -210,7 +210,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 
         public bool close()
         {
-            lock (Sync)
+            lock (ObSync)
             {
                 if (state > 4)
                     return true;
@@ -231,7 +231,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         /// </summary>
         public void Flush(string message)
         {
-            lock (Sync)
+            lock (ObSync)
             {
                 Message(message);
                 Flush();
@@ -243,7 +243,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         /// </summary>
         public void Flush(byte[] message)
         {
-            lock (Sync)
+            lock (ObSync)
             {
                 Message(message);
                 Flush();
@@ -303,14 +303,14 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                         }
                         else
                         {
-                            if (Response.Close)
-                                close();
-                            else
-                            {
-                                Request = new Header();
-                                Response = new Header();
-                                Interlocked.CompareExchange(ref state, 0, 2);
-                            }
+							if (Response.Close)
+								close();
+							else
+							{
+								Request = new Header();
+								Response = new Header();
+								Interlocked.CompareExchange(ref state, 0, 2);
+							}
                         }
                     }
                 /*============================================================
@@ -318,7 +318,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                     произошло никаких ошибок возвращаемся к предыдущему
                     обработчику.						   
                 ==============================================================*/
-                    if (Interlocked.CompareExchange(ref state, -1, 2) == 2)
+                    if (Interlocked.CompareExchange( ref state, -1, 2) == 2 )
                         return Result;
                 }
                 /*============================================================
@@ -336,7 +336,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                     их. Когда данные будут получены и обработаны переходим
                     к следующему обработчику, обработчику отправки данных.					   
                 ==============================================================*/
-                    if (Interlocked.CompareExchange(ref state, 1, 0) != 0)
+                    if (Interlocked.CompareExchange( ref state, 1, 0) != 0 )
                         return Result;
                     if (!Request.IsEnd)
                     {
@@ -344,9 +344,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                         if (!Reader.Empty)
                             Data();
                     }
-                    else
-                        Interlocked.CompareExchange(ref state,-1, 1);
-                    if (Interlocked.CompareExchange(ref state, 0, 1) == 1)
+					else
+						Interlocked.CompareExchange( ref state,-1, 1 );
+                    if (Interlocked.CompareExchange( ref state, 0, 1) == 1 )
                         return Result;
                 }
                 /*============================================================
@@ -358,7 +358,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 if (state == 3)
                 {
                     Connection();
-                    if (Interlocked.CompareExchange(ref state, 0, 3) == 3)
+                    if (Interlocked.CompareExchange( ref state, 0, 3 ) == 3)
                         return Result;
                 }
                 /*============================================================
@@ -373,7 +373,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 								{
 									/////Ошибка/////
 									Error(Exception);
-									Interlocked.Exchange( ref state, -1 );
+										Interlocked.Exchange(ref state, -1);
 								}
                 /*============================================================
                                         Закрываем соединеие						   
@@ -387,7 +387,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 									Close();
 									if (Tcp.Connected)
 										Tcp.Close( 0 );
-									Result.Option  =  TaskOption.Delete;
+										Result.Option  =  TaskOption.Delete;
 								}
             }
             catch (HTTPException err)
@@ -411,7 +411,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         /// <param name="err">Ошибка</param>
         private void exc(HTTPException err)
         {
-            lock (Sync)
+            lock (ObSync)
             {
 				if (state > 3 
 					 || Exception != null)

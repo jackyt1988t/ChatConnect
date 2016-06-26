@@ -82,8 +82,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         /// <param name="_chunk"></param>
         protected override void file( string path, int _chunk )
         {
-            Header response = Response;
-            FileInfo fileinfo = new FileInfo(path);
+			Header response = null;
+			lock (ObSync)
+				response = Response;
+			
+			FileInfo fileinfo = new FileInfo(path);
             
             if (!fileinfo.Exists)
             {
@@ -147,8 +150,12 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         public override bool Message(byte[] buffer, int start, int write)
         {
             bool result = true;
-            Header response = Response;
-            if (!response.IsRes)
+			Header response = null;
+
+			lock (ObSync)
+				response = Response;
+
+			if (!response.IsRes)
             {
                 if (string.IsNullOrEmpty(response.StrStr))
                     response.StrStr  =  "HTTP/1.1 200 OK";
@@ -170,7 +177,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                                                    "charset=utf-8"
                                                };
             }
-            lock (Sync)
+            lock (ObSync)
             {
                 if (response.IsEnd 
                      || (State == States.Close 
@@ -206,9 +213,12 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 
         protected override void End()
         {
-            lock (Sync)
+            lock (ObSync)
             {
-                Header response = Response;
+				Header response = null;
+				lock (ObSync)
+					response = Response;
+
                 if (__Arhiv != null)
                     __Arhiv.Dispose();
                 // Отправить блок данных chunked 0CRLFCRLF
@@ -243,9 +253,12 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             {
                 __Reader._Frame.Clear();
                 __Writer._Frame.Clear();
-                __Reader.header = Request;
-                __Writer.header = Response;
-            }
+				lock (ObSync)
+				{
+					__Reader.header = Request;
+					__Writer.header = Response;
+				}
+			}
 
             /*
                 ----------------------------------------------------------------------------------
@@ -391,18 +404,23 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         protected override void Error(HTTPException error)
         {
             OnEventError(error);
+
+			Header response = null;
+			lock (ObSync)
+				response = Response;
 			
-			Header response = Response;
-			if (response.IsRes || response.TransferEncoding != "chunked"))
+			if (response.IsRes || response.TransferEncoding != "chunked")
 				close();
 			else
 			{
 				__Reader._Frame.Clear();
 				__Writer._Frame.Clear();
-				__Reader.header = Request = new Header();
-				__Writer.header = Response = new Header();
-				
-				if ( response.IsRes && response.TransferEncoding == "chunked" )
+				lock (ObSync)
+				{
+					__Reader.header = Request = new Header();
+					__Writer.header = Response = new Header();
+				}
+				if (response.IsRes && response.TransferEncoding == "chunked")
 				{
 					try
 					{
@@ -412,7 +430,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					}
 					catch (IOException exc)
 					{
-						close();
 						Log.Loging.AddMessage(exc.Message + "/r/n" + exc.StackTrace, "log.log", Log.Log.Info);
 					}
 				}

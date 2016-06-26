@@ -12,11 +12,16 @@ namespace MyWebSocket.Log
 	}
     static class Loging
     {
-		public static object Sync = new object();
+		/// <summary>
+		/// Мод записи
+		/// </summary>
+		public static Log Mode = Log.Info;
 		/// <summary>
 		/// Перевод строки
 		/// </summary>
-		public static string NewLine   =   "\r\n";
+		public static string NewLine = "\r\n";
+		
+		private static object ObjSync = new object();
 		/// <summary>
 		/// функция для записи сообщения в файл
 		/// </summary>
@@ -25,16 +30,18 @@ namespace MyWebSocket.Log
 		/// <param name="mode">информация о приоритете ошибки</param>
 		public static void AddMessage(string message, string path, Log mode)
         {
+			if (Mode < mode)
+				return;
+			
 			message = mode.ToString() + ": " +
 							  message + ". " +
 							  DateTime.Now.ToString();
-			
-			FileInfo fileinfo = 
-				 new FileInfo(path);            
+						            
             StreamWriter writer = null;
             try
             {
-				lock (Sync)
+				FileInfo fileinfo = new FileInfo(path);
+				lock (ObjSync)
 				{
 					if (fileinfo.Exists)
 					{
@@ -44,7 +51,7 @@ namespace MyWebSocket.Log
 					{
 						writer = fileinfo.CreateText();
 					}
-					writer.WriteLine(message);
+						writer.WriteLine(   message   );
 				}
             }
             finally
