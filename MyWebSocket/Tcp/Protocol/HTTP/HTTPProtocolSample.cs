@@ -82,7 +82,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         /// <param name="_chunk"></param>
         protected override void file( string path, int _chunk )
         {
-			Header response = Response;
+            Header response = Response;
             FileInfo fileinfo = new FileInfo(path);
             
             if (!fileinfo.Exists)
@@ -94,9 +94,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 if (response.ContentType == null
                     || response.ContentType.Count == 0)
                 {
-					string extension = 
-							fileinfo.Extension.Substring(1);
-					response.ContentType = new List<string>()
+                    string extension = 
+                            fileinfo.Extension.Substring(1);
+                    response.ContentType = new List<string>()
                                            {
                                                "text/" + extension,
                                                "charset=utf-8"
@@ -109,7 +109,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                     int length = (int)(stream.Length - _count * _chunk);
 
                     if (string.IsNullOrEmpty(response.TransferEncoding))
-						response.ContentLength  =  ( int )stream.Length;
+                        response.ContentLength  =  ( int )stream.Length;
                     
                     while (i++ < _count)
                     {
@@ -147,29 +147,29 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         public override bool Message(byte[] buffer, int start, int write)
         {
             bool result = true;
-			Header response = Response;
-			if (!response.IsRes)
-			{
-				if (string.IsNullOrEmpty(response.StrStr))
-					response.StrStr  =  "HTTP/1.1 200 OK";
-				
-				if (response.CashControl == null
-					 || response.CashControl.Count == 0)
-					response.CashControl = new List<string>
-											   {
-												   "no-store",
-												   "no-cache",
+            Header response = Response;
+            if (!response.IsRes)
+            {
+                if (string.IsNullOrEmpty(response.StrStr))
+                    response.StrStr  =  "HTTP/1.1 200 OK";
+                
+                if (response.CashControl == null
+                     || response.CashControl.Count == 0)
+                    response.CashControl = new List<string>
+                                               {
+                                                   "no-store",
+                                                   "no-cache",
 
 
-											   };
-				if (response.ContentType == null
-					 || response.ContentType.Count == 0)
-					response.ContentType = new List<string>
-											   {
-												   "text/plain",
-												   "charset=utf-8"
-											   };
-			}
+                                               };
+                if (response.ContentType == null
+                     || response.ContentType.Count == 0)
+                    response.ContentType = new List<string>
+                                               {
+                                                   "text/plain",
+                                                   "charset=utf-8"
+                                               };
+            }
             lock (Sync)
             {
                 if (response.IsEnd 
@@ -208,8 +208,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         {
             lock (Sync)
             {
-				Header response = Response;
-				if (__Arhiv != null)
+                Header response = Response;
+                if (__Arhiv != null)
                     __Arhiv.Dispose();
                 // Отправить блок данных chunked 0CRLFCRLF
                 if (response.TransferEncoding == "chunked")
@@ -344,8 +344,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                         __Arhiv = new GZipStream(__Writer, CompressionLevel.Fastest, true);
                     else if (Response.ContentEncoding == "deflate")
                         __Arhiv = new DeflateStream(__Writer, CompressionLevel.Fastest, true);
-					Log.Loging.AddMessage("Http заголовки успешно обработаны", "log.log", Log.Log.Info);
-				}
+                    Log.Loging.AddMessage("Http заголовки успешно обработаны", "log.log", Log.Log.Info);
+                }
             }
             /*
                 ----------------------------------------------------------------------------------
@@ -365,20 +365,20 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 if (__Reader.ReadBody() == -1)
                     return;
 
-				switch (__Reader._Frame.Pcod)
+                switch (__Reader._Frame.Pcod)
                 {
                     case HTTPFrame.DATA:
                         if (!Result.Jump)
-						{
-							OnEventData();
-							Log.Loging.AddMessage("Все данные Http запроса получены", "log.log", Log.Log.Info);
-						}
+                        {
+                            OnEventData();
+                            Log.Loging.AddMessage("Все данные Http запроса получены", "log.log", Log.Log.Info);
+                        }
                         else
                             Result.Option = TaskOption.Protocol;
                         break;
                     case HTTPFrame.CHUNK:
                             OnEventChunk();
-							Log.Loging.AddMessage("Часть данных Http запроса получена", "log.log", Log.Log.Info);
+                            Log.Loging.AddMessage("Часть данных Http запроса получена", "log.log", Log.Log.Info);
                         break;
                 }
             }
@@ -391,39 +391,39 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         protected override void Error(HTTPException error)
         {
             OnEventError(error);
-			
-			if (!Response.IsRes 
-				 || (Response.IsRes && Response.TransferEncoding == "chunked"))
-			{
-				Header response = Response;
+            
+            if (!Response.IsRes 
+                 || (Response.IsRes && Response.TransferEncoding == "chunked"))
+            {
+                Header response = Response;
 
-				__Reader._Frame.Clear();
-				__Writer._Frame.Clear();
-				__Reader.header = Request = new Header();
-				__Writer.header = Response = new Header();
-				
-				if ( response.IsRes && response.TransferEncoding == "chunked" )
-				{
-					try
-					{
-						if (State != States.Close
-							 && State != States.Disconnect)
-							__Writer.Eof();
-					}
-					catch (IOException exc)
-					{
-						close();
-						Log.Loging.AddMessage(exc.Message + "/r/n" + exc.StackTrace, "log.log", Log.Log.Info);
-					}
-				}
-						Response.StrStr = "HTTP/1.1 " + error.Status.value
-																	.ToString()
-												+ " " + error.Status.ToString();
-				
-						File("Html/" + error.Status.value.ToString() + ".html");
-						Log.Loging.AddMessage("Информация об ошибке готова к отправке", "log.log", Log.Log.Info);
-			}
-		}
+                __Reader._Frame.Clear();
+                __Writer._Frame.Clear();
+                __Reader.header = Request = new Header();
+                __Writer.header = Response = new Header();
+                
+                if ( response.IsRes && response.TransferEncoding == "chunked" )
+                {
+                    try
+                    {
+                        if (State != States.Close
+                             && State != States.Disconnect)
+                            __Writer.Eof();
+                    }
+                    catch (IOException exc)
+                    {
+                        close();
+                        Log.Loging.AddMessage(exc.Message + "/r/n" + exc.StackTrace, "log.log", Log.Log.Info);
+                    }
+                }
+                        Response.StrStr = "HTTP/1.1 " + error.Status.value
+                                                                    .ToString()
+                                                + " " + error.Status.ToString();
+                
+                        File("Html/" + error.Status.value.ToString() + ".html");
+                        Log.Loging.AddMessage("Информация об ошибке готова к отправке", "log.log", Log.Log.Info);
+            }
+        }
         protected override void Connection()
         {
             OnEventConnect();
