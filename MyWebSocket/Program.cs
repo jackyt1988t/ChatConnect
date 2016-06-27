@@ -148,6 +148,7 @@ namespace Example
                     Console.WriteLine("Соединение Http Установлено");
                 };
             };
+					//Log.Loging.Mode = Log.Log.Debug;
                     WServer Server = new WServer("0.0.0.0", 8081, 2);
         }
     }
