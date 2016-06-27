@@ -153,32 +153,31 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             Header response = null;
 
             lock (ObSync)
+            {
                 response = Response;
 
-            if (!response.IsRes)
-            {
-                if (string.IsNullOrEmpty(response.StrStr))
-                    response.StrStr  =  "HTTP/1.1 200 OK";
+                if (!response.IsRes)
+                {
+                    if (string.IsNullOrEmpty(response.StrStr))
+                        response.StrStr  =  "HTTP/1.1 200 OK";
                 
-                if (response.ContentType == null
-                     || response.ContentType.Count == 0)
-                    response.ContentType = new List<string>
-                                               {
-                                                   "text/plain",
-                                                   "charset=utf-8"
-                                               };
-				if (response.CacheControl == null
-                     || response.CacheControl.Count == 0)
-                    response.CacheControl = new List<string>
-                                               {
-                                                   "no-store",
-                                                   "no-cache",
-                                               };
+                    if (response.ContentType == null
+                        || response.ContentType.Count == 0)
+                        response.ContentType = new List<string>
+                                                   {
+                                                       "text/plain",
+                                                       "charset=utf-8"
+                                                   };
+                    if (response.CacheControl == null
+                         || response.CacheControl.Count == 0)
+                        response.CacheControl = new List<string>
+                                                    {
+                                                       "no-store",
+                                                       "no-cache",
+                                                    };
+                }
                 Log.Loging.AddMessage("Http заголовки успешно обработаны: \r\n" +
                                       "Исходящие заг:\r\n" + Response.ToString(), "log.log", Log.Log.Info);
-            }
-            lock (ObSync)
-            {
                 if (response.IsEnd 
                      || (State == States.Close 
                           || State == States.Disconnect))
@@ -406,11 +405,12 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             OnEventError(error);
 
             Header response = null;
-            lock (ObSync)
-                response = Response;
-
+			lock (ObSync)
+			{
+				response = Response;
+			}
                         Log.Loging.AddMessage("Информация об ошибке:\r\n" + 
-                                              "произошла Ошибка протокола Http:"+ error.Message, "log.log", Log.Log.Info);
+                                              "произошла Ошибка Http:"+ error.Message, "log.log", Log.Log.Info);
             if (response.IsRes || response.TransferEncoding != "chunked")
                 close();
             else

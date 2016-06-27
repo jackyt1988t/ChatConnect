@@ -168,6 +168,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						base.Write(hex, 0, hex.Length);
 						End();
 						base.Write(  buffer, start, length  );
+						HTTPWriter re = this;
 						End();
 					}
 				}

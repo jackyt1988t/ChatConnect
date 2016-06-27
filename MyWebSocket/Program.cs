@@ -92,7 +92,6 @@ namespace Example
                 Console.WriteLine("HTTP");
 
                 bool poll = false;
-				Console.WriteLine(poll.ToString());
                 HTTP Http = obj as HTTP;
                 Http.EventData += (object sender, PEventArgs e) =>
                 {
@@ -111,22 +110,23 @@ namespace Example
                         }
                         lock (Polling)
                         {
-                            for (int i = 0; i < Polling.Count; i++)
+							int count = Polling.Count;
+							for (int i = 0; i < count; i++)
                             {
-                                Polling[i].Flush(Http.Request.Body);
+                                Polling[0].Flush(Http.Request.Body);
+								Polling.RemoveAt(0);
                             }
-                            if (!poll)
-                                Http.Flush("Данные получены");
+							if (!poll)
+								Http.Flush("Данные получены");
+							else
+							{
+								Console.WriteLine("Добавлен");
+							}
                         }
                         break;
                         case "/subscribe":
-                        
-                        if (!poll)
-                        {
-                            poll = true;
-                            lock (Polling)
+							lock (Polling)
                                 Polling.Add(Http);
-                        }
                         break;
                         default:
                         Http.File("Html" + Http.Request.Path);
@@ -139,12 +139,8 @@ namespace Example
                 };
                 Http.EventClose += (object sender, PEventArgs e) =>
                 {
-                    if (poll)
-                    {
-                        poll = false;
-                        lock (Polling)
-                            Polling.Remove(Http);
-                    }
+                    lock (Polling)
+						Polling.Remove(Http);
                     Console.WriteLine("CLOSE");
                 };
                 Http.EventOnOpen += (object sender, PEventArgs e) =>

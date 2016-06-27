@@ -112,20 +112,16 @@ namespace Example
                         {
                             for (int i = 0; i < Polling.Count; i++)
                             {
-                                Polling[i].Flush(Http.Request.Body);
+                                Polling[0].Flush(Http.Request.Body);
+								Polling.RemoveAt(0);
                             }
-                            if (!poll)
-                                Http.Flush("Данные получены");
+							Http.Flush("Данные получены");
                         }
                         break;
                         case "/subscribe":
-                        
-                        if (!poll)
-                        {
-                            poll = true;
+							poll = true;
                             lock (Polling)
                                 Polling.Add(Http);
-                        }
                         break;
                         default:
                             Http.File("Html" + Http.Request.Path);
@@ -138,13 +134,9 @@ namespace Example
                 };
                 Http.EventClose += (object sender, PEventArgs e) =>
                 {
-                    
-                    if (poll)
-                    {
-                        poll = false;
+                     poll = false;
                         lock (Polling)
                             Polling.Remove(Http);
-                    }
                     Console.WriteLine("CLOSE");
                 };
                 Http.EventOnOpen += (object sender, PEventArgs e) =>
