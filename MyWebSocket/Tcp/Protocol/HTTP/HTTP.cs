@@ -416,15 +416,14 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             lock (ObSync)
             {
 				if (state > 3 
-					 || Exception != null)
+				    || Exception != null)
 					state = 7;
 				else
 				{
 					state = 4;
-					Response.SetEnd();
 				}
-
-						Exception  =  err;
+				       Response.SetEnd();
+				       Exception  =  err;
             }
         }
         /// <summary>
@@ -458,7 +457,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 								close();
 							else
 							{
-								Response.SetEnd();
 								exc(new HTTPException("Ошибка чтения http данных: " + error.ToString(), HTTPCode._500_));
 							}
                         }
@@ -492,7 +490,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 								close();
 							else
 							{
-								Response.SetEnd();
 								exc(new HTTPException("Ошибка чтения http данных: " + error.ToString(), HTTPCode._500_));
 							}
 
