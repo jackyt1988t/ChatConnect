@@ -422,7 +422,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				{
 					state = 4;
 				}
-
+				       Response.SetEnd();
 				       Exception  =  err;
             }
         }
