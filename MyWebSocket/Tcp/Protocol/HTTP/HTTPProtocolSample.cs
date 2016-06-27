@@ -406,7 +406,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 
                         Log.Loging.AddMessage("Информация об ошибке:\r\n" + 
                                               "Ошибка протокола Http:"+ error.Message, "log.log", Log.Log.Info);
-            if (Response.IsRes || error.State.value == 500)
+								
+            if (Response.IsRes || error.Status.value == 500)
                 close();
             else
             {
