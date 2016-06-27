@@ -410,7 +410,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 response = Response;
 
                         Log.Loging.AddMessage("Информация об ошибке:\r\n" + 
-                                              "произошла Ошибка протокола Http:"+ error.Message, "log.log", Log.Log.Info);
+                                              "Ошибка протокола Http:"+ error.Message, "log.log", Log.Log.Info);
             if (error.State.value == 500
                  || (response.IsRes && response.TransferEncoding != "chunked"))
                 close();
