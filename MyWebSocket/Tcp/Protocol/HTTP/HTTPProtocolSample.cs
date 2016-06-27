@@ -405,34 +405,16 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         {
             OnEventError(error);
 
-            Header response = null;
-            lock (ObSync)
-                response = Response;
-
                         Log.Loging.AddMessage("Информация об ошибке:\r\n" + 
                                               "Ошибка протокола Http:"+ error.Message, "log.log", Log.Log.Info);
-            if (error.State.value == 500
-                 || (response.IsRes && response.TransferEncoding != "chunked"))
+            if (Response.IsRes || error.State.value == 500)
                 close();
             else
             {
                 lock (ObSync)
                 {
                     __Writer.header = Response = new Header();
-                }
-                if ( response.IsRes && response.TransferEncoding == "chunked"))
-                {
-                    try
-                    {
-                        if (State != States.Close
-                             && State != States.Disconnect)
-                            __Writer.Eof();
-                    }
-                    catch (IOException exc)
-                    {
-                        Log.Loging.AddMessage( exc.Message + "/r/n" + exc.StackTrace, "log.log", Log.Log.Info );
-                    }
-                }
+              	}
                         Response.StrStr = "HTTP/1.1 " + error.Status.value
                                                                     .ToString()
                                                 + " " + error.Status.ToString();
