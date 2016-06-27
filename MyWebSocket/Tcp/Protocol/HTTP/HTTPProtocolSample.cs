@@ -411,7 +411,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 
                         Log.Loging.AddMessage("Информация об ошибке:\r\n" + 
                                               "произошла Ошибка протокола Http:"+ error.Message, "log.log", Log.Log.Info);
-            if (response.IsRes || response.TransferEncoding != "chunked")
+            if (error.State.value == 500
+                 || (response.IsRes && response.TransferEncoding != "chunked"))
                 close();
             else
             {
@@ -419,7 +420,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 {
                     __Writer.header = Response = new Header();
                 }
-                if (response.IsRes && response.TransferEncoding == "chunked")
+                if ( response.IsRes && response.TransferEncoding == "chunked"))
                 {
                     try
                     {
