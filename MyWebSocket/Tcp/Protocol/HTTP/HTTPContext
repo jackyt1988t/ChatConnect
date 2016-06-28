@@ -1,0 +1,73 @@
+﻿using System;
+using System.IO;
+using System.Net.Sockets;
+		using System.Text;
+		using System.Threading;
+		using System.Threading.Tasks;
+
+namespace MyWebSocket.Tcp.Protocol.HTTP
+{
+	class HTTPContext
+	{
+		public Header Request;
+		public Header Response;
+		public Object __ObSync;
+		
+		private Stream __Writer;
+		private Stream __Encode;
+		public HTTPContext()
+		{
+		}
+		
+		public void Message(string message)
+		{
+		}
+		public void Message(byte[] message, int recive, int length)
+		{
+			lock (__ObSync)
+			{
+				if (Response.IsEnd)
+					throw new HTTPException("Отправка данных закончена");
+				if (!Response.IsRes)
+                		{
+                    			if (string.IsNullOrEmpty(response.StrStr))
+                        			response.StrStr  =  "HTTP/1.1 200 OK";
+                
+                    			if (Response.ContentType == null
+                        			|| response.ContentType.Count == 0)
+                        			response.ContentType = new List<string>
+                                                   			   {
+                                                       			       "text/plain",
+                                                       			       "charset=utf-8"
+                                                  			   };
+                    			if (Response.CacheControl == null
+                         			|| response.CacheControl.Count == 0)
+                        			response.CacheControl = new List<string>
+                                                   			    {
+                                                       				"no-store",
+                                                       				"no-cache",
+                                                    			    };
+					if (Response.ContentEncoding == "gzip")
+                        			__Encode = new GZipStream(__Writer, CompressionLevel.Fastest, true);
+                    			else if (Response.ContentEncoding == "deflate")
+                        			__Encode = new DeflateStream(__Writer, CompressionLevel.Fastest, true);
+				}
+				switch (Response.ContentEncoding)
+                            	{
+                                	case "gzip":
+                                    		__Encode.Write(buffer, start, write);
+                                    		break;
+                                	case "deflate":
+                                    		__Encode.Write(buffer, start, write);
+                                    		break;
+                                	default:
+                                    		__Writer.Write(buffer, start, write);
+                                    		break;
+                		}
+			}
+                			Log.Loging.AddMessage("Http заголовки успешно обработаны: \r\n" +
+                                      	      			"Исходящие заг:\r\n" + Response.ToString(), "log.log", Log.Log.Info);
+              
+		}
+	}
+}
