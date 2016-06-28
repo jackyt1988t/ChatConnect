@@ -13,15 +13,30 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		public Header Response;
 		public Object __ObSync;
 		
-		internal Stream __Writer;
 		internal Stream __Encode;
-		public HTTPContext(HTTP http)
+		internal MyStream __Reader;
+		internal MyStream __Writer;
+		public HTTPContext(MyStream reader)
 		{
+			__Reader = reader;
+			__Reader._Frame.Clear();
+			__Reader.header = Request = new Header();
 			
+			__Writer = new HTTPWriter();
+			__Writer.header = Response = new Header();
 		}
 		
+		public void End()
+		{
+			lock (__ObSync)
+			{
+				__Writer.Eof();
+				Response.SetEnd();
+			}
+		}
 		public void Message(string message)
 		{
+			
 		}
 		public void Message(byte[] message, int recive, int length)
 		{
@@ -32,8 +47,10 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				if (!Response.IsRes)
                 		{
                     			if (string.IsNullOrEmpty(response.StrStr))
-                        			response.StrStr  =  "HTTP/1.1 200 OK";
-                
+                        			Response.StrStr  =  "HTTP/1.1 200 OK";
+                			
+					if (Response.Connection == "close")
+						Response.SetClose();
                     			if (Response.ContentType == null
                         			|| response.ContentType.Count == 0)
                         			response.ContentType = new List<string>
@@ -53,7 +70,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                     			else if (Response.ContentEncoding == "deflate")
                         			__Encode = new DeflateStream(__Writer, CompressionLevel.Fastest, true);
 					Log.Loging.AddMessage("Http заголовки успешно обработаны: \r\n" +
-                                      	      			"Исходящие заг:\r\n" + Response.ToString(), "log.log", Log.Log.Info);
+                                      	      			"Заголовки:\r\n" + Response.ToString(), "log.log", Log.Log.Info);
 				}
 				try
 				{
@@ -69,13 +86,19 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                                     			__Writer.Write(buffer, start, write);
                                     			break;
                 			}
-					Log.Loging.AddMessage("Http данные успешно добавлены к отправке., "log.log", Log.Log.Info);
-				catch (IOException exc)
+					Log.Loging.AddMessage("Http данные успешно добавлены к отправке, "log.log", Log.Log.Info);
+				catch (IOException error)
 				{
 					Response.SetClose();
+					Log.Loging.AddMessage(error.Message + "/r/n" + error.StackTrace, "log.log", Log.Log.Info);
 				}
 			}
               
+		}
+		
+		internal bool ReadRequest()
+		{
+			
 		}
 	}
 }
