@@ -97,6 +97,7 @@
     <Compile Include="Tcp\Protocol\HTTP\HTTPCode\HTTPCode.cs" />
     <Compile Include="Tcp\Protocol\HTTP\HTTPCode\HTTPCodeXXX.cs" />
     <Compile Include="Tcp\Protocol\HTTP\HTTPCode\HTTPICodeXXX.cs" />
+    <Compile Include="Tcp\Protocol\HTTP\HTTPContext.cs" />
     <Compile Include="Tcp\Protocol\HTTP\HTTPFrame\HTTPFrame.cs" />
     <Compile Include="Tcp\Protocol\HTTP\HTTPProtocolSample.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

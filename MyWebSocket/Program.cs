@@ -14,7 +14,7 @@ namespace Example
         static void Main(string[] args)
         {
             List<WS> Array = new List<WS>();
-            List<HTTP> Polling = new List<HTTP>();
+            List<HTTPContext> Polling = new List<HTTPContext>();
             WS.EventConnect += (object o, PEventArgs e) =>
             {
                 WS ws = o as WS;
@@ -46,8 +46,10 @@ namespace Example
                         {
                             for (int i = 0; i < Polling.Count; i++)
                             {
-                                Polling[i].Flush(text);
-                            }
+                                Polling[i].Message(text);
+								Polling[i].End();
+
+							}
                         }
                     }
                     else
@@ -95,10 +97,11 @@ namespace Example
                 HTTP Http = obj as HTTP;
                 Http.EventData += (object sender, PEventArgs e) =>
                 {
+					HTTPContext ctx = e.sender as HTTPContext;
                     switch (Http.Request.Path)
                     {
                         case "/":
-                        Http.File("Html/index.html");
+						ctx.File("Html/index.html");
                         break;
                         case "/message":
                         lock (Array)
@@ -113,23 +116,20 @@ namespace Example
 							int count = Polling.Count;
 							for (int i = 0; i < count; i++)
                             {
-                                Polling[0].Flush(Http.Request.Body);
+                                Polling[0].Message(ctx.Request.Body);
+								Polling[0].End();
 								Polling.RemoveAt(0);
                             }
-							if (!poll)
-								Http.Flush("Данные получены");
-							else
-							{
-								Console.WriteLine("Добавлен");
-							}
+							ctx.Message("Данные получены");
+							ctx.End();
                         }
                         break;
                         case "/subscribe":
 							lock (Polling)
-                                Polling.Add(Http);
+                                Polling.Add(ctx);
                         break;
                         default:
-                        Http.File("Html" + Http.Request.Path);
+						ctx.File("Html" + Http.Request.Path);
                         break;
                     }
                 };
@@ -140,7 +140,7 @@ namespace Example
                 Http.EventClose += (object sender, PEventArgs e) =>
                 {
                     lock (Polling)
-						Polling.Remove(Http);
+						Polling.Remove(Http.Context);
                     Console.WriteLine("CLOSE");
                 };
                 Http.EventOnOpen += (object sender, PEventArgs e) =>

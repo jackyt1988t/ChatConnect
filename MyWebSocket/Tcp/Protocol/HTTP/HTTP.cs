@@ -26,9 +26,13 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             protected set;
         }
 		/// <summary>
+		/// 
+		/// </summary>
+		public HTTPContext Context;
+		/// <summary>
 		/// Последняя зафиксировання ошибка
 		/// </summary>
-        public HTTPException Exception
+		public HTTPException Exception
         {
             get;
             protected set;
@@ -185,28 +189,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 Response = new Header();
 
         }
-        async public void File(string path, int chunk = 1000 * 64)
-        {
-            await Task.Run(() =>
-            {
-				try
-				{
-					file(path, chunk);
-				}
-				catch (HTTPException err)
-				{
-					exc(err);
-				}
-				catch (IOException err)
-				{
-					exc(new HTTPException("Ошибка при чтении файла " + path, HTTPCode._500_, err));
-				}
-				finally
-				{
-					Flush();
-				}
-            });
-        }
 
         public bool close()
         {
@@ -218,152 +200,56 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 return false;
             }
         }
-        /// <summary>
-        /// Очищает записывающий буффер данных
-        /// </summary>
-        public void Flush()
-        {
-            Response.SetEnd();
-        }
-        /// <summary>
-        /// Очищает записывающий буффер данных
-        /// Отправляет указанную строку уд. стороне
-        /// </summary>
-        public void Flush(string message)
-        {
-            lock (ObSync)
-            {
-                Message(message);
-                Flush();
-            }
-        }
-        /// <summary>
-        /// Очищает записывающий буффер данных
-        /// Отправляет указанный массив данных уд. стороне
-        /// </summary>
-        public void Flush(byte[] message)
-        {
-            lock (ObSync)
-            {
-                Message(message);
-                Flush();
-            }
-        }
-        /// <summary>
-        /// Отправляет указанную строку уд. стороне
-        /// </summary>
-        /// <returns>true в случае успеха</returns>
-        public bool Message(string message)
-        {
-            return Message(Encoding.UTF8.GetBytes(message));
-        }
-        /// <summary>
-        /// Отправляет указанный массив данных уд. стороне
-        /// </summary>
-        /// <returns>true в случае успеха</returns>
-        public bool Message(byte[] message)
-        {
-            if (message == null)
-                message = new byte[0];
-            return Message(message, 0, message.Length);
-        }
-        public abstract bool Message(byte[] message, int start, int write);
-
         public override TaskResult TaskLoopHandlerProtocol()
         {
             try
             {
-                /*============================================================
-                                    Обработчик отправки данных
-                    Запускает функцию обработки пользоватлеьских данных, в
-                    случае если статус не был изменен переходим к следующему
-                    обработчику, обработчику отправки пользовательских 
-                    данных.						   
-                ==============================================================*/
-                if (state == -1)
-                {
-                    Work();
-                /*============================================================
-                    Пытаемся отправить данные, если отправка данных 
-                    была закончена и все данные были отправлены проверяем 
-                    необходимость закрытия текушего соединения если это так,
-                    закрываем соединения, если нет обновляем заголвоки и 
-                    продолжаем обрабатывать входящие запросы.						   
-                ==============================================================*/
-                    if (Interlocked.CompareExchange(ref state, 2, -1) != -1)
-                        return Result;
+				/*==================================================================
+					Запускает функцию обработки пользоватлеьских данных,в случае
+					если статус не был изменен выполняет переход к следующему
+					обраотчику, обработчику чтения данных.						   
+				===================================================================*/
+				if (state == 0)
+				{
+					Work();
+					/*==================================================================
+						Проверяет сокет были получены данные или нет. Читаем данные 
+						из сокета, если есть данные обрабатываем  их. Когда данные
+						будут получены и обработаны переходим к следующему обработчику,
+						обработчику отправки данных.
+					==================================================================*/
+					if (Interlocked.CompareExchange(ref state, 1, 0) != 0)
+						return Result;
+						read();
+					if (!Reader.Empty)
+						Data();
+					/*==================================================================
+						Проверяет возможность отправки данных. Если данные можно 
+						отправить запускает функцию для отправки данных, в случае 
+						если статус не был изменен выполняет переход к следующему 
+						обраотчику.
+					==================================================================*/
+					if (Interlocked.CompareExchange(ref state, 2, 1) != 1)
+						return Result;
 
-                    write();
-                    if (Response.IsEnd && Writer.Empty)
-                    {
-                        if (!Response.IsReq)
-                        {
-                            End();
-                            Response.SetReq();
-                        }
-                        else
-                        {
-							Exception  =  null;
-							if (Response.Close)
-								close();
-							else
-							{
-								Request = new Header();
-								Response = new Header();
-								
-								Interlocked.CompareExchange(ref state, 0, 2);
-							}
-                        }
-                    }
-                /*============================================================
-                    Если во время отправки соединение не было закрыто и не 
-                    произошло никаких ошибок возвращаемся к предыдущему
-                    обработчику.						   
-                ==============================================================*/
-                    if (Interlocked.CompareExchange( ref state, -1, 2) == 2 )
-                        return Result;
-                }
-                /*============================================================
-                    Запускает функцию обработки пользоватлеьских данных, в
-                    случае если статус не был изменен переходим к 
-                    следующему обработчику, обработчику чтения полученных
-                    и обраблтки пользовательских данных.						   
-                ==============================================================*/
-                if (state == 0)
-                {
-                    Work();
-                /*============================================================
-                                    Обработчик получения данных
-                    Читаем данные из сокета, если есть данные обрабатываем 
-                    их. Когда данные будут получены и обработаны переходим
-                    к следующему обработчику, обработчику отправки данных.					   
-                ==============================================================*/
-                    if (Interlocked.CompareExchange( ref state, 1, 0) != 0 )
-                        return Result;
-                    if (!Request.IsEnd)
-                    {
-                        read();
-                        if (!Reader.Empty)
-                            Data();
-                    }
+					if (Response.Close)
+						close();
+					else if (Response.IsEnd && Writer.Empty)
+						End();
 					else
-						Interlocked.CompareExchange( ref state,-1, 1 );
-                    if (Interlocked.CompareExchange( ref state, 0, 1) == 1 )
-                        return Result;
-                }
-                /*============================================================
-                                        Заголвоки получены
-                    Запускаем обработчик полученных заголвоков, если статус
-                    не будет изменен в обработчике и не произойдет никаких
-                    ошибок, продолжаем получать пользовательские данные.						   
-                ==============================================================*/
-                if (state == 3)
-                {
-                    Connection();
-                    if (Interlocked.CompareExchange( ref state, 0, 3 ) == 3)
-                        return Result;
-                }
-                /*============================================================
+						write();
+					if (Interlocked.CompareExchange(ref state, 0, 2) == 2)
+						return Result;
+				}
+					if (state == 3)
+					{
+						Connection();
+
+						if (Interlocked.CompareExchange(ref state, 0, 3) == 5)
+							return Result;
+
+					}
+				/*============================================================
                                         Обработчик ошибок
                     Запускам функцию обработки ошибок. Если заголвоки были
                     отправлены закрываем соединение, если нет отправляем 
@@ -371,7 +257,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                     400 или ошибке сервера 500 указываем серверу после 
                     отправки данных закрыть моединение. 					   
                 ==============================================================*/
-								if (state == 4)
+				if (state == 4)
 								{
 									/////Ошибка/////
 									Error(Exception);
@@ -518,7 +404,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         /// Потокобезопасный запуск события Data
         /// желательно запускать в обработчике Data
         /// </summary>
-        protected void OnEventData()
+        protected void OnEventData(HTTPContext cntx)
         {
             string s = "data";
             string m = "Получены все данные";
@@ -527,13 +413,13 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             lock (SyncEvent)
                 e = __EventData;
             if (e != null)
-                e(this, new PEventArgs(s, m, null));
+                e(this, new PEventArgs(s, m, cntx));
         }
         /// <summary>
         /// Потокобезопасный запуск события Chunk
         /// желательно запускать в обработчике Chunk
         /// </summary>
-        protected void OnEventChunk()
+        protected void OnEventChunk(HTTPContext cntx)
         {
             string s = "сhunk";
             string m = "Получена часть данных";
@@ -542,7 +428,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             lock (SyncEvent)
                 e = __EventChunk;
             if (e != null)
-                e(this, new PEventArgs(s, m, null));
+                e(this, new PEventArgs(s, m, cntx));
         }
         /// <summary>
         /// Потокобезопасный запуск события Close
@@ -605,12 +491,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 e(this, new PEventArgs(s, m, null));
 
         }
-        /// <summary>
-        /// отправляет файл пользователю
-        /// </summary>
-        /// <param name="path"></param>
-        /// <param name="chunk"></param>
-        protected abstract void file(string path, int chunk);
         /// <summary>
         /// закончена передача данных чтобы закрыть соединеие не обходимо установить
         /// значение response.Close = true;
