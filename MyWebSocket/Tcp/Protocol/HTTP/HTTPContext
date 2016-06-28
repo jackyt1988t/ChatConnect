@@ -13,10 +13,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		public Header Response;
 		public Object __ObSync;
 		
-		private Stream __Writer;
-		private Stream __Encode;
-		public HTTPContext()
+		internal Stream __Writer;
+		internal Stream __Encode;
+		public HTTPContext(HTTP http)
 		{
+			
 		}
 		
 		public void Message(string message)
@@ -51,22 +52,29 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                         			__Encode = new GZipStream(__Writer, CompressionLevel.Fastest, true);
                     			else if (Response.ContentEncoding == "deflate")
                         			__Encode = new DeflateStream(__Writer, CompressionLevel.Fastest, true);
-				}
-				switch (Response.ContentEncoding)
-                            	{
-                                	case "gzip":
-                                    		__Encode.Write(buffer, start, write);
-                                    		break;
-                                	case "deflate":
-                                    		__Encode.Write(buffer, start, write);
-                                    		break;
-                                	default:
-                                    		__Writer.Write(buffer, start, write);
-                                    		break;
-                		}
-			}
-                			Log.Loging.AddMessage("Http заголовки успешно обработаны: \r\n" +
+					Log.Loging.AddMessage("Http заголовки успешно обработаны: \r\n" +
                                       	      			"Исходящие заг:\r\n" + Response.ToString(), "log.log", Log.Log.Info);
+				}
+				try
+				{
+					switch (Response.ContentEncoding)
+                            		{
+                                		case "gzip":
+                                    			__Encode.Write(buffer, start, write);
+                                    			break;
+                                		case "deflate":
+                                    			__Encode.Write(buffer, start, write);
+                                    			break;
+                                		default:
+                                    			__Writer.Write(buffer, start, write);
+                                    			break;
+                			}
+					Log.Loging.AddMessage("Http данные успешно добавлены к отправке., "log.log", Log.Log.Info);
+				catch (IOException exc)
+				{
+					Response.SetClose();
+				}
+			}
               
 		}
 	}
