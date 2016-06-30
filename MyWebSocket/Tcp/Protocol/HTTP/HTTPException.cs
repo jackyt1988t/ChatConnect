@@ -3,8 +3,18 @@
 namespace MyWebSocket.Tcp.Protocol.HTTP
 {
     [Serializable]
-    class HTTPException : Exception
+    public class HTTPException : Exception
     {
+		public int Num
+		{
+			get;
+			private set;
+		}
+		public string Error
+		{
+			get;
+			private set;
+		}
 		public codexxx Status
 		{
 			get;
@@ -25,11 +35,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		{
 			Status = status;
 		}
-		public HTTPException(string message, Exception except) :
-            base(message, except)
-        {
-
-        }
 		public HTTPException(string message, codexxx status, Exception except) :
 			base(message, except)
 		{

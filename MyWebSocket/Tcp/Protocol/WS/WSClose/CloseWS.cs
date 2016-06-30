@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace MyWebSocket.Tcp.Protocol.WS
 {
-	class CloseWS
+	public class CloseWS
 	{
 		public bool Req
 		{

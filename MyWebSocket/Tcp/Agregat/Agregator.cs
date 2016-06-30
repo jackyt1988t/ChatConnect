@@ -10,7 +10,7 @@ using MyWebSocket.Tcp.Protocol.HTTP;
 
 namespace MyWebSocket.Tcp
 {
-	class Agregator
+	public class Agregator
 	{
 		public IProtocol Protocol;		
 		private static ConcurrentQueue<Agregator> Container;
@@ -21,7 +21,7 @@ namespace MyWebSocket.Tcp
 		}
 		public Agregator(Socket tcp)
 		{
-			Protocol = new HTTPProtocol(tcp);
+			Protocol = new HTTProtocol(tcp);
 			Container.Enqueue(this);
 		}
  static public void Loop()
@@ -38,16 +38,16 @@ namespace MyWebSocket.Tcp
 					else
 					{
 						agregator.TaskLoopHandler();
-						if (loop++ > 500)
+						if (loop++ > Container.Count)
 						{
 							loop = 0;
-							Thread.Sleep(10);
+							Thread.Sleep(20);
 						}
 					}
 				}
 				catch (Exception exc)
 				{
-					Loging.AddMessage(exc.Message + Loging.NewLine + exc.StackTrace, "Log/log.log", Log.Log.Debug);
+					Loging.AddMessage(exc.Message + Loging.NewLine + exc.StackTrace, "log.log", Log.Log.Debug);
 				}
 			}
 		}
@@ -62,7 +62,7 @@ namespace MyWebSocket.Tcp
 				case TaskOption.Protocol:
 					if (TaskResult.Protocol == TaskProtocol.WSN13)
 					{
-						Protocol = new WSProtocolN13(Protocol);
+						Protocol = new WSProtocolN13((HTTProtocol)Protocol);
 						Container.Enqueue(this);
 					}
 					break;

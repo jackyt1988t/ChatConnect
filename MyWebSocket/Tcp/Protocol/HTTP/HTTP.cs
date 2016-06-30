@@ -1,6 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
@@ -8,59 +8,91 @@ using System.Threading.Tasks;
 
 namespace MyWebSocket.Tcp.Protocol.HTTP
 {
-    abstract class HTTP : BaseProtocol
+    public class HTTProtocol : BaseProtocol
     {
 		/// <summary>
-		/// true если соединение небыло
-		/// закрыто
-		/// </summary>	 
-        public bool Loop
-		{
-			get
-			{
-				if (state < 5)
-					return true;
-				else
-					return false;
-			}
-		}
-		/// <summary>
-        /// Объект синхронизации данных
-        /// </summary>
-		public object Sync
+		/// Объект синхронизации данных
+		/// </summary>
+		public object ObSync
         {
             get;
             protected set;
         }
-volatile
-		int state;		
-override
-		public States State
-        {
-            protected set
-            {
-                state = (int)value;
-            }
-            get
-            {
-                return (States)state;
-            }
-        }
+		/// <summary>
+		/// Слстояние обработки потоком
+		/// </summary>
         public TaskResult Result
         {
             get;
             protected set;
         }
-        public HTTPException Exception
+		/// <summary>
+		/// 
+		/// </summary>
+		public HTTPContext ContextRs;
+		/// <summary>
+		/// 
+		/// </summary>
+		public HTTPContext ContextRq;
+		/// <summary>
+		/// Последняя зафиксировання ошибка
+		/// </summary>
+		public HTTPException Exception
         {
             get;
             protected set;
         }
-            
-        /// <summary>
-        /// Событие которое наступает при проходе по циклу
-        /// </summary>
-        public event PHandlerEvent EventWork
+		/// <summary>
+		/// 
+		/// </summary>
+		public Queue<HTTPContext> ListContext; 
+
+		volatile int state;
+		/// <summary>
+		/// Информация о текщем сотстоянии объекта
+		/// </summary>
+		override public States State
+		{
+			protected set
+			{
+				state = (int)value;
+			}
+			get
+			{
+					return (States)state;
+			}
+		}
+		HTTPReader reader;
+		public override MyStream Reader
+		{
+			get
+			{
+				return reader;
+			}
+
+			protected set
+			{
+				base.Reader = value;
+			}
+		}
+		HTTPWriter writer;
+		public override MyStream Writer
+		{
+			get
+			{
+				return writer;
+			}
+
+			protected set
+			{
+				base.Writer = value;
+			}
+		}
+
+		/// <summary>
+		/// Событие которое наступает при проходе по циклу
+		/// </summary>
+		public event PHandlerEvent EventWork
         {
             add
             {
@@ -172,205 +204,99 @@ override
             }
         }
 
-		private bool _filewrite;
         private object SyncEvent = new object();
-        private  event PHandlerEvent __EventWork;
-        private  event PHandlerEvent __EventData;
-        private  event PHandlerEvent __EventError;
-        private  event PHandlerEvent __EventClose;
-        private  event PHandlerEvent __EventChunk;
-        private  event PHandlerEvent __EventOnOpen;
-        static 
-        private  event PHandlerEvent __EventConnect;
+        private event PHandlerEvent __EventWork;
+        private event PHandlerEvent __EventData;
+        private event PHandlerEvent __EventError;
+        private event PHandlerEvent __EventClose;
+        private event PHandlerEvent __EventChunk;
+        private event PHandlerEvent __EventOnOpen;
+        static
+        private event PHandlerEvent __EventConnect;
 
-        public HTTP()
+        public HTTProtocol(Socket tcp)
         {
-            Sync     = new object();
-            State    
-                = States.Connection;
-            Result   = new TaskResult();
-            Request  = new Header();
-            Response = new Header();
-            
-        }
-		async public void File(string path, int chunk = 1000 * 64)
-		{
-			lock (Sync)
-			{
-				if (_filewrite)
-					throw new HTTPException("Дождитесь окончания записи файла");
-				_filewrite = true;
-			}
-			await Task.Run(() =>
-			{
-				try
-				{
-					file(path, chunk);
-				}
-				catch (HTTPException err)
-				{
-					exc(err);
-				}
-				catch (Exception err)
-				{
-					exc(new HTTPException( "Ошибка при чтении файла " + path, HTTPCode._500_, err ));
-				}
-				finally
-				{
-					flush();
-					lock (Sync)
-						_filewrite = false;
-				}
-			});
-        }
-
-		public bool close()
-		{
-            lock (Sync)
-            {
-                if (state > 4)
-                    return true;
-                state = 5;
-                return false;
-            }
-        }
-		public bool flush()
-		{
-			lock (Sync)
-				return Response.SetEnd();
+			Tcp = tcp;
+            State = 
+				States.Connection;
+					
+			ObSync = new object();
+            Result = new TaskResult();
+                Request = new Header();
+                Response = new Header();
+			reader = new HTTPReader(32000);
+			writer = (
+				ContextRq = ContextRs = 
+					  new HTTPContext(this))
+								     .__Writer;
+			ListContext = 
+					  new Queue<HTTPContext>();
+			
+			OnEventConnect();
+			Interlocked.CompareExchange(ref state, 0, 3);
 		}
-        public bool Message(string message)
-        {
-            return Message(Encoding.UTF8.GetBytes(message));
-        }
-        public bool Message(byte[] message)
-        {
-            return Message(   message, 0, message.Length  );
-        }
-		/*
 		/// <summary>
-		/// Отправляет данные текущему подключению
+		/// Закрывает HTTP соединение, если оно еще не закрыто
 		/// </summary>
-		/// <param name="message">массив байт для отправки</param>
-		/// <returns>true в случае ечсли данные можно отправить</returns>
-		public bool message(byte[] message, int start, int write)
+		/// <returns></returns>
+        public void HTTPClose()
         {
-            lock (Sync)
+            lock (ObSync)
             {
-                if (state > 4)
-                    return false;
-				
-                SocketError error;
-                if ((error = Write(message, start, write)) != SocketError.Success)
-                {
-                    if (error != SocketError.WouldBlock
-                           && error != SocketError.NoBufferSpaceAvailable)
-                    {
-                        Response.Close = true;
-                        exc(new HTTPException("Ошибка записи http данных: " + error.ToString(), HTTPCode._500_));
-                        return false;
-                    }
-                }
+                if (state < 5)
+					state = 5;
             }
-            return true;
         }
-		*/
-		public abstract bool Message(byte[] message, int start, int write);
-		
-        public override TaskResult TaskLoopHandlerProtocol()
+		/// <summary>
+		/// Обрабатывает происходящие ошибки и назначает оьраьотчики
+		/// </summary>
+		/// <param name="err">Ошибка</param>
+		internal void HTTPError(HTTPException err)
+		{
+			lock (ObSync)
+			{
+				if (state > 3)
+					state = 7;
+				else
+					state = 4;
+			}
+		}
+		public override TaskResult TaskLoopHandlerProtocol()
         {
             try
             {
-                /*============================================================
-                                    Обработчик отправки данных
-                    Запускает функцию обработки пользоватлеьских данных, в
-                    случае если статус не был изменен переходим к следующему
-                    обработчику, обработчику отправки пользовательских 
-                    данных.						   
-                ==============================================================*/
-                if (state ==-1)
-                {
-                    Work();
-                /*============================================================
-                    Происходит отправка данных из буффера и проверка 
-                    окончания отправки всех данных, если отправка данных 
-                    была закончена и все данные были отправлены проверяем 
-                    необходимость закрытия текушего соединения если это так,
-                    закрываем соединения, если нет обновляем заголвоки и 
-                    продолжаем обрабатывать входящие запросы.						   
-                ==============================================================*/
-                    if (Interlocked.CompareExchange(ref state, 2,-1) !=-1)
-                        return Result;
-
-					write();
-                    if (Response.IsEnd && Writer.Empty)
-                    {
-						if (!Response.IsReq)
-						{
-							End();
-							Response.SetReq();
-						}
-						else
-						{
-							if (Response.Close)
-								close();
-							else
-							{
-								Request = new Header();
-								Response = new Header();
-								Interlocked.CompareExchange(ref state, 0, 2);
-							}
-						}
-                    }
-                /*============================================================
-                    Если во время отправки соединение не было закрыто и не 
-                    произошло никаких ошибок возвращаемся к предыдущему
-                    обработчику.						   
-                ==============================================================*/
-                    if (Interlocked.CompareExchange(ref state,-1, 2) == 2)
-                        return Result;
-                }
-                /*============================================================
-                    Запускает функцию обработки пользоватлеьских данных, в
-                    случае если статус не был изменен переходим к 
-                    следующему обработчику, обработчику чтения полученных
-                    и обраблтки пользовательских данных.						   
-                ==============================================================*/
-                if (state == 0)
-                {
-                    Work();
-                /*============================================================
-                                    Обработчик получения данных
-                    Пока данные не были получены и не произошло никаких
-                    продолжаем читать данные и обрабатывать их. Когда все
-                    данные будут получены переходим к следующему 
-                    обработчику, обработчику отправки данных.					   
-                ==============================================================*/
-                    if (Interlocked.CompareExchange(ref state, 1, 0) != 0)
-                        return Result;
-                        if (!Request.IsEnd)
-                        {
-                            read();
-                            Data();
-                        }
-                        else
-                            Interlocked.CompareExchange (ref state,-1, 1);
-                    if (Interlocked.CompareExchange(ref state, 0, 1) == 1)
-                        return Result;
-                }
-                /*============================================================
-                                        Заголвоки получены
-                    Запускаем обработчик полученных заголвоков, если статус
-                    не будет изменен в обработчике и не произойдет никаких
-                    ошибок, продолжаем получать пользовательские данные.						   
-                ==============================================================*/
-                if (state == 3)
-                {
-                    Connection();
-                    if (Interlocked.CompareExchange(ref state, 0, 3) == 3)
-                        return Result;
-                }
-                /*============================================================
+				/*==================================================================
+					Запускает функцию обработки пользоватлеьских данных,в случае
+					если статус не был изменен выполняет переход к следующему
+					обраотчику, обработчику чтения данных.						   
+				===================================================================*/
+				if (state == 0)
+				{
+					OnEventWork();
+					/*==================================================================
+						Проверяет сокет были получены данные или нет. Читаем данные 
+						из сокета, если есть данные обрабатываем  их. Когда данные
+						будут получены и обработаны переходим к следующему обработчику,
+						обработчику отправки данных.
+					==================================================================*/
+					if (Interlocked.CompareExchange(ref state, 1, 0) != 0)
+						return Result;
+						read();
+					if (!Reader.Empty)
+						ContextRq.Hadler();
+					/*==================================================================
+						Проверяет возможность отправки данных. Если данные можно 
+						отправить запускает функцию для отправки данных, в случае 
+						если статус не был изменен выполняет переход к следующему 
+						обраотчику.
+					==================================================================*/
+					if (Interlocked.CompareExchange(ref state, 2, 1) != 1)
+						return Result;
+						write();
+					if (Interlocked.CompareExchange(ref state, 0, 2) == 2)
+						return Result;
+				}
+				/*============================================================
                                         Обработчик ошибок
                     Запускам функцию обработки ошибок. Если заголвоки были
                     отправлены закрываем соединение, если нет отправляем 
@@ -378,29 +304,38 @@ override
                     400 или ошибке сервера 500 указываем серверу после 
                     отправки данных закрыть моединение. 					   
                 ==============================================================*/
-                        if (state == 4)
-                        {
-                            Error(Exception);
-							Interlocked.CompareExchange (ref state,-1, 4);
-						}
+								if (state == 4)
+								{
+									/////Ошибка/////
+									OnEventError(Exception);
+									if (Exception.Status.value == 500)
+										HTTPClose();
+									else
+										Interlocked.Exchange(ref state, -1);
+								}
                 /*============================================================
                                         Закрываем соединеие						   
                 ==============================================================*/
-                                    if (state == 5)
-                                    {
-                                        state = 7;
-                                    }
-                                    if (state == 7)
-                                    {
-										Tcp.Close();
-										Close();
-                                        Dispose();
-                                        Result.Option = TaskOption.Delete;
-                                    }
+								if (state == 5)
+								{
+									state = 7;
+								}
+								if (state == 7)
+								{
+									OnEventClose();
+									if (Tcp.Connected)
+										Tcp.Close( 0 );
+										Result.Option  =  TaskOption.Delete;
+								}
             }
             catch (HTTPException err)
             {
-                exc(err);
+                HTTPError(err);
+            }
+            catch (Exception err)
+            {
+                HTTPError(new HTTPException("Критическая ошибка. " + err.Message, HTTPCode._500_, err));
+                Log.Loging.AddMessage(err.Message + Log.Loging.NewLine + err.StackTrace, "log.log", Log.Log.Debug);
             }
             return Result;
         }
@@ -409,40 +344,38 @@ override
             return "HTTP";
         }
         /// <summary>
-        /// Обрабатывает происходящие ошибки и назначает оьраьотчики
-        /// </summary>
-        /// <param name="err">Ошибка</param>
-        private void exc(HTTPException err)
-        {
-            lock (Sync)
-            {
-                if (state < 4)
-                    state = 4;
-                else if (state < 7)
-                    state = 7;
-                    Exception = err;
-            }
-        }
-        /// <summary>
         /// получает данные
         /// </summary>
         private void read()
         {
+            /*
+                Если функция Poll Вернет true проверяем наличие данных, если данных нет значит соединение
+                было закрыто. Если есть данные читаем данные из сокета проверяем на наличие ошибок, если
+                выполнение произошло с ошибкой, обрабатываем.
+            */
             if (Tcp.Poll(0, SelectMode.SelectRead))
             {
                 if (Tcp.Available == 0)
-                    exc( new HTTPException("Ошибка чтения http данных. Соединение закрыто.", HTTPCode._500_));
+                {
+					HTTPClose();
+                }
                 else
                 {
-					SocketError error; 
+                    SocketError error;
                     if ((error = Read()) != SocketError.Success)
                     {
+                        // проверка является данная ошибка критической
                         if (error != SocketError.WouldBlock
                          && error != SocketError.NoBufferSpaceAvailable)
                         {
-                            Response.Close = true;
-                            exc( new HTTPException("Ошибка чтения http данных: " + error.ToString(), HTTPCode._500_));
-                    
+							/*         Текущее подключение было закрыто сброшено или разорвано          */
+							if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
+																   || error == SocketError.ConnectionAborted)
+								HTTPClose();
+							else
+							{
+								HTTPError(new HTTPException("Ошибка чтения http данных: " + error.ToString(), HTTPCode._500_));
+							}
                         }
                     }
                 }
@@ -451,77 +384,139 @@ override
         /// <summary>
         /// Отправляет сообщение
         /// </summary>
-        /// <param name="data">Данные</param>
         private void write()
         {
-            
+            /*
+                Если функция Poll Вернет false или есть наличие данные, считываем данные из сокета, иначе закрываем
+                соединение. Если проверка прошла успешно читаем данные из сокета
+            */
             if (!Tcp.Poll(0, SelectMode.SelectRead) || Tcp.Available > 0)
             {
-					SocketError error;
+                SocketError error;
+                if (!Writer.Empty)
+                {
                     if ((error = Send()) != SocketError.Success)
                     {
+                        // проверка является данная ошибка критической
                         if (error != SocketError.WouldBlock
-                         && error != SocketError.NoBufferSpaceAvailable)
+							  && error != SocketError.NoBufferSpaceAvailable)
                         {
-                            Response.Close = true;
-                            exc( new HTTPException("Ошибка записи http данных: " + error.ToString(), HTTPCode._500_));
-                        
-                        }
+							/*         Текущее подключение было закрыто сброшено или разорвано          */
+							if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
+																   || error == SocketError.ConnectionAborted)
+								HTTPClose();
+							else
+							{
+								HTTPError(new HTTPException("Ошибка чтения http данных: " + error.ToString(), HTTPCode._500_));
+							}
+
+						}
                     }
+                }
             }
-                        else
-                            exc( new HTTPException("Ошибка записи http данных. Соединение закрыто.", HTTPCode._500_));
+							else
+								HTTPClose();
         }
         /// <summary>
         /// Потокобезопасный запуск события Work
         /// желательно запускать в обработчике Work
         /// </summary>
-        protected void OnEventWork()
+        internal void OnEventWork()
         {
+			if (ContextRs.Response.IsEnd && Writer.Empty)
+			{
+				writer.Dispose();
+				writer = (ContextRs =
+					ListContext.Dequeue()).__Writer;
+			}
+
             string s = "work";
             string m = "Цикл обработки";
+
             PHandlerEvent e;
             lock (SyncEvent)
                 e = __EventWork;
             if (e != null)
                 e(this, new PEventArgs(m, s));
         }
-        /// <summary>
-        /// Потокобезопасный запуск события Data
-        /// желательно запускать в обработчике Data
-        /// </summary>
-        protected void OnEventData()
+		/// <summary>
+		/// Потокобезопасный запуск события Data
+		/// желательно запускать в обработчике Data
+		/// </summary>
+		internal void OnEventData(HTTPContext cntx)
         {
-            string s = "data";
-            string m = "Получен фрейм с данными";
+				ContextRq = new HTTPContext( this );
+				ListContext.Enqueue(   ContextRq   );
 
-            PHandlerEvent e;
+            string s = "data";
+            string m = "Получены все данные";
+			
+			PHandlerEvent e;
             lock (SyncEvent)
                 e = __EventData;
             if (e != null)
-                e(this, new PEventArgs(s, m, null));
+                e(this, new PEventArgs(s, m, cntx));
         }
-        /// <summary>
-        /// Потокобезопасный запуск события Close
-        /// желательно запускать в обработчике Close
-        /// </summary>
-        protected void OnEventClose()
+		/// <summary>
+		/// Потокобезопасный запуск события Chunk
+		/// желательно запускать в обработчике Chunk
+		/// </summary>
+		internal void OnEventChunk(HTTPContext cntx)
+        {
+            string s = "сhunk";
+            string m = "Получена часть данных";
+
+            PHandlerEvent e;
+            lock (SyncEvent)
+                e = __EventChunk;
+            if (e != null)
+                e(this, new PEventArgs(s, m, cntx));
+        }
+		/// <summary>
+		/// Потокобезопасный запуск события Close
+		/// желательно запускать в обработчике Close
+		/// </summary>
+		internal void OnEventClose()
         {
             string s = "close";
             string m = "Соединение было закрыто";
+
+			HTTPContext[] cntx = 
+				ListContext.ToArray();
+			foreach (HTTPContext ctx in ListContext)
+			{
+				lock (ctx.__ObSync)
+					  ctx.__Writer.Dispose();
+			}
 
             PHandlerEvent e;
             lock (SyncEvent)
                 e = __EventClose;
             if (e != null)
-                e(this, new PEventArgs(s, m, null));
+                e(this, new PEventArgs(s, m, cntx));
         }
-        /// <summary>
-        /// Потокобезопасный запуск события Error
-        /// желательно запускать в обработчике Error
-        /// </summary>
-        protected void OnEventError(HTTPException error)
+		/// <summary>
+		/// Потокобезопасный запуск события OnOpen 
+		/// </summary>
+		internal void OnEventOpen(HTTPContext cntx)
+		{
+
+			string s = "connect";
+			string m = "Соединение было установлено, протокол ws";
+
+			PHandlerEvent e;
+			lock (SyncEvent)
+				e = __EventOnOpen;
+			if (e != null)
+				e(this, new PEventArgs(s, m, cntx));
+		}
+		/// <summary>
+		/// Потокобезопасный запуск события Error
+		/// желательно запускать в обработчике Error
+		/// </summary>
+		internal void OnEventError(HTTPException error)
         {
+
             string s = "error";
             string m = "Произошла ошибка во время исполнения";
 
@@ -531,27 +526,13 @@ override
             if (e != null)
                 e(this, new PEventArgs(s, m, error));
         }
-        /// <summary>
-        /// Потокобезопасный запуск события OnOpen 
-        /// </summary>
-        /// <param name="request"></param>
-        /// <param name="response"></param>
-        protected void OnEventOpen(IHeader request, IHeader response)
+		/// <summary>
+		/// Потокобезопасный запуск события Connection
+		/// желательно запускать в обработчике Connection
+		/// </summary>
+		internal void OnEventConnect()
         {
-            string s = "connect";
-            string m = "Соединение было установлено, протокол ws";
-            PHandlerEvent e;
-            lock (SyncEvent)
-                e = __EventOnOpen;
-            if (e != null)
-                e(this, new PEventArgs(s, m, null));
-        }
-        /// <summary>
-        /// Потокобезопасный запуск события Connection
-        /// желательно запускать в обработчике Connection
-        /// </summary>
-        protected void OnEventConnect()
-        {
+
             string s = "connect";
             string m = "Соединение было установлено, протокол ws";
 
@@ -560,43 +541,7 @@ override
                 e = __EventConnect;
             if (e != null)
                 e(this, new PEventArgs(s, m, null));
-            
+
         }
-		/// <summary>
-		/// отправляет файл пользователю
-		/// </summary>
-		/// <param name="path"></param>
-		/// <param name="chunk"></param>
-		protected abstract void file(string path, int chunk);
-		/// <summary>
-		/// закончена передача данных чтобы закрыть соединеие не обходимо установить
-		/// значение response.Close = true;
-		/// в случае ошибок необходимо бросать HTTPException с указанным статусом http
-		/// </summary>
-		protected abstract void End();
-		/// <summary>
-		/// 
-		/// </summary>
-		protected abstract void Work();
-        /// <summary>
-        /// работаем
-        /// в случае ошибок необходимо бросать HTTPException с указанным статусом http
-        /// </summary>
-        protected abstract void Data();
-        /// <summary>
-        /// получить заголовки
-        /// в случае ошибок необходимо бросать HTTPException с указанным статусом http
-        /// </summary>
-        protected abstract void Close();
-        /// <summary>
-        /// произошло закрытие
-        /// в случае ошибок необходимо бросать HTTPException с указанным статусом http 
-        /// </summary>
-        protected abstract void Error(HTTPException error);
-        /// <summary>
-        /// обработать ошибку
-        /// в случае ошибок необходимо бросать HTTPException с указанным статусом http
-        /// </summary>
-        protected abstract void Connection();
     }
 }

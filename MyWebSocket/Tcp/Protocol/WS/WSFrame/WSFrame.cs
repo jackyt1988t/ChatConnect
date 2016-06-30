@@ -1,6 +1,6 @@
 ﻿namespace MyWebSocket.Tcp.Protocol.WS
 {
-	enum WSOpcod : int
+	public enum WSOpcod : int
 	{
 		Text = 0,
 		Ping = 1,

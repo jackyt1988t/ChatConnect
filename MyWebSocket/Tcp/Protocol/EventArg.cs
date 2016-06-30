@@ -41,6 +41,6 @@ namespace MyWebSocket.Tcp.Protocol
             this.message = message;
         }
     }
-    /*        Делегат для обработки событий парсера        */
-    delegate void PHandlerEvent(object sender, PEventArgs e);
+    /*            Делегат для обработки событий парсера           */
+    public delegate void PHandlerEvent(object sender, PEventArgs e);
 }

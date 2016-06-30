@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace MyWebSocket.Tcp
 {
-    interface IHeader
+    public interface IHeader
     {
 		int ContentLength
 		{
@@ -22,11 +22,6 @@ namespace MyWebSocket.Tcp
 			get;
 			set;
 		}
-		string ContentType
-		{
-			get;
-			set;
-		}
 		string ContentEncoding
 		{
 			get;
@@ -37,7 +32,16 @@ namespace MyWebSocket.Tcp
 			get;
 			set;
 		}
-
+		List<string> CacheControl
+		{
+			get;
+			set;
+		}
+		List<string> ContentType
+		{
+			get;
+			set;
+		}
 		List<string> AcceptEncoding
 		{
 			get;
@@ -59,9 +63,8 @@ namespace MyWebSocket.Tcp
 		bool Close
 		{
 			get;
-			set;
 		}
-		byte[] _Body
+		byte[] Body
         {
             get;
             set;
@@ -86,7 +89,7 @@ namespace MyWebSocket.Tcp
             get;
             set;
         }
-        string StartString
+        string StrStr
         {
             get;
             set;
@@ -99,12 +102,9 @@ namespace MyWebSocket.Tcp
 		{
 			get;
 		}
-		void Clear();
-		bool SetReq();
-		bool SetRes();
-		bool SetEnd();
 		byte[] ToByte();
 		void AddHeader(string key, string value);
+		void ClearHeaders();
 		bool ContainsKeys(string key, bool @case = true);
 		bool ContainsKeys(string key, out string value, bool @case = true);
 	}

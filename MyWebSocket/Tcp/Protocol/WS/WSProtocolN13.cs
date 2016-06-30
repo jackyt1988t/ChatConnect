@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Net;
 using System.Net.Sockets;
-		using System.Text;
-		using System.Security.Cryptography;
-
+using System.Text;
+using System.Security.Cryptography;
+using MyWebSocket.Tcp.Protocol.HTTP;
 
 namespace MyWebSocket.Tcp.Protocol.WS
 {
@@ -56,7 +56,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		/// Инициализрует класс протокола WS с указанным обработчиком
 		/// </summary>
 		/// <param name="http">протокол  http</param>
-		public WSProtocolN13(IProtocol http) :
+		public WSProtocolN13(HTTProtocol http) :
 			this()
 		{
 			Tcp = http.Tcp;
@@ -65,7 +65,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 						 (int)http.Reader.Length);
 
 			Policy.SetPolicy(0, 1, 1, 1, 0, 32000);
-			Request = http.Request;
+			Request = http.ContextRq.Request;
 			
 			try
 			{
@@ -73,13 +73,12 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			}
 			catch (SocketException exc)
 			{
-				ExcServer(new WSException("Ошибка сокета", exc.SocketErrorCode, WSClose.ServerError));
+				ErrorServer(new WSException("Ошибка сокета", exc.SocketErrorCode, WSClose.ServerError));
 			}
 		}
-		static
-		public void Set101(IHeader header)
+		static public void Set101(IHeader header)
 		{
-			header.StartString = "HTTP/1.1 101 Switching Protocols";
+			header.StrStr = "HTTP/1.1 101 Switching Protocols";
 			header.AddHeader("Upgrade", "WebSocket");
 			header.AddHeader("Connection", "Upgrade");
 		}
@@ -120,10 +119,10 @@ namespace MyWebSocket.Tcp.Protocol.WS
 					byte[] _buffer = new byte[2 + message.Length];
 						   _buffer[0] = (byte)((int)___Close._InitCode >> 08);
 						   _buffer[1] = (byte)((int)___Close._InitCode >> 00);
-				length = _buffer.Length;
+					length = _buffer.Length;
 					message.CopyTo(_buffer, 2);
 							 message = _buffer;
-				Opcod = WSN13.CLOSE;
+					Opcod = WSN13.CLOSE;
 				break;
 				case WSOpcod.Binnary:
 					Opcod = WSN13.BINNARY;
@@ -156,27 +155,24 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		protected override void Work()
 		{
 			OnEventWork();
-			/*if (!PingControl.IsPong && PingControl.GetPong.Ticks < DateTime.Now.Ticks)
+			if (!PingControl.IsPong && PingControl.GetPong.Ticks < DateTime.Now.Ticks)
 				 throw new WSException( "Нет ответа Понг", WsError.PingNotResponse, WSClose.PolicyViolation);
 
 			if (!PingControl.IsPing && PingControl.SetPing.Ticks < DateTime.Now.Ticks)
 			{	
 				 PingControl.SetPing  =  new TimeSpan(  DateTime.Now.Ticks  +  TimeSpan.TicksPerSecond * 5  );
 			Ping(PingControl.SetPing.ToString());
-			}*/			
+			}			
 		}
 
 		protected override void Data()
 		{
-			if (Reader.Empty)
-				return;
-			
 			if (reader._Frame.GetsHead && reader._Frame.GetsBody)
 				reader._Frame.Null();
 
 			if (!reader._Frame.GetsHead)
 			{
-				if (reader.ReadHead() == -1)
+				if (!reader.ReadHead())
 					return;
 				if (reader._Frame.BitRsv1 == Policy.Bit2)
 					throw new WSException("Неверный бит rcv1", WsError.HeaderFrameError, WSClose.PolicyViolation);
@@ -194,7 +190,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			}
 			if (!reader._Frame.GetsBody)
 			{
-				if (reader.ReadBody() == -1)
+				if (!reader.ReadBody())
 					return;
 
 				if (Debug)
@@ -294,16 +290,20 @@ namespace MyWebSocket.Tcp.Protocol.WS
 
 		protected override void Connection(IHeader request, IHeader response)
 		{
+			OnEventConnect();
+
 			SHA1 sha1 = SHA1.Create();
 			string key;
 			if (!request.ContainsKeys("sec-websocket-key", out key, true))
-				throw new WSException("Отсутствует заголовок sec-webspcket-key", WsError.PcodNotSuported, WSClose.UnsupportedData);
+				throw new WSException("Отсутствует заголовок sec-websocket-key", WsError.HandshakeError, WSClose.TLSHandshake);
 			string hex = Convert.ToBase64String(sha1.ComputeHash(Encoding.UTF8.GetBytes(key + CHECKKEY)));
 			sha1.Clear();
 				Response.AddHeader("Sec-WebSocket-Accept", hex);
 
 			Set101(Response);
-			OnEventConnect(request, response);
+			
+			OnEventOpen(request, response);
+
 			byte[] buffer = response.ToByte();
 			Message(buffer, 0, buffer.Length);
 		}

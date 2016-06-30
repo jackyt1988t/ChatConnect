@@ -3,7 +3,7 @@ using System.Text;
 
 namespace MyWebSocket.Tcp.Protocol.WS
 {
-    class WSData
+    public class WSData
     {
 		/// <summary>
 		/// Фрагментация

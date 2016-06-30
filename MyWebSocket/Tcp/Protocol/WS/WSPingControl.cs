@@ -2,7 +2,7 @@
 
 namespace MyWebSocket.Tcp.Protocol.WS
 {
-	class WSPingControl
+	public class WSPingControl
 	{
 		/// <summary>
 		/// пинг отправлен

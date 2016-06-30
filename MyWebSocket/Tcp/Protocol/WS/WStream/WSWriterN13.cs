@@ -97,7 +97,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 				{
 					int resize = (int)Count * 2;
 					if (resize - (int)Length < length)
-						resize = (int)Length + length + 64;
+						resize = (int)Length + length;
 					
 					if (resize < MAXRESIZE)
 						Resize (  resize  );
