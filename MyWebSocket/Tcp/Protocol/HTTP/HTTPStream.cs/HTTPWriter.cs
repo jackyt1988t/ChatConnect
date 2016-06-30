@@ -24,7 +24,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// <summary>
 		/// Заголвоки запрос
 		/// </summary>
-		public Header header;
+		public Header Header;
 		/// <summary>
 		/// Информация о записи
 		/// </summary>
@@ -132,12 +132,12 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			lock (__Sync)
 			{
 				_Frame.Handl++;
-				if (!header.IsRes)
+				if (!Header.IsRes)
 				{
-						byte[] data = header.ToByte();
+						byte[] data = Header.ToByte();
 					base.Write(data, 0, data.Length);
 
-					header.SetRes();
+					Header.SetRes();
 					_Frame.hleng = data.Length;
 				}
 				if ((length + 64) > Clear)
@@ -153,12 +153,12 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				}
 					_Frame.bleng += length;
 				if (!string.IsNullOrEmpty(
-									header.ContentEncoding))
+									Header.ContentEncoding))
 					_Frame.bpart += length;
 				if (length > 0)
 				{
 					// оптравить форматированные данные
-					if (header.TransferEncoding != "chunked")
+					if (Header.TransferEncoding != "chunked")
 						base.Write(  buffer, start, length  );
 					else
 					{

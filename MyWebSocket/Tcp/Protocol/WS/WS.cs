@@ -420,7 +420,7 @@ override
 					{
 						Connection(Request, Response);
 
-					if (Interlocked.CompareExchange(ref state, 0, 3) == 5)
+					if (Interlocked.CompareExchange(ref state, 0, 3) == 3)
 						return TaskResult;
 
 					}

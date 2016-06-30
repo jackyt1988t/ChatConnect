@@ -22,6 +22,11 @@ namespace MyWebSocket.Tcp.Protocol
 		/// максимальный размер потока
 		/// </summary>
 		public static int MAXLENGTHBUFFER = 1000 * 1024;
+
+		/// <summary>
+		/// Длинна данных
+		/// </summary>
+		public long Len;
 		/// <summary>
 		/// tcp / ip сокет подключения
 		/// </summary>
@@ -114,6 +119,7 @@ namespace MyWebSocket.Tcp.Protocol
 					int length = Tcp.Receive(buffer, start, count, SocketFlags.None, out error);
 					if (length > 0)
 					{
+						Len -= length;
 						try
 						{
 							Reader.SetLength(length);

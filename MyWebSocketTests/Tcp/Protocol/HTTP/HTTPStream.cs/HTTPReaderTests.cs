@@ -3,7 +3,7 @@ using MyWebSocket.Tcp.Protocol.HTTP;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+/*using System.Text;
 using System.Threading.Tasks;
 
 namespace MyWebSocket.Tcp.Protocol.HTTP.Tests
@@ -20,7 +20,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP.Tests
 			//
 			HTTPReader reader = new HTTPReader(2400)
 			{
-				header = new Header()
+				Header = new Header()
 			};
 			byte[] header = Encoding.UTF8.GetBytes(
 				 "GET / HTTP1.1\ra"
@@ -36,7 +36,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP.Tests
 			//
 			HTTPReader reader = new HTTPReader(2400)
 			{
-				header = new Header()
+				Header = new Header()
 			};
 			byte[] header = Encoding.UTF8.GetBytes(
 				 "GET / HTTP1.1\r\n\r\n"
@@ -51,7 +51,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP.Tests
 			HTTPReader.STSTR = 1;
 
 			reader._Frame.Clear();
-			reader.header = new Header();
+			reader.Header = new Header();
 			reader.Write(header, 0, header.Length);
 			reader.ReadHead();
 
@@ -66,7 +66,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP.Tests
 			//
 			HTTPReader reader = new HTTPReader(2400)
 			{
-				header = new Header()
+				Header = new Header()
 			};
 			byte[] header = Encoding.UTF8.GetBytes(
 				"\r\n" +
@@ -84,7 +84,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP.Tests
 			//
 			HTTPReader reader = new HTTPReader(2400)
 			{
-				header = new Header()
+				Header = new Header()
 			};
 			byte[] header = Encoding.UTF8.GetBytes(
 				"\r\n" +
@@ -100,7 +100,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP.Tests
 			HTTPReader.PARAM = 1;
 
 			reader._Frame.Clear();
-			reader.header = new Header();
+			reader.Header = new Header();
 			reader.Write(header, 0, header.Length);
 			reader.ReadHead();
 
@@ -115,7 +115,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP.Tests
 			//
 			HTTPReader reader = new HTTPReader(2400)
 			{
-				header = new Header()
+				Header = new Header()
 			};
 			byte[] header = Encoding.UTF8.GetBytes(
 				"\r\n" +
@@ -128,7 +128,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP.Tests
 				Assert.Fail("заголвоки верные");
 				return;
 			}
-			if (reader.header.Connection != "keep-alive")
+			if (reader.Header.Connection != "keep-alive")
 			{
 				Assert.Fail("заголвоки верные");
 				return;
@@ -137,11 +137,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP.Tests
 			HTTPReader.VALUE = 1;
 
 			reader._Frame.Clear();
-			reader.header = new Header();
+			reader.Header = new Header();
 			reader.Write(header, 0, header.Length);
 			reader.ReadHead();
 
 			HTTPReader.VALUE = 1024;
 		}
 	}
-}
+}*/

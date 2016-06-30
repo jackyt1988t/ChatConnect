@@ -1,4 +1,4 @@
-﻿using System;
+﻿/*using System;
 
 using System.IO;
 using System.IO.Compression;
@@ -60,7 +60,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 Result.Protocol    =    TaskProtocol.HTTP;
                 __Reader = new HTTPReader(MINLENGTHBUFFER)
                 {
-                    header = Request
+                    Header = Request
                 };
 
 			Contexts = new Queue<HTTPContext>();
@@ -98,7 +98,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             // вермя до закрытия(  keep-alive  )
             if (Alive.Ticks < DateTime.Now.Ticks && Writer.Empty)
             {
-                close();
+                HTTPClose();
                         Log.Loging.AddMessage( "Соединеине Keep-Alive вермя истекло", "log.log", Log.Log.Info );
             }
         }
@@ -110,8 +110,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 __Writer._Frame.Clear();
                 lock (ObSync)
                 {
-                    __Reader.header = Request;
-                    __Writer.header = Response;
+                    __Reader.Header = Request;
+                    __Writer.Header = Response;
                 }
             }
 
@@ -127,7 +127,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 Когда все заголвоки будут получены и пройдут первоначальную обработку произойдет событие EventOpen
 
             --------------------------------------------------------------------------------------------------------*/
-            if (!__Reader._Frame.GetHead)
+/*            if (!__Reader._Frame.GetHead)
             {
                 if (__Reader.ReadHead() == -1)
                     return;
@@ -198,7 +198,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 заголвок в соыбтие EventOpen и при привышении допустимого значения закрыть соединение.
             
             --------------------------------------------------------------------------------------------------------*/
-            if (!__Reader._Frame.GetBody)
+/*
+			if (!__Reader._Frame.GetBody)
             {
                 if (__Reader.ReadBody() == -1)
                     return;
@@ -243,12 +244,12 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                                               "Ошибка протокола Http:"+ error.Message, "log.log", Log.Log.Info);
 								
             if (Response.IsRes || error.Status.value == 500)
-                close();
+                HTTPClose();
             else
             {
                 lock (ObSync)
                 {
-                    __Writer.header = Response = new Header();
+                    __Writer.Header = Response = new Header();
               	}
                         Response.StrStr = "HTTP/1.1 " + error.Status.value
                                                                     .ToString()
@@ -263,3 +264,4 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         }
     }
 }
+*/

@@ -23,12 +23,10 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			base.Reset();
 			_Frame.Null();
 		}
-		unsafe public override int ReadBody()
+		unsafe public bool ReadBody()
         {
-            int read = 0;
-
 			if (  _Frame.BitLeng == 0  )
-				return read;
+				return true;
             if (  _Frame.BitMask == 0  )
             {
 				fixed (byte* sourse = _buffer, target = _Frame.DataBody)
@@ -41,13 +39,11 @@ namespace MyWebSocket.Tcp.Protocol.WS
 						*pt = *ps;
 						ps++;
 						pt++;						
-						read++;
 						PointR++;
 
 						if (++_Frame.PartBody == _Frame.LengBody)
 						{
-							_Frame.GetsBody = true;
-							return read;
+							return (_Frame.GetsBody = true);
 						}
 					}
 				}
@@ -64,25 +60,19 @@ namespace MyWebSocket.Tcp.Protocol.WS
 						*pt = (byte)(*ps ^ _Frame.DataMask[_Frame.PartBody % 4]);
 						ps++;
 						pt++;
-						read++;
 						PointR++;
 
 						if (++_Frame.PartBody == _Frame.LengBody)
 						{
-							_Frame.GetsBody = true;
-							return read;
+							return (_Frame.GetsBody = true);
 						}
 					}
 				}
             }
-
-            read = -1;
-            return read;
+            return false;
         }
-        public override int ReadHead()
+        public bool ReadHead()
         {
-            int read = 0;
-
             while (!Empty)
             {
                 switch (_Frame.Handler)
@@ -214,21 +204,17 @@ namespace MyWebSocket.Tcp.Protocol.WS
                         break;
                 }
 
-                read++;
 				PointR++;
                 _Frame.PartHead++;
 
                 if (_Frame.PartHead == _Frame.LengHead)
                 {
-                    _Frame.GetsHead = true;
 					if (_Frame.LengBody > -1)
 						_Frame.DataBody = new byte[_Frame.LengBody];
-					return read;
+					return (_Frame.GetsHead = true);
                 }
             }
-
-            read = -1;
-            return read;
+            return false;
         }
     }
 	

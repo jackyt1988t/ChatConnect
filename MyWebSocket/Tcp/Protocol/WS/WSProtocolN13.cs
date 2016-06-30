@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Net;
 using System.Net.Sockets;
-		using System.Text;
-		using System.Security.Cryptography;
-
+using System.Text;
+using System.Security.Cryptography;
+using MyWebSocket.Tcp.Protocol.HTTP;
 
 namespace MyWebSocket.Tcp.Protocol.WS
 {
@@ -56,7 +56,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		/// Инициализрует класс протокола WS с указанным обработчиком
 		/// </summary>
 		/// <param name="http">протокол  http</param>
-		public WSProtocolN13(IProtocol http) :
+		public WSProtocolN13(HTTProtocol http) :
 			this()
 		{
 			Tcp = http.Tcp;
@@ -65,7 +65,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 						 (int)http.Reader.Length);
 
 			Policy.SetPolicy(0, 1, 1, 1, 0, 32000);
-			Request = http.Request;
+			Request = http.ContextRq.Request;
 			
 			try
 			{
@@ -172,7 +172,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 
 			if (!reader._Frame.GetsHead)
 			{
-				if (reader.ReadHead() == -1)
+				if (!reader.ReadHead())
 					return;
 				if (reader._Frame.BitRsv1 == Policy.Bit2)
 					throw new WSException("Неверный бит rcv1", WsError.HeaderFrameError, WSClose.PolicyViolation);
@@ -190,7 +190,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			}
 			if (!reader._Frame.GetsBody)
 			{
-				if (reader.ReadBody() == -1)
+				if (!reader.ReadBody())
 					return;
 
 				if (Debug)

@@ -1,13 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
-		using System.Text;
-		using System.Threading;
-		using System.Threading.Tasks;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MyWebSocket.Tcp.Protocol.HTTP
 {
-    public abstract class HTTP : BaseProtocol
+    public class HTTProtocol : BaseProtocol
     {
 		/// <summary>
 		/// Объект синхронизации данных
@@ -28,7 +29,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// <summary>
 		/// 
 		/// </summary>
-		public HTTPContext Context;
+		public HTTPContext ContextRs;
+		/// <summary>
+		/// 
+		/// </summary>
+		public HTTPContext ContextRq;
 		/// <summary>
 		/// Последняя зафиксировання ошибка
 		/// </summary>
@@ -37,6 +42,10 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             get;
             protected set;
         }
+		/// <summary>
+		/// 
+		/// </summary>
+		public Queue<HTTPContext> ListContext; 
 
 		volatile int state;
 		/// <summary>
@@ -51,6 +60,32 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			get
 			{
 					return (States)state;
+			}
+		}
+		HTTPReader reader;
+		public override MyStream Reader
+		{
+			get
+			{
+				return reader;
+			}
+
+			protected set
+			{
+				base.Reader = value;
+			}
+		}
+		HTTPWriter writer;
+		public override MyStream Writer
+		{
+			get
+			{
+				return writer;
+			}
+
+			protected set
+			{
+				base.Writer = value;
 			}
 		}
 
@@ -179,28 +214,54 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         static
         private event PHandlerEvent __EventConnect;
 
-        public HTTP()
+        public HTTProtocol(Socket tcp)
         {
-            ObSync = new object();
-            State
-                = States.Connection;
+			Tcp = tcp;
+            State = 
+				States.Connection;
+					
+			ObSync = new object();
             Result = new TaskResult();
                 Request = new Header();
                 Response = new Header();
-
-        }
-
-        public bool close()
+			reader = new HTTPReader(32000);
+			writer = (
+				ContextRq = ContextRs = 
+					  new HTTPContext(this))
+								     .__Writer;
+			ListContext = 
+					  new Queue<HTTPContext>();
+			
+			OnEventConnect();
+			Interlocked.CompareExchange(ref state, 0, 3);
+		}
+		/// <summary>
+		/// Закрывает HTTP соединение, если оно еще не закрыто
+		/// </summary>
+		/// <returns></returns>
+        public void HTTPClose()
         {
             lock (ObSync)
             {
-                if (state > 4)
-                    return true;
-                state = 5;
-                return false;
+                if (state < 5)
+					state = 5;
             }
         }
-        public override TaskResult TaskLoopHandlerProtocol()
+		/// <summary>
+		/// Обрабатывает происходящие ошибки и назначает оьраьотчики
+		/// </summary>
+		/// <param name="err">Ошибка</param>
+		internal void HTTPError(HTTPException err)
+		{
+			lock (ObSync)
+			{
+				if (state > 3)
+					state = 7;
+				else
+					state = 4;
+			}
+		}
+		public override TaskResult TaskLoopHandlerProtocol()
         {
             try
             {
@@ -211,7 +272,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				===================================================================*/
 				if (state == 0)
 				{
-					Work();
+					OnEventWork();
 					/*==================================================================
 						Проверяет сокет были получены данные или нет. Читаем данные 
 						из сокета, если есть данные обрабатываем  их. Когда данные
@@ -222,7 +283,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						return Result;
 						read();
 					if (!Reader.Empty)
-						Data();
+						ContextRq.Hadler();
 					/*==================================================================
 						Проверяет возможность отправки данных. Если данные можно 
 						отправить запускает функцию для отправки данных, в случае 
@@ -231,24 +292,10 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					==================================================================*/
 					if (Interlocked.CompareExchange(ref state, 2, 1) != 1)
 						return Result;
-
-					if (Response.Close)
-						close();
-					else if (Response.IsEnd && Writer.Empty)
-						End();
-					else
 						write();
 					if (Interlocked.CompareExchange(ref state, 0, 2) == 2)
 						return Result;
 				}
-					if (state == 3)
-					{
-						Connection();
-
-						if (Interlocked.CompareExchange(ref state, 0, 3) == 5)
-							return Result;
-
-					}
 				/*============================================================
                                         Обработчик ошибок
                     Запускам функцию обработки ошибок. Если заголвоки были
@@ -257,10 +304,13 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                     400 или ошибке сервера 500 указываем серверу после 
                     отправки данных закрыть моединение. 					   
                 ==============================================================*/
-				if (state == 4)
+								if (state == 4)
 								{
 									/////Ошибка/////
-									Error(Exception);
+									OnEventError(Exception);
+									if (Exception.Status.value == 500)
+										HTTPClose();
+									else
 										Interlocked.Exchange(ref state, -1);
 								}
                 /*============================================================
@@ -272,7 +322,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 								}
 								if (state == 7)
 								{
-									Close();
+									OnEventClose();
 									if (Tcp.Connected)
 										Tcp.Close( 0 );
 										Result.Option  =  TaskOption.Delete;
@@ -280,11 +330,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             }
             catch (HTTPException err)
             {
-                exc(err);
+                HTTPError(err);
             }
             catch (Exception err)
             {
-                exc(new HTTPException("Критическая ошибка. " + err.Message, HTTPCode._500_, err));
+                HTTPError(new HTTPException("Критическая ошибка. " + err.Message, HTTPCode._500_, err));
                 Log.Loging.AddMessage(err.Message + Log.Loging.NewLine + err.StackTrace, "log.log", Log.Log.Debug);
             }
             return Result;
@@ -292,25 +342,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         public override string ToString()
         {
             return "HTTP";
-        }
-        /// <summary>
-        /// Обрабатывает происходящие ошибки и назначает оьраьотчики
-        /// </summary>
-        /// <param name="err">Ошибка</param>
-        private void exc(HTTPException err)
-        {
-            lock (ObSync)
-            {
-				if (state > 3 
-				    || Exception != null)
-					state = 7;
-				else
-				{
-					state = 4;
-				}
-				       Response.SetEnd();
-				       Exception  =  err;
-            }
         }
         /// <summary>
         /// получает данные
@@ -326,7 +357,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             {
                 if (Tcp.Available == 0)
                 {
-					close();
+					HTTPClose();
                 }
                 else
                 {
@@ -340,10 +371,10 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							/*         Текущее подключение было закрыто сброшено или разорвано          */
 							if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
 																   || error == SocketError.ConnectionAborted)
-								close();
+								HTTPClose();
 							else
 							{
-								exc(new HTTPException("Ошибка чтения http данных: " + error.ToString(), HTTPCode._500_));
+								HTTPError(new HTTPException("Ошибка чтения http данных: " + error.ToString(), HTTPCode._500_));
 							}
                         }
                     }
@@ -373,10 +404,10 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							/*         Текущее подключение было закрыто сброшено или разорвано          */
 							if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
 																   || error == SocketError.ConnectionAborted)
-								close();
+								HTTPClose();
 							else
 							{
-								exc(new HTTPException("Ошибка чтения http данных: " + error.ToString(), HTTPCode._500_));
+								HTTPError(new HTTPException("Ошибка чтения http данных: " + error.ToString(), HTTPCode._500_));
 							}
 
 						}
@@ -384,42 +415,53 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 }
             }
 							else
-								close();
+								HTTPClose();
         }
         /// <summary>
         /// Потокобезопасный запуск события Work
         /// желательно запускать в обработчике Work
         /// </summary>
-        protected void OnEventWork()
+        internal void OnEventWork()
         {
+			if (ContextRs.Response.IsEnd && Writer.Empty)
+			{
+				writer.Dispose();
+				writer = (ContextRs =
+					ListContext.Dequeue()).__Writer;
+			}
+
             string s = "work";
             string m = "Цикл обработки";
+
             PHandlerEvent e;
             lock (SyncEvent)
                 e = __EventWork;
             if (e != null)
                 e(this, new PEventArgs(m, s));
         }
-        /// <summary>
-        /// Потокобезопасный запуск события Data
-        /// желательно запускать в обработчике Data
-        /// </summary>
-        protected void OnEventData(HTTPContext cntx)
+		/// <summary>
+		/// Потокобезопасный запуск события Data
+		/// желательно запускать в обработчике Data
+		/// </summary>
+		internal void OnEventData(HTTPContext cntx)
         {
+				ContextRq = new HTTPContext( this );
+				ListContext.Enqueue(   ContextRq   );
+
             string s = "data";
             string m = "Получены все данные";
-
-            PHandlerEvent e;
+			
+			PHandlerEvent e;
             lock (SyncEvent)
                 e = __EventData;
             if (e != null)
                 e(this, new PEventArgs(s, m, cntx));
         }
-        /// <summary>
-        /// Потокобезопасный запуск события Chunk
-        /// желательно запускать в обработчике Chunk
-        /// </summary>
-        protected void OnEventChunk(HTTPContext cntx)
+		/// <summary>
+		/// Потокобезопасный запуск события Chunk
+		/// желательно запускать в обработчике Chunk
+		/// </summary>
+		internal void OnEventChunk(HTTPContext cntx)
         {
             string s = "сhunk";
             string m = "Получена часть данных";
@@ -430,27 +472,51 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             if (e != null)
                 e(this, new PEventArgs(s, m, cntx));
         }
-        /// <summary>
-        /// Потокобезопасный запуск события Close
-        /// желательно запускать в обработчике Close
-        /// </summary>
-        protected void OnEventClose()
+		/// <summary>
+		/// Потокобезопасный запуск события Close
+		/// желательно запускать в обработчике Close
+		/// </summary>
+		internal void OnEventClose()
         {
             string s = "close";
             string m = "Соединение было закрыто";
+
+			HTTPContext[] cntx = 
+				ListContext.ToArray();
+			foreach (HTTPContext ctx in ListContext)
+			{
+				lock (ctx.__ObSync)
+					  ctx.__Writer.Dispose();
+			}
 
             PHandlerEvent e;
             lock (SyncEvent)
                 e = __EventClose;
             if (e != null)
-                e(this, new PEventArgs(s, m, null));
+                e(this, new PEventArgs(s, m, cntx));
         }
-        /// <summary>
-        /// Потокобезопасный запуск события Error
-        /// желательно запускать в обработчике Error
-        /// </summary>
-        protected void OnEventError(HTTPException error)
+		/// <summary>
+		/// Потокобезопасный запуск события OnOpen 
+		/// </summary>
+		internal void OnEventOpen(HTTPContext cntx)
+		{
+
+			string s = "connect";
+			string m = "Соединение было установлено, протокол ws";
+
+			PHandlerEvent e;
+			lock (SyncEvent)
+				e = __EventOnOpen;
+			if (e != null)
+				e(this, new PEventArgs(s, m, cntx));
+		}
+		/// <summary>
+		/// Потокобезопасный запуск события Error
+		/// желательно запускать в обработчике Error
+		/// </summary>
+		internal void OnEventError(HTTPException error)
         {
+
             string s = "error";
             string m = "Произошла ошибка во время исполнения";
 
@@ -460,27 +526,13 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             if (e != null)
                 e(this, new PEventArgs(s, m, error));
         }
-        /// <summary>
-        /// Потокобезопасный запуск события OnOpen 
-        /// </summary>
-        /// <param name="request"></param>
-        /// <param name="response"></param>
-        protected void OnEventOpen(IHeader request, IHeader response)
+		/// <summary>
+		/// Потокобезопасный запуск события Connection
+		/// желательно запускать в обработчике Connection
+		/// </summary>
+		internal void OnEventConnect()
         {
-            string s = "connect";
-            string m = "Соединение было установлено, протокол ws";
-            PHandlerEvent e;
-            lock (SyncEvent)
-                e = __EventOnOpen;
-            if (e != null)
-                e(this, new PEventArgs(s, m, null));
-        }
-        /// <summary>
-        /// Потокобезопасный запуск события Connection
-        /// желательно запускать в обработчике Connection
-        /// </summary>
-        protected void OnEventConnect()
-        {
+
             string s = "connect";
             string m = "Соединение было установлено, протокол ws";
 
@@ -491,35 +543,5 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 e(this, new PEventArgs(s, m, null));
 
         }
-        /// <summary>
-        /// закончена передача данных чтобы закрыть соединеие не обходимо установить
-        /// значение response.Close = true;
-        /// в случае ошибок необходимо бросать HTTPException с указанным статусом http
-        /// </summary>
-        protected abstract void End();
-        /// <summary>
-        /// 
-        /// </summary>
-        protected abstract void Work();
-        /// <summary>
-        /// работаем
-        /// в случае ошибок необходимо бросать HTTPException с указанным статусом http
-        /// </summary>
-        protected abstract void Data();
-        /// <summary>
-        /// получить заголовки
-        /// в случае ошибок необходимо бросать HTTPException с указанным статусом http
-        /// </summary>
-        protected abstract void Close();
-        /// <summary>
-        /// произошло закрытие
-        /// в случае ошибок необходимо бросать HTTPException с указанным статусом http 
-        /// </summary>
-        protected abstract void Error(HTTPException error);
-        /// <summary>
-        /// обработать ошибку
-        /// в случае ошибок необходимо бросать HTTPException с указанным статусом http
-        /// </summary>
-        protected abstract void Connection();
     }
 }

@@ -293,22 +293,9 @@ namespace MyWebSocket.Tcp.Protocol
         #endregion
 #region read write finction 
         /// <summary>
-        /// считывает тело сообщения
-        /// </summary>
-        /// <returns>количество прочитанных байт</returns>
-        public virtual int ReadBody()
-        {
-            throw new NotImplementedException();
-        }
-        /// <summary>
-        /// считывает заголовки сообщения
-        /// </summary>
-        /// <returns>количество прочитанных байт</returns>
-        public virtual int ReadHead()
-        {
-            throw new NotImplementedException();
-        }
-        
+		/// Читает один байт
+		/// </summary>
+		/// <returns>-1 если достигнут конец потока</returns>
         public override int ReadByte()
         {
             lock (__Sync)

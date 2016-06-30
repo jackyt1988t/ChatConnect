@@ -21,7 +21,7 @@ namespace MyWebSocket.Tcp
 		}
 		public Agregator(Socket tcp)
 		{
-			Protocol = new HTTPProtocol(tcp);
+			Protocol = new HTTProtocol(tcp);
 			Container.Enqueue(this);
 		}
  static public void Loop()
@@ -62,7 +62,7 @@ namespace MyWebSocket.Tcp
 				case TaskOption.Protocol:
 					if (TaskResult.Protocol == TaskProtocol.WSN13)
 					{
-						Protocol = new WSProtocolN13(Protocol);
+						Protocol = new WSProtocolN13((HTTProtocol)Protocol);
 						Container.Enqueue(this);
 					}
 					break;

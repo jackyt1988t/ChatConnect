@@ -145,7 +145,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 
 			if (!reader._Frame.GetsHead)
 			{
-				if (reader.ReadHead() == -1)
+				if (!reader.ReadHead())
 					return;
 				if (reader._Frame.BitRsv1 == 1)
 					throw new WSException("Неверный бит rcv1", WsError.HeaderFrameError, WSClose.PolicyViolation);
@@ -163,7 +163,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			}
 			if (!reader._Frame.GetsBody)
 			{
-				if (reader.ReadBody() == -1)
+				if (!reader.ReadBody())
 					return;
 
 				if (Debug)

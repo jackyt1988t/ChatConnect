@@ -89,26 +89,27 @@ namespace Example
                 };
             };
 
-            HTTP.EventConnect += (object obj, PEventArgs a) =>
+            HTTProtocol.EventConnect += (object obj, PEventArgs a) =>
             {
                 Console.WriteLine("HTTP");
 
                 bool poll = false;
-                HTTP Http = obj as HTTP;
-                Http.EventData += (object sender, PEventArgs e) =>
+                HTTProtocol Http = obj as HTTProtocol;
+                Http.EventData += async (object sender, PEventArgs e) =>
                 {
 					HTTPContext ctx = e.sender as HTTPContext;
-                    switch (Http.Request.Path)
+                    switch (ctx.Request.Path)
                     {
                         case "/":
-						ctx.File("Html/index.html");
-                        break;
+							await ctx.AsFile("Html/index.html");
+							ctx.End();
+							break;
                         case "/message":
                         lock (Array)
                         {
                             for (int i = 0; i < Array.Count; i++)
                             {
-                                Array[i].Message(Http.Request.Body, WSOpcod.Text, WSFin.Last);
+                                Array[i].Message(ctx.Request.Body, WSOpcod.Text, WSFin.Last);
                             }
                         }
                         lock (Polling)
@@ -125,12 +126,16 @@ namespace Example
                         }
                         break;
                         case "/subscribe":
+						if (poll)
+							;
+							poll = true;
 							lock (Polling)
-                                Polling.Add(ctx);
+								Polling.Add(ctx);
                         break;
                         default:
-						ctx.File("Html" + Http.Request.Path);
-                        break;
+							await ctx.AsFile("Html" + ctx.Request.Path);
+							ctx.End();
+							break;
                     }
                 };
                 Http.EventError += (object sender, PEventArgs e) =>
@@ -139,8 +144,16 @@ namespace Example
                 };
                 Http.EventClose += (object sender, PEventArgs e) =>
                 {
-                    lock (Polling)
-						Polling.Remove(Http.Context);
+					HTTPContext[] cntx = 
+							e.sender as HTTPContext[];
+					foreach (HTTPContext ctx in cntx)
+					{
+						if (ctx.Request.Path == "/subscribe")
+						{
+							lock (Polling)
+								Polling.Remove(ctx);
+						}
+					}
                     Console.WriteLine("CLOSE");
                 };
                 Http.EventOnOpen += (object sender, PEventArgs e) =>
