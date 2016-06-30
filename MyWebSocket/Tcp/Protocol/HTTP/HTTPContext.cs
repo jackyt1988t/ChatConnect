@@ -166,7 +166,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				if (Response.ContentType == null
 					|| Response.ContentType.Count == 0)
 				{
-					string ext = Info.Extension.Substring(1);
+					string ext = string.Empty;
+					if (string.IsNullOrEmpty(Info.Extension))
+						ext = "plain";
+					else
+						ext = Info.Extension.Substring(1);
 					Response.ContentType = new List<string>()
 											   {
 												   "text/" + ext,
@@ -240,6 +244,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					{
 						HTTP.HTTPError((_1_Error =
 							new HTTPException(error.Message + "./r/n" + error.StackTrace, HTTPCode._500_)));
+						return false;
 					}
 					finally
 					{
