@@ -282,8 +282,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					if (Interlocked.CompareExchange(ref state, 1, 0) != 0)
 						return Result;
 						read();
-					if (!Reader.Empty)
-						ContextRq.Hadler();
 					/*==================================================================
 						Проверяет возможность отправки данных. Если данные можно 
 						отправить запускает функцию для отправки данных, в случае 
@@ -365,8 +363,13 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                     if ((error = Read()) != SocketError.Success)
                     {
                         // проверка является данная ошибка критической
-                        if (error != SocketError.WouldBlock
-                         && error != SocketError.NoBufferSpaceAvailable)
+                        if (error == SocketError.WouldBlock
+                         || error == SocketError.NoBufferSpaceAvailable)
+			{
+				if (!Reader.Empty)
+					ContextRq.Hadler();
+			}
+			else
                         {
 							/*         Текущее подключение было закрыто сброшено или разорвано          */
 							if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
@@ -390,7 +393,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 Если функция Poll Вернет false или есть наличие данные, считываем данные из сокета, иначе закрываем
                 соединение. Если проверка прошла успешно читаем данные из сокета
             */
-            if (!Tcp.Poll(0, SelectMode.SelectRead) || Tcp.Available > 0)
+            if (Tcp.Poll(0, SelectMode.SelectWrite)
             {
                 SocketError error;
                 if (!Writer.Empty)
@@ -414,8 +417,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                     }
                 }
             }
-							else
-								HTTPClose();
         }
         /// <summary>
         /// Потокобезопасный запуск события Work
