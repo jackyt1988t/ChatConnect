@@ -201,11 +201,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							if (Response.ContentLength == 0
 								 && string.IsNullOrEmpty(Response.TransferEncoding))
 								Response.ContentLength = (int)stream.Length;
-
+							
+							byte[] buffer = new byte[_chunk];
 							while (i++ < _count)
 							{
 								int recive = 0;
-								byte[] buffer = new byte[_chunk];
 
 								while ((_chunk - recive) > 0)
 								{
@@ -223,7 +223,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							if (length > 0)
 							{
 								int recive = 0;
-								byte[] buffer = new byte[length];
 
 								while ((length - recive) > 0)
 								{
