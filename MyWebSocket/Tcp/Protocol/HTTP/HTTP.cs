@@ -250,15 +250,16 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// <summary>
 		/// Обрабатывает происходящие ошибки и назначает оьраьотчики
 		/// </summary>
-		/// <param name="err">Ошибка</param>
-		internal void HTTPError(HTTPException err)
+		/// <param name="error">Ошибка</param>
+		internal void HTTPError(HTTPException error)
 		{
 			lock (ObSync)
 			{
-				if (state > 3)
+				if (state > 4)
 					state = 7;
 				else
 					state = 4;
+				Exception = error;
 			}
 		}
 		public override TaskResult TaskLoopHandlerProtocol()
@@ -309,7 +310,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 									if (Exception.Status.value == 500)
 										HTTPClose();
 									else
-										Interlocked.Exchange(ref state, -1);
+										Interlocked.Exchange(ref state, 0);
 								}
                 /*============================================================
                                         Закрываем соединеие						   
@@ -346,31 +347,31 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         /// </summary>
         private void read()
         {
-            /*
+			/*
                 Если функция Poll Вернет true проверяем наличие данных, если данных нет значит соединение
                 было закрыто. Если есть данные читаем данные из сокета проверяем на наличие ошибок, если
                 выполнение произошло с ошибкой, обрабатываем.
             */
-            if (Tcp.Poll(0, SelectMode.SelectRead))
-            {
-                if (Tcp.Available == 0)
-                {
-					HTTPClose();
-                }
-                else
-                {
-                    SocketError error;
-                    if ((error = Read()) != SocketError.Success)
-                    {
-                        // проверка является данная ошибка критической
-                        if (error == SocketError.WouldBlock
-                         || error == SocketError.NoBufferSpaceAvailable)
+			if (Tcp.Poll(0, SelectMode.SelectRead))
 			{
-				if (!Reader.Empty)
-					ContextRq.Hadler();
-			}
-			else
-                        {
+				if (Tcp.Available == 0)
+				{
+					HTTPClose();
+				}
+				else
+				{
+					SocketError error;
+					if ((error = Read()) != SocketError.Success)
+					{
+						// проверка является данная ошибка критической
+						if (error == SocketError.WouldBlock
+						 || error == SocketError.NoBufferSpaceAvailable)
+						{
+							if (!Reader.Empty)
+								ContextRq.Hadler();
+						}
+						else
+						{
 							/*         Текущее подключение было закрыто сброшено или разорвано          */
 							if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
 																   || error == SocketError.ConnectionAborted)
@@ -379,10 +380,15 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							{
 								HTTPError(new HTTPException("Ошибка чтения http данных: " + error.ToString(), HTTPCode._500_));
 							}
-                        }
-                    }
-                }
-            }
+						}
+					}
+				}
+			}
+						else
+						{
+							if (!Reader.Empty)
+								ContextRq.Hadler();
+						}
         }
         /// <summary>
         /// Отправляет сообщение
@@ -393,7 +399,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 Если функция Poll Вернет false или есть наличие данные, считываем данные из сокета, иначе закрываем
                 соединение. Если проверка прошла успешно читаем данные из сокета
             */
-            if (Tcp.Poll(0, SelectMode.SelectWrite)
+            if (Tcp.Poll(0, SelectMode.SelectWrite))
             {
                 SocketError error;
                 if (!Writer.Empty)

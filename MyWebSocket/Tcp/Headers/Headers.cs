@@ -222,6 +222,30 @@ namespace MyWebSocket.Tcp
             get;
             set;
         }
+		/// <summary>
+		/// Возвращает значение заголвока
+		/// </summary>
+		/// <param name="param">параметр заголвока</param>
+		/// <returns>возвращает null если заголвок не найден</returns>
+		public string this[string param]
+		{
+			set
+			{
+				AddHeader(param, value);
+			}
+			get
+			{
+				param = param.ToLower();
+				foreach (KeyValuePair<string, string> header in ContainerHeaders)
+				{
+					if (header.Key.ToLower() == param)
+					{
+						return header.Value;
+					}
+				}
+				return null;
+			}
+		}
         /// <summary>
         /// время создания объекта заголвоков
         /// </summary>
@@ -258,8 +282,14 @@ namespace MyWebSocket.Tcp
         /// <param name="value">значение заголовка</param>
         public void AddHeader(string key, string value)
         {
-            key = key.Trim(new char[] { ' ' });
-            value = value.Trim(new char[] { ' ' });
+			if (key == null)
+				key = string.Empty;
+			else
+				key = key.Trim(new char[] { ' ' });
+			if (value == null)
+				value = string.Empty;
+			else
+				value = value.Trim(new char[] { ' ' });
             
             Analizating(key, value);
             ReplaceHeader(key, value);
@@ -269,12 +299,16 @@ namespace MyWebSocket.Tcp
         /// </summary>
         public void ClearHeaders()
         {
-            StrStr = string.Empty;
-            foreach (KeyValuePair<string, string> header in ContainerHeaders)
-            {
-                Analizating(header.Key, string.Empty);
-            }
-            ContainerHeaders.Clear();
+            StrStr           = null;
+            upgrade          = null;
+			connection       = null;
+			contenttype      = null;
+			cashcontrol      = null;
+			contentlength    =    0;
+			acceptencoding   = null;
+			contentencoding  = null;
+			transferencoding = null;
+			ContainerHeaders.Clear();
         }
         /// <summary>
         /// Удаляет заголовок если он был добавлен
@@ -293,7 +327,7 @@ namespace MyWebSocket.Tcp
                     Key = header.Key.ToLower();
                 if (Key == key)
                 {
-                    Analizating(Key, string.Empty);
+                    Analizating(Key, null);
                     ContainerHeaders.Remove(header.Key);
                     return true;
                 }
@@ -304,7 +338,7 @@ namespace MyWebSocket.Tcp
         /// Проверяет добвлен указанный заголвок или нет
         /// </summary>
         /// <param name="key">параметр заголвока</param>
-        /// <param name="@case">регстронезависимый поиск параметра</param>
+        /// <param name="case">регстронезависимый поиск параметра</param>
         /// <returns>true если заголвок был найден иначе false</returns>
         public bool ContainsKeys(string key, bool @case = true)
         {
@@ -318,28 +352,6 @@ namespace MyWebSocket.Tcp
                 if (Key == key)
                     return true;
             }
-            return false;
-        }
-        /// <summary>
-        /// Проверяет добвлен указанный заголвок или нет,
-        /// если добавлен записывает значение парметра в переданную переменную
-        /// </summary>
-        /// <param name="key">значение парметра</param>
-        /// <param name="value">будет записано значение заголвока</param>
-        /// <param name="@case">регстронезависимый поиск параметра<</param>
-        /// <returns>true если заголвок был найден инче false</returns>
-        public bool ContainsKeys(string key, out string value, bool @case = true)
-        {
-            
-            foreach (KeyValuePair<string, string> header in ContainerHeaders)
-            {
-                if (header.Key.ToLower() == key)
-                {
-                    value = header.Value;
-                    return true;
-                }
-            }
-            value = string.Empty;
             return false;
         }
 
@@ -371,31 +383,31 @@ namespace MyWebSocket.Tcp
             switch (key.ToLower())
             {
                 case "upgrade":
-                    upgrade = value.ToLower();
+					upgrade = value.ToLower();
                     break;
                 case "connection":
-                    connection = value.ToLower();
+					connection = value.ToLower();
                     break;
                 case "content-type":
-                    contenttype = 
-                        ReplaseValues(value, ",");
+					contenttype = 
+						ReplaseValues(value, ",");
                     break;
                 case "cache-control":
-                    cashcontrol =
-                        ReplaseValues(value, ",");
+					cashcontrol =
+						ReplaseValues(value, ",");
                     break;
                 case "content-length":
-                    contentlength = int.Parse(value);
+					contentlength = int.Parse(value);
                     break;
                 case "accept-encoding":
-                    acceptencoding = 
-                            ReplaseValues(value, ",");
+					acceptencoding = 
+						ReplaseValues(value, ",");
                     break;
                 case "content-encoding":
-                    contentencoding = value.ToLower();
+					contentencoding = value.ToLower();
                     break;
                 case "transfer-encoding":
-                    transferencoding = value.ToLower();
+					transferencoding = value.ToLower();
                     break;
             }
         }

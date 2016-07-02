@@ -94,6 +94,11 @@ namespace MyWebSocket.Tcp
             get;
             set;
         }
+		string this[string param]
+		{
+			get;
+			set;
+		}
 		DateTime TimeConnection
 		{
 			get;
@@ -106,7 +111,6 @@ namespace MyWebSocket.Tcp
 		void AddHeader(string key, string value);
 		void ClearHeaders();
 		bool ContainsKeys(string key, bool @case = true);
-		bool ContainsKeys(string key, out string value, bool @case = true);
 	}
     interface IHeaders
     {

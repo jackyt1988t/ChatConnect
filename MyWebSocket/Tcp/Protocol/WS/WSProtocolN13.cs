@@ -294,7 +294,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 
 			SHA1 sha1 = SHA1.Create();
 			string key;
-			if (!request.ContainsKeys("sec-websocket-key", out key, true))
+			if ((key = request["sec-websocket-key"]) == null)
 				throw new WSException("Отсутствует заголовок sec-websocket-key", WsError.HandshakeError, WSClose.TLSHandshake);
 			string hex = Convert.ToBase64String(sha1.ComputeHash(Encoding.UTF8.GetBytes(key + CHECKKEY)));
 			sha1.Clear();

@@ -101,8 +101,8 @@ namespace Example
                     switch (ctx.Request.Path)
                     {
                         case "/":
-							await ctx.AsFile("Html/index.html");
-							ctx.End();
+							if (await ctx.AsFile("Html/index.html"))
+								ctx.End();
 							break;
                         case "/message":
                         lock (Array)
@@ -133,9 +133,9 @@ namespace Example
 								Polling.Add(ctx);
                         break;
                         default:
-							await ctx.AsFile("Html" + ctx.Request.Path);
-							ctx.End();
-							break;
+							if (await ctx.AsFile("Html" + ctx.Request.Path))
+								ctx.End();
+						break;
                     }
                 };
                 Http.EventError += (object sender, PEventArgs e) =>

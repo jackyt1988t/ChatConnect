@@ -10,24 +10,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 {
 	public class HTTPContext
 	{
-		/// <summary>
-		/// Входящие заголвоки
-		/// </summary>
-		public Header Request;
-		/// <summary>
-		/// Исходящие заголвоки
-		/// </summary>
-		public Header Response;
-		/// <summary>
-		/// Синхронизация текущего объекта
-		/// </summary>
-		public Object __ObSync;
-
 		volatile bool _to_;
-		/// <summary>
-		/// HTTP
-		/// </summary>
-		internal HTTProtocol HTTP;
 		/// <summary>
 		/// Поток
 		/// </summary>
@@ -41,9 +24,26 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// </summary>
 		internal HTTPWriter __Writer;
 		/// <summary>
+		/// HTTP
+		/// </summary>
+		internal HTTProtocol Protocol;
+		/// <summary>
 		/// Последняя ошибка
 		/// </summary>
 		internal HTTPException _1_Error;
+
+		/// <summary>
+		/// Входящие заголвоки
+		/// </summary>
+		public Header Request;
+		/// <summary>
+		/// Исходящие заголвоки
+		/// </summary>
+		public Header Response;
+		/// <summary>
+		/// Синхронизация текущего объекта
+		/// </summary>
+		public Object __ObSync;
 
 		/// <summary>
 		/// Создает контекст получения, отправки данных
@@ -51,9 +51,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// <param name="http">HTTP</param>
 		public HTTPContext(HTTProtocol http)
 		{
-			HTTP = http;
-
 			Request  = new Header();
+			Protocol = http;
 			Response = new Header();
 			__ObSync = new object();
 
@@ -67,6 +66,30 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				Header = Response
 			};	
 		}
+
+		/// <summary>
+		/// 
+		/// </summary>
+		internal void Hadler()
+		{
+			try
+			{
+				if (!__Reader._Frame.GetHead)
+				{
+					HandlerHead();
+				}
+
+				if (!__Reader._Frame.GetBody)
+				{
+					HandlerBody();
+				}
+			}
+			catch (HTTPException error)
+			{
+					HandlerError(error);
+			}
+		}
+
 		/// <summary>
 		/// 
 		/// </summary>
@@ -87,11 +110,14 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					{
 						__Writer.Eof();
 					}
-					catch (IOException exc)
+					catch (IOException error)
 					{
-							HTTP.HTTPClose();
-						Log.Loging.AddMessage(exc.Message + "./r/n" + exc.StackTrace, "log.log", Log.Log.Debug);
-						
+						Protocol.HTTPClose();
+						Log.Loging.AddMessage(
+							"Ошибка при записи ответа на запрос HTTP" +
+							error.Message + "./r/n" + error.StackTrace, 
+													"log.log", Log.Log.Fatal);
+
 					}
 				}
 			}
@@ -120,28 +146,32 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 
 			return await Task.Run<bool>(() =>
 			{
-				while (i++ < _count)
+				if (Response.ContentLength == 0
+						&& string.IsNullOrEmpty(
+									Response.TransferEncoding))
+					Response.ContentLength = ( int )msg.Length;
+					while (i++ < _count)
 				{
-					if (HTTP.State == States.Close
-						 || HTTP.State == States.Disconnect)
+					if (Protocol.State == States.Close
+						 || Protocol.State == States.Disconnect)
 					{
 						_to_ = false;
 						return false;
 					}
-					HTTP.Len += _chunk;
+					
 					Message(msg, i * _chunk, _chunk);
 
 				}
 				if (length > 0)
 				{
-					if (HTTP.State == States.Close
-						 || HTTP.State == States.Disconnect)
+					if (Protocol.State == States.Close
+						 || Protocol.State == States.Disconnect)
 					{
 						_to_ = false;
 						return false;
 					}
-					HTTP.Len += _chunk;
-					Message(msg, i * _chunk, length);
+					
+					Message(msg, (i - 1) * _chunk, length);
 
 				}
 				return true;
@@ -170,7 +200,21 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					if (string.IsNullOrEmpty(Info.Extension))
 						ext = "plain";
 					else
+					{
 						ext = Info.Extension.Substring(1);
+						switch (ext)
+						{
+							case "js":
+								break;
+							case "css":
+								break;
+							case "html":
+								break;
+							default:
+								ext = "plain";
+								break;
+						}
+					}
 					Response.ContentType = new List<string>()
 											   {
 												   "text/" + ext,
@@ -180,12 +224,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			}
 			if (!Info.Exists)
 			{
-				if (_1_Error == null)
-					HTTP.HTTPError((_1_Error =
-						new HTTPException("Файл не найден " + path, HTTPCode._404_)));
-				else
-					HTTP.HTTPError((_1_Error =
-						new HTTPException("Файл не найден " + path, HTTPCode._500_)));
+				_to_ = false;
+				HandlerError(new HTTPException("Файл не найден " + path, HTTPCode._404_));
+				return false;
 			}
 				return await Task.Run<bool>(() =>
 				{
@@ -199,7 +240,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							int length = (int)(stream.Length - _count * _chunk);
 
 							if (Response.ContentLength == 0
-								 && string.IsNullOrEmpty(Response.TransferEncoding))
+								 && string.IsNullOrEmpty(
+												Response.TransferEncoding))
 								Response.ContentLength = (int)stream.Length;
 							
 							byte[] buffer = new byte[_chunk];
@@ -212,11 +254,13 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 									recive = stream.Read(buffer, recive, _chunk - recive);
 								}
 
-								if (HTTP.State == States.Close
-									 || HTTP.State == States.Disconnect)
+								if (Protocol.State == States.Close
+									 || Protocol.State == States.Disconnect)
+								{
+									_to_ = false;
 									return false;
+								}
 
-								HTTP.Len += _chunk;
 								Message(buffer, 0, _chunk);
 
 							}
@@ -229,11 +273,13 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 									recive = stream.Read(buffer, recive, length - recive);
 								}
 
-								if (HTTP.State == States.Close
-									 || HTTP.State == States.Disconnect)
+								if (Protocol.State == States.Close
+									 || Protocol.State == States.Disconnect)
+								{
+									_to_ = false;
 									return false;
+								}
 
-								HTTP.Len += _chunk;
 								Message(buffer, 0, length);
 
 							}
@@ -241,13 +287,12 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					}
 					catch (Exception error)
 					{
-						HTTP.HTTPError((_1_Error =
-							new HTTPException(error.Message + "./r/n" + error.StackTrace, HTTPCode._500_)));
-						return false;
-					}
-					finally
-					{
 						_to_ = false;
+						Protocol.HTTPClose();
+						Log.Loging.AddMessage(
+							"Ошибка при отпарвке файла HTTP ответа, " +
+							error.Message + "./r/n" + error.StackTrace,
+																"log.log", Log.Log.Fatal);
 					}
 					return true;
 				});
@@ -305,11 +350,15 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 														"no-cache",
 													};
 					if (Response.ContentEncoding == "gzip")
-						__Encode = new GZipStream(__Writer, CompressionLevel.Fastest, true);
+						__Encode = new GZipStream(
+							__Writer, CompressionLevel.Fastest, true);
 					else if (Response.ContentEncoding == "deflate")
-						__Encode = new DeflateStream(__Writer, CompressionLevel.Fastest, true);
-					Log.Loging.AddMessage("Http заголовки успешно обработаны: \r\n" +
-										  "Заголовки зап:\r\n" + Response.ToString(), "log.log", Log.Log.Info);
+						__Encode = new DeflateStream(
+							__Writer, CompressionLevel.Fastest, true);
+					Log.Loging.AddMessage(
+						"Http заголовки успешно обработаны: \r\n" +
+						"Заголовки зап:\r\n" + Response.ToString(), 
+												"log.log", Log.Log.Info);
 				}
 				try
 				{
@@ -325,141 +374,192 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						__Writer.Write(message, recive, length);
 						break;
 					}
-					Log.Loging.AddMessage("Http данные успешно добавлены к отправке", "log.log", Log.Log.Info);
+					Log.Loging.AddMessage(
+						"Http данные успешно добавлены к отправке", 
+												"log.log", Log.Log.Info);
 				}
 				catch (IOException error)
 				{
-					HTTP.HTTPError(new HTTPException(error.Message + "./r/n" + error.StackTrace, HTTPCode._500_));
+					Protocol.HTTPClose();
+					Log.Loging.AddMessage(
+						"Ошибка при записи ответа на запрос HTTP" +
+						error.Message + "./r/n" + error.StackTrace, 
+												"log.log", Log.Log.Fatal);
+				}
+			}
+		}
+		private void HandlerHead()
+		{
+			/*--------------------------------------------------------------------------------------------------------
+
+			   Обрабатываем заголвоки запроса. Если заголвоки не были получены, читаем данные из кольцевого 
+			   потока данных. Проверяем доступные методы обработки. При переходе на Websocket, меняем протокол WS 
+			   Устанавливаем заголвоки:
+			   Date
+			   Server
+			   Connection(если необходимо)
+			   Cintent-Encoding(если в заголвоке Accept-Encoding указаны gzip или deflate)
+			   Когда все заголвоки будут получены и пройдут первоначальную обработку произойдет событие EventOpen
+
+		   --------------------------------------------------------------------------------------------------------*/
+			if (!__Reader.ReadHead())
+			{
+				switch (Request.Method)
+				{
+					case "GET":
+						if (__Reader._Frame.bleng > 0)
+						{
+							throw new HTTPException(
+										"Неверная длина запроса GET", HTTPCode._400_);
+						}
+						break;
+						case "POST":
+						if (__Reader._Frame.Handl == 0)
+						{
+							throw new HTTPException(
+										"Неверная длина запроса POST", HTTPCode._400_);
+						}
+						break;
+					default:
+							throw new HTTPException(
+										"Метод не поддерживается " +
+												 Request.Method + ".", HTTPCode._501_);
+				}
+				if (!string.IsNullOrEmpty(Request.Upgrade))
+				{
+						Protocol.Result.Jump = true;
+						if (Request.Upgrade.ToLower() == "websocket")
+						{
+
+						}
+						else
+							throw new HTTPException(
+										"Протокол не поддерживается " +
+												Request.Upgrade + ".", HTTPCode._400_);
+				}
+				else
+				{
+						if (Request.Connection == "close")
+						{
+							Response.SetClose();
+							Response.Connection = "close";
+						}
+						else
+							Response.Connection = "keep-alive";
+
+						if (Request.AcceptEncoding != null)
+						{
+							if (Request.AcceptEncoding.Contains("gzip"))
+								Response.ContentEncoding = "gzip";
+							else if (Request.AcceptEncoding.Contains("deflate"))
+								Response.ContentEncoding = "deflate";
+						}
+								Response.TransferEncoding = "chunked";
+
+						Protocol.OnEventOpen(this);
+				}
+			}
+		}
+		private void HandlerBody()
+		{
+			/*--------------------------------------------------------------------------------------------------------
+
+			   Обрабатываем тело запроса. Если тело не было получено, читаем данные из кольцевого потока данных.
+			   При заголвоке Transfer-Encoding тело будет приходяить по частям и будет полность получено после 0
+			   данных и насупить событие EventData, до этого момента будет насупать событиеEventChunk, если был 
+			   указан заголвок Content-Length событие EventChunk происходить не будет, а событие EventData 
+			   произойдет только тогда когда все данные будут получены. Максимальный размер блока данных chuncked
+			   можно указать задав значение HTTPReader.LENCHUNK. В случае с Content-Length можно обработать 
+			   заголвок в соыбтие EventOpen и при привышении допустимого значения закрыть соединение.
+
+		   --------------------------------------------------------------------------------------------------------*/
+			if (__Reader.ReadBody())
+			{
+				switch (__Reader._Frame.Pcod)
+				{
+					case HTTPFrame.DATA:
+						if (!Protocol.Result.Jump)
+						{
+							Protocol.OnEventData(this);
+
+							Log.Loging.AddMessage(
+								"Все данные Http запроса получены", "log.log", Log.Log.Info);
+						}
+						else
+							Protocol.Result.Option = TaskOption.Protocol;
+						break;
+					case HTTPFrame.CHUNK:
+							Protocol.OnEventChunk(this);
+
+							Log.Loging.AddMessage(
+								"Часть данных Http запроса получена", "log.log", Log.Log.Info);
+						break;
 				}
 			}
 		}
 		/// <summary>
-		/// 
+		/// Обрабатывает ошибки и вызывает события класса HTTP
 		/// </summary>
-		internal void Hadler()
+		/// <param name="_1_error">Ошибка протокола HTTP</param>
+		async
+		protected void HandlerError(HTTPException _1_error)
 		{
-			/*--------------------------------------------------------------------------------------------------------
-            
-                Обрабатываем заголвоки запроса. Если заголвоки не были получены, читаем данные из кольцевого 
-                потока данных. Проверяем доступные методы обработки. При переходе на Websocket, меняем протокол WS 
-                Устанавливаем заголвоки:
-                Date
-                Server
-                Connection(если необходимо)
-                Cintent-Encoding(если в заголвоке Accept-Encoding указаны gzip или deflate)
-                Когда все заголвоки будут получены и пройдут первоначальную обработку произойдет событие EventOpen
-
-            --------------------------------------------------------------------------------------------------------*/
-			if (!__Reader._Frame.GetHead)
+			if (_1_Error != null)
 			{
-				if (!__Reader.ReadHead())
-					return;
-
-				switch (Request.Method)
+					Response.ClearHeaders();
+					Protocol.HTTPError (_1_Error  =  _1_error);
+				switch (_1_error.Status.value)
 				{
-					case "GET":
-					if (__Reader._Frame.bleng > 0)
-						throw new HTTPException("Неверная длина запроса GET", HTTPCode._400_);
-					break;
-					case "POST":
-					if (__Reader._Frame.Handl == 0)
-						throw new HTTPException("Неверная длина запроса POST", HTTPCode._400_);
-					break;
+					case 400:
+							Response.StrStr = "HTTP/1.1 400 " + _1_error.Status.ToString();
+							if (await AsMsg(Encoding.UTF8.GetBytes(
+								"400"
+							)))
+								End();
+						break;
+					case 404:
+							Response.StrStr = "HTTP/1.1 404 " + _1_error.Status.ToString();
+							if (await AsMsg(Encoding.UTF8.GetBytes(
+								"404"
+							)))
+								End();
+						break;
+					case 501:
+							Response.StrStr = "HTTP/1.1 501 " + _1_error.Status.ToString();
+							if (await AsMsg(Encoding.UTF8.GetBytes(
+								"501"
+							)))
+								End();
+						break;
 					default:
-					throw new HTTPException("Не поддерживается текущей реализацией", HTTPCode._501_);
-				}
-				if (!string.IsNullOrEmpty(Request.Upgrade))
-				{
-					HTTP.Result.Jump = true;
-					if (Request.Upgrade.ToLower() == "websocket")
-					{
-						string version;
-						string protocol = string.Empty;
-						if (Request.ContainsKeys("websocket-protocol", out version, true))
-							protocol = "websocket-protocol";
-						else if (Request.ContainsKeys("sec-websocket-version", out version, true))
-							protocol = "sec-websocket-version";
-						else if (Request.ContainsKeys("sec-websocket-protocol", out version, true))
-							protocol = "sec-websocket-protocol";
-						switch (version.ToLower())
-						{
-							case "7":
-							HTTP.Result.Jump = true;
-							HTTP.Result.Protocol = TaskProtocol.WSN13;
-							break;
-							case "8":
-							HTTP.Result.Jump = true;
-							HTTP.Result.Protocol = TaskProtocol.WSN13;
-							break;
-							case "13":
-							HTTP.Result.Jump = true;
-							HTTP.Result.Protocol = TaskProtocol.WSN13;
-							break;
-							case "sample":
-							HTTP.Result.Jump = true;
-							__Reader._Frame.Handl = 1;
-							__Reader._Frame.bleng = 8;
-							HTTP.Result.Protocol = TaskProtocol.WSAMPLE;
-							break;
-						}
-					}
-				}
-				else
-				{
-					if (Request.Connection == "close")
-					{
-						Response.SetClose();
-						Response.Connection = "close";
-					}
-					else
-						Response.Connection = "keep-alive";
-
-					if (Request.AcceptEncoding != null)
-					{
-						if (Request.AcceptEncoding.Contains("gzip"))
-							Response.ContentEncoding = "gzip";
-						else if (Request.AcceptEncoding.Contains("deflate"))
-							Response.ContentEncoding = "deflate";
-					}
-					Response.TransferEncoding = "chunked";
-
-					HTTP.OnEventOpen(this);
+							_1_error.Status  =  HTTPCode._500_;
+						break;
 				}
 			}
-			/*--------------------------------------------------------------------------------------------------------
-
-                Обрабатываем тело запроса. Если тело не было получено, читаем данные из кольцевого потока данных.
-                При заголвоке Transfer-Encoding тело будет приходяить по частям и будет полность получено после 0
-                данных и насупить событие EventData, до этого момента будет насупать событиеEventChunk, если был 
-                указан заголвок Content-Length событие EventChunk происходить не будет, а событие EventData 
-                произойдет только тогда когда все данные будут получены. Максимальный размер блока данных chuncked
-                можно указать задав значение HTTPReader.LENCHUNK. В случае с Content-Length можно обработать 
-                заголвок в соыбтие EventOpen и при привышении допустимого значения закрыть соединение.
-            
-            --------------------------------------------------------------------------------------------------------*/
-			if (!__Reader._Frame.GetBody)
+			else
 			{
-				if (!__Reader.ReadBody())
-					return;
-
-				switch (__Reader._Frame.Pcod)
+					Response.ClearHeaders();
+					Protocol.HTTPError (_1_Error  =  _1_error);
+				switch (_1_error.Status.value)
 				{
-					case HTTPFrame.DATA:
-					if (!HTTP.Result.Jump)
-					{
-						HTTP.OnEventData(this);
-
-						Log.Loging.AddMessage("Все данные Http запроса получены", "log.log", Log.Log.Info);
-					}
-					else
-						HTTP.Result.Option = TaskOption.Protocol;
-					break;
-					case HTTPFrame.CHUNK:
-					HTTP.OnEventChunk(this);
-					Log.Loging.AddMessage("Часть данных Http запроса получена", "log.log", Log.Log.Info);
-					break;
+					case 400:
+							Response.StrStr = "HTTP/1.1 400 " + _1_error.Status.ToString();
+							if (await AsFile("Html/400.html"))
+								End();
+						break;
+					case 404:
+							Response.StrStr = "HTTP/1.1 404 " + _1_error.Status.ToString();
+							if (await AsFile("Html/404.html"))
+								End();
+						break;
+					case 501:
+							Response.StrStr = "HTTP/1.1 501 " + _1_error.Status.ToString();
+							if (await AsFile("Html/501.html"))
+								End();
+						break;
 				}
 			}
+					
 		}
 	}
 }

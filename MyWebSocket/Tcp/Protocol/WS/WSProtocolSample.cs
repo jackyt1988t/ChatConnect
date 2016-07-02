@@ -248,9 +248,9 @@ namespace MyWebSocket.Tcp.Protocol.WS
 
 			string key1;
 			string key2;
-			if (!request.ContainsKeys("sec-websocket-key1", out key1, true))
+			if ((key1 = request["sec-websocket-key1"]) == null)
 				throw new WSException("Отсутствует заголовок sec-webspcket-key1", WsError.HandshakeError, WSClose.TLSHandshake);
-			if (!request.ContainsKeys("sec-websocket-key2", out key2, true))
+			if ((key2 = request["sec-websocket-key2"]) == null)
 				throw new WSException("Отсутствует заголовок sec-webspcket-key2", WsError.HandshakeError, WSClose.TLSHandshake);
 			
 			long space_1 = Regex.Matches(key1, @" ").Count;

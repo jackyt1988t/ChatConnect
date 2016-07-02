@@ -8,17 +8,17 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		public int Num
 		{
 			get;
-			private set;
+			internal set;
 		}
 		public string Error
 		{
 			get;
-			private set;
+			internal set;
 		}
 		public codexxx Status
 		{
 			get;
-			private set;
+			internal set;
 		}
 		public HTTPException() :
             base()
