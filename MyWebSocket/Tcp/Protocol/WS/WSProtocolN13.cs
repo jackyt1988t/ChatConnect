@@ -65,7 +65,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 						 (int)http.Reader.Length);
 
 			Policy.SetPolicy(0, 1, 1, 1, 0, 32000);
-			Request = http.ContextRq.Request;
+			//Request = http.ContextRq.Request;
 			
 			try
 			{

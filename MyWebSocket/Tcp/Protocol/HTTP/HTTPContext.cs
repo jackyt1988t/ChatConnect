@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace MyWebSocket.Tcp.Protocol.HTTP
 {
-	public class HTTPContext
+	public class HTTPContext : IContext
 	{
 		internal bool _to_;
 		/// <summary>
@@ -16,80 +16,100 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// </summary>
 		internal Stream __Encode;
 		/// <summary>
-		/// Поток чтения
+		/// Протолкол HTTP
 		/// </summary>
-		internal HTTPReader __Reader;
-		/// <summary>
-		/// Поток записи
-		/// </summary>
-		internal HTTPWriter __Writer;
-		/// <summary>
-		/// HTTP
-		/// </summary>
-		internal HTTProtocol Protocol;
+		internal BaseProtocol Protocol;
 		/// <summary>
 		/// Последняя ошибка
 		/// </summary>
 		internal HTTPException _1_Error;
 
 		/// <summary>
+		/// Закончена обр-ка
+		/// </summary>
+		public bool Cancel
+		{
+			get;
+			private set;
+		}
+		/// <summary>
 		/// Входящие заголвоки
 		/// </summary>
-		public Header Request;
+		public Header Request
+		{
+			get;
+			private set;
+		}
 		/// <summary>
 		/// Исходящие заголвоки
 		/// </summary>
-		public Header Response;
+		public Header Response
+		{
+			get;
+			private set;
+		}
 		/// <summary>
 		/// Синхронизация текущего объекта
 		/// </summary>
-		public Object __ObSync;
+		public object __ObSync
+		{
+			get;
+			private set;
+		}
+		HTTPReader __reader;
+		/// <summary>
+		/// Поток чтения
+		/// </summary>
+		public MyStream __Reader
+		{
+			get
+			{
+				return __reader;
+			}
+		}
+		HTTPWriter __writer;
+		/// <summary>
+		/// Поток записи
+		/// </summary>
+		public MyStream __Writer
+		{
+			get
+			{
+				return __writer;
+			}
+		}
 
 		/// <summary>
 		/// Создает контекст получения, отправки данных
 		/// </summary>
-		/// <param name="http">HTTP</param>
-		public HTTPContext(HTTProtocol http)
+		/// <param name="protocol">HTTP</param>
+		public HTTPContext(BaseProtocol protocol)
 		{
 			Request  = new Header();
-			Protocol = http;
+			Protocol = protocol;
 			Response = new Header();
 			__ObSync = new object();
 
-			(__Reader =
-			(HTTPReader)http.Reader)
-					   ._Frame.Clear();
-			__Reader.Header  =  Request;
+			(__reader =
+			(HTTPReader)protocol.Reader)
+					     ._Frame.Clear();
+			__reader.Header  =  Request;
 
-			__Writer = new HTTPWriter(10000)
-			{
-				Header = Response
-			};	
+			__writer = new HTTPWriter(
+								  10000);
+			__writer.Header  =  Response;	
 		}
-
 		/// <summary>
-		/// 
+		/// Возвращает новый контекст
 		/// </summary>
-		internal void Hadler()
+		/// <returns></returns>
+		public IContext Context()
 		{
-			try
-			{
-				if (!__Reader._Frame.GetHead)
-				{
-					HandlerHead();
-				}
-
-				if (!__Reader._Frame.GetBody)
-				{
-					HandlerBody();
-				}
-			}
-			catch (HTTPException error)
-			{
-					HandlerError(error);
-			}
+			if ( Request.Upgrade == "websocket" )
+				return null;
+			else
+				return new HTTPContext(Protocol);
 		}
-
 		/// <summary>
 		/// 
 		/// </summary>
@@ -97,11 +117,10 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		{
 			lock (__ObSync)
 			{
-				if (Response.IsEnd)
+				if (Cancel)
 					throw new HTTPException("Отправка данных закончена");
-				
-					Response.SetEnd();
-				
+				else
+					Cancel = true;
 			}
 			if (__Encode != null)
 				__Encode.Dispose();
@@ -110,11 +129,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			{
 				try
 				{
-					__Writer.Eof();
+					__writer.Eof();
 				}
 				catch (IOException error)
 				{
-					Protocol.HTTPClose();
+					Protocol.Close();
 					Log.Loging.AddMessage(
 						"Ошибка при записи ответа на запрос HTTP" +
 						error.Message + "./r/n" + error.StackTrace, "log.log", Log.Log.Fatal);		
@@ -124,10 +143,33 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// <summary>
 		/// 
 		/// </summary>
+		public void Handler()
+		{
+			try
+			{
+				if (!__reader._Frame.GetHead)
+				{
+					HandlerHead();
+				}
+
+				if (!__reader._Frame.GetBody)
+				{
+					HandlerBody();
+				}
+			}
+			catch (HTTPException error)
+			{
+					HandlerError(error);
+					Log.Loging.AddMessage("Ошибка об-тки HTTP запроса", "log.log", Log.Log.Info);
+			}
+		}
+		/// <summary>
+		/// 
+		/// </summary>
 		/// <param name="msg"></param>
 		/// <returns></returns>
 		async
-		public Task<bool> AsMsg(byte[] msg)
+		public Task<bool> AsMssg(byte[] msg)
 		{
 			
 			int i = 0;
@@ -224,6 +266,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							string ext = string.Empty;
 							if (string.IsNullOrEmpty(Info.Extension))
 								ext = "plain";
+							else
+								ext = Info.Extension.Substring(1);
 							Response.ContentType =
 								new List<string>()
 									{
@@ -280,7 +324,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				catch (Exception error)
 				{
 					
-					Protocol.HTTPClose();
+					Protocol.Close();
 					Log.Loging.AddMessage(
 						"Ошибка при отпарвке файла HTTP ответа, " +
 						error.Message + "./r/n" + error.StackTrace, "log.log", Log.Log.Fatal);
@@ -343,7 +387,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				}
 				catch (Exception error)
 				{
-					Protocol.HTTPClose();
+					Protocol.Close();
 					Log.Loging.AddMessage(
 						"Ошибка при записи ответа на запрос HTTP" +
 						error.Message + "./r/n" + error.StackTrace, "log.log", Log.Log.Fatal);
@@ -351,6 +395,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				}
 			}
 		}
+
 		private void SetResponse()
 		{
 			if ( !Response.IsRes )
@@ -401,19 +446,19 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			   Когда все заголвоки будут получены и пройдут первоначальную обработку произойдет событие EventOpen
 
 		   --------------------------------------------------------------------------------------------------------*/
-			if (!__Reader.ReadHead())
+			if (__reader.ReadHead())
 			{
 				switch (Request.Method)
 				{
 					case "GET":
-						if (__Reader._Frame.bleng > 0)
+						if (__reader._Frame.bleng > 0)
 						{
 							throw new HTTPException(
 												"Неверная длина запроса GET", HTTPCode._400_);
 						}
 						break;
 						case "POST":
-						if (__Reader._Frame.Handl == 0)
+						if (__reader._Frame.Handl == 0)
 						{
 							throw new HTTPException(
 												"Неверная длина запроса POST", HTTPCode._400_);
@@ -426,7 +471,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				}
 				if (!string.IsNullOrEmpty(Request.Upgrade))
 				{
-						Protocol.Result.Jump = true;
+						Protocol.TaskResult.Jump = true;
 						if (Request.Upgrade.ToLower() == "websocket")
 						{
 
@@ -472,12 +517,12 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			   заголвок в соыбтие EventOpen и при привышении допустимого значения закрыть соединение.
 
 		   --------------------------------------------------------------------------------------------------------*/
-			if (__Reader.ReadBody())
+			if (__reader.ReadBody())
 			{
-				switch (__Reader._Frame.Pcod)
+				switch (__reader._Frame.Pcod)
 				{
 					case HTTPFrame.DATA:
-						if (!Protocol.Result.Jump)
+						if (!Protocol.TaskResult.Jump)
 						{
 							Protocol.OnEventData(this);
 
@@ -485,7 +530,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 								"Все данные Http запроса получены", "log.log", Log.Log.Info);
 						}
 						else
-							Protocol.Result.Option = TaskOption.Protocol;
+							Protocol.TaskResult.Option = TaskOption.Protocol;
 						break;
 					case HTTPFrame.CHUNK:
 							Protocol.OnEventChunk(this);
@@ -506,26 +551,26 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			if (_1_Error != null)
 			{
 					Response.ClearHeaders();
-					Protocol.HTTPError (_1_Error  =  _1_error);
+					Protocol.Error(_1_Error  =  _1_error);
 				switch (_1_error.Status.value)
 				{
 					case 400:
 							Response.StrStr = "HTTP/1.1 400 " + _1_error.Status.ToString();
-							if (await AsMsg(Encoding.UTF8.GetBytes(
+							if (await AsMssg(Encoding.UTF8.GetBytes(
 								"400"
 							)))
 								End();
 						break;
 					case 404:
 							Response.StrStr = "HTTP/1.1 404 " + _1_error.Status.ToString();
-							if (await AsMsg(Encoding.UTF8.GetBytes(
+							if (await AsMssg(Encoding.UTF8.GetBytes(
 								"404"
 							)))
 								End();
 						break;
 					case 501:
 							Response.StrStr = "HTTP/1.1 501 " + _1_error.Status.ToString();
-							if (await AsMsg(Encoding.UTF8.GetBytes(
+							if (await AsMssg(Encoding.UTF8.GetBytes(
 								"501"
 							)))
 								End();
@@ -538,7 +583,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			else
 			{
 					Response.ClearHeaders();
-					Protocol.HTTPError (_1_Error  =  _1_error);
+					Protocol.Error(_1_Error  =  _1_error);
 				switch (_1_error.Status.value)
 				{
 					case 400:

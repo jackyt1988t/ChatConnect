@@ -34,23 +34,23 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			get;
 			protected set;
 		}
-		volatile 
-		int state;
-		/// <summary>
-		/// Текщий статус протокола
-		/// </summary>
-		override
-		public States State
-		{
-			protected set
-			{
-				state = (int)value;
-			}
-			get
-			{
-				return (States)state;
-			}
-		}
+		//volatile 
+		//int state;
+		///// <summary>
+		///// Текщий статус протокола
+		///// </summary>
+		//override
+		//public States State
+		//{
+		//	protected set
+		//	{
+		//		state = (int)value;
+		//	}
+		//	get
+		//	{
+		//		return (States)state;
+		//	}
+		//}
 		
 		/// <summary>
 		/// Информации о закрытии соединения
@@ -380,7 +380,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		/// </summary>
 		/// <returns>информация о дальнейшей обработки соединения</returns>
 override
-		public TaskResult TaskLoopHandlerProtocol()
+		public TaskResult HandlerProtocol()
 		{
 			try
 			{

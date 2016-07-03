@@ -53,7 +53,7 @@ namespace MyWebSocket.Tcp
 		}
 		private void TaskLoopHandler()
 		{
-			TaskResult TaskResult = Protocol.TaskLoopHandlerProtocol();
+			TaskResult TaskResult = Protocol.HandlerProtocol();
 			switch (TaskResult.Option)
 			{
 				case TaskOption.Loop:
@@ -79,7 +79,7 @@ namespace MyWebSocket.Tcp
 					{
 						while (true)
 						{
-							TaskResult TaskResult = Protocol.TaskLoopHandlerProtocol();
+							TaskResult TaskResult = Protocol.HandlerProtocol();
 							switch (TaskResult.Option)
 							{
 								case TaskOption.Loop:

@@ -1,9 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
 
 namespace MyWebSocket.Tcp.Protocol
 {
+	/// <summary>
+	/// Базовая реализация протокола
+	/// </summary>
 	public class BaseProtocol : IProtocol, IDisposable
 	{
 		/// <summary>
@@ -28,17 +32,26 @@ namespace MyWebSocket.Tcp.Protocol
 		/// </summary>
 		public long Len;
 		/// <summary>
-		/// tcp / ip сокет подключения
+		/// tcp/ip сокет подключения
 		/// </summary>
 		public Socket Tcp
 		{
 			get;
 			protected set;
 		}
+		
 		/// <summary>
 		/// Статус текущего протокола.
 		/// </summary>
-		public virtual States State
+		public States State
+		{
+			get;
+			protected set;
+		}
+		/// <summary>
+		/// Объект для синхронизации
+		/// </summary>
+		public object ObSync
 		{
 			get;
 			protected set;
@@ -75,31 +88,345 @@ namespace MyWebSocket.Tcp.Protocol
 			get;
 			protected set;
 		}
-		
+		/// <summary>
+		/// 
+		/// </summary>
+		public IContext ContextRs;
+		/// <summary>
+		/// 
+		/// </summary>
+		public IContext ContextRq;
+		/// <summary>
+		/// Последняя зафиксировання ошибка
+		/// </summary>
+		public Exception Exception
+		{
+			get;
+			protected set;
+		}
+		/// <summary>
+		/// Состояние обработки текущего протоколв
+		/// </summary>
+		public TaskResult TaskResult
+		{
+			get;
+			protected set;
+		}
+		/// <summary>
+		/// 
+		/// </summary>
+		public Queue<IContext> AllContext;
 
+		event PHandlerEvent eventWork;
+		/// <summary>
+		/// Событие которое наступает при проходе по циклу
+		/// </summary>
+		public event PHandlerEvent EventWork
+		{
+			add
+			{
+				lock (SyncEvent)
+					eventWork += value;
+
+			}
+			remove
+			{
+				lock (SyncEvent)
+					eventWork -= value;
+			}
+		}
+		       event PHandlerEvent eventData;
+		/// <summary>
+		/// Событие которое наступает когда приходит фрейм с данными
+		/// </summary>
+		public event PHandlerEvent EventData
+		{
+			add
+			{
+				lock (SyncEvent)
+					eventData += value;
+
+			}
+			remove
+			{
+				lock (SyncEvent)
+					eventData -= value;
+			}
+		}
+			   event PHandlerEvent eventclose;
+		/// <summary>
+		/// Событие которое наступает когда приходит заврешающий фрейм
+		/// </summary>
+		public event PHandlerEvent EventClose
+		{
+			add
+			{
+				lock (SyncEvent)
+					eventclose += value;
+
+			}
+			remove
+			{
+				lock (SyncEvent)
+					eventclose -= value;
+			}
+		}
+		       event PHandlerEvent eventerror;
+		/// <summary>
+		/// Событие которое наступает когда приходит при ошибке протокола
+		/// </summary>
+		public event PHandlerEvent EventError
+		{
+			add
+			{
+				lock (SyncEvent)
+					eventerror += value;
+
+			}
+			remove
+			{
+				lock (SyncEvent)
+					eventerror -= value;
+			}
+		}
+			   event PHandlerEvent eventchunk;
+		/// <summary>
+		/// Событие которое наступает когда приходит кусок отправленных данных
+		/// </summary>
+		public event PHandlerEvent EventChunk
+		{
+			add
+			{
+				lock (SyncEvent)
+					eventchunk += value;
+
+			}
+			remove
+			{
+				lock (SyncEvent)
+					eventchunk -= value;
+			}
+		}
+			   event PHandlerEvent eventOnopen;
+		/// <summary>
+		/// Событие которое наступает при открвтии соединения когда получены заголвоки
+		/// </summary>
+		public event PHandlerEvent EventOnOpen
+		{
+			add
+			{
+				eventOnopen += value;
+			}
+			remove
+			{
+				eventOnopen -= value;
+			}
+		}
+		static event PHandlerEvent eventconnect;
+		/// <summary>
+		/// Событие которое наступает при открвтии соединения когда получены заголвоки
+		/// </summary>
+		static
+		public event PHandlerEvent EventConnect
+		{
+			add
+			{
+				eventconnect += value;
+			}
+			remove
+			{
+				eventconnect -= value;
+			}
+		}
+		volatile
+		protected int state;
+		protected object SyncEvent = new object();
+
+		/// <summary>
+		/// Закрывает HTTP соединение, если оно еще не закрыто
+		/// </summary>
+		/// <returns></returns>
+		public void Close()
+		{
+			lock (ObSync)
+			{
+				if (state < 5)
+					state = 5;
+			}
+		}
+		/// <summary>
+		/// Обрабатывает происходящие ошибки и назначает оьраьотчики
+		/// </summary>
+		/// <param name="error">Ошибка</param>
+		public void Error(Exception error)
+		{
+			lock (ObSync)
+			{
+				if (state > 4)
+					state = 7;
+				else
+					state = 4;
+			}
+		}
+		/// <summary>
+		/// Очищает управляемые ресурсы
+		/// </summary>
 		public virtual void Dispose()
 		{
 			Dispose(true);
+			if (Tcp != null)
+				Tcp.Dispose();
+			if (Writer != null)
+				Writer.Dispose();
+			if (Reader != null)
+				Reader.Dispose();
 			GC.SuppressFinalize(this);
 		}
+		/// <summary>
+		/// Очищает управляемые и неуправляемые ресурсы
+		/// </summary>
+		/// <param name="disposing">если true очитстить неуправляемые ресурсы</param>
 		public virtual void Dispose(bool disposing)
 		{
-			
+			Dispose();
 			if (disposing)
 			{
-				if (Tcp != null)
-					Tcp.Dispose();
-				if (Writer != null)
-					Writer.Dispose();
-				if (Reader != null)
-					Reader.Dispose();
+				
 			}
 		}
-		public virtual TaskResult TaskLoopHandlerProtocol()
+		/// <summary>
+		/// Не поддерживается текущей реализацией
+		/// </summary>
+		/// <returns>инфорамация о работе протокола</returns>
+		public virtual TaskResult HandlerProtocol()
 		{
 			throw new NotSupportedException("Не поддерживается");
 		}
 
+		/// <summary>
+		/// Потокобезопасный запуск события Work
+		/// желательно запускать в обработчике Work
+		/// </summary>
+		internal void OnEventWork()
+		{
+			if (ContextRs.Cancel && Writer.Empty)
+			{
+				Writer.Dispose();
+				Writer = (ContextRs =
+					AllContext.Dequeue()).__Writer;
+			}
+
+			string s = "work";
+			string m = "Цикл обработки";
+
+			PHandlerEvent e;
+			lock (SyncEvent)
+				e = eventWork;
+			if (e != null)
+				e(this, new PEventArgs(m, s));
+		}
+		/// <summary>
+		/// Потокобезопасный запуск события Data
+		/// желательно запускать в обработчике Data
+		/// </summary>
+		internal void OnEventData(IContext cntx)
+		{
+			AllContext.Enqueue(
+				(ContextRq = ContextRq.Context()));
+
+			string s = "data";
+			string m = "Получены все данные";
+
+			PHandlerEvent e;
+			lock (SyncEvent)
+				e = eventData;
+			if (e != null)
+				e(this, new PEventArgs(s, m, cntx));
+		}
+		/// <summary>
+		/// Потокобезопасный запуск события Chunk
+		/// желательно запускать в обработчике Chunk
+		/// </summary>
+		internal void OnEventChunk(IContext cntx)
+		{
+			string s = "сhunk";
+			string m = "Получена часть данных";
+
+			PHandlerEvent e;
+			lock (SyncEvent)
+				e = eventchunk;
+			if (e != null)
+				e(this, new PEventArgs(s, m, cntx));
+		}
+		/// <summary>
+		/// Потокобезопасный запуск события Close
+		/// желательно запускать в обработчике Close
+		/// </summary>
+		internal void OnEventClose()
+		{
+			string s = "close";
+			string m = "Соединение было закрыто";
+
+			IContext[] cntx = AllContext.ToArray();
+
+			PHandlerEvent e;
+			lock (SyncEvent)
+				e = eventclose;
+			if (e != null)
+				e(this, new PEventArgs(s, m, cntx));
+		}
+		/// <summary>
+		/// Потокобезопасный запуск события OnOpen 
+		/// </summary>
+		internal void OnEventOpen(IContext cntx)
+		{
+
+			string s = "connect";
+			string m = "Соединение было установлено, протокол ws";
+
+			PHandlerEvent e;
+			lock (SyncEvent)
+				e = eventOnopen;
+			if (e != null)
+				e(this, new PEventArgs(s, m, cntx));
+		}
+		/// <summary>
+		/// Потокобезопасный запуск события Error
+		/// желательно запускать в обработчике Error
+		/// </summary>
+		internal void OnEventError(Exception error)
+		{
+
+			string s = "error";
+			string m = "Произошла ошибка во время исполнения";
+
+			PHandlerEvent e;
+			lock (SyncEvent)
+				e = eventerror;
+			if (e != null)
+				e(this, new PEventArgs(s, m, error));
+		}
+		/// <summary>
+		/// Потокобезопасный запуск события Connection
+		/// желательно запускать в обработчике Connection
+		/// </summary>
+		internal void OnEventConnect()
+		{
+
+			string s = "connect";
+			string m = "Соединение было установлено, протокол ws";
+
+			PHandlerEvent e;
+			lock (SyncEvent)
+				e = eventconnect;
+			if (e != null)
+				e(this, new PEventArgs(s, m, null));
+
+		}
+		/// <summary>
+		/// Читает данные из сокета и записывает их в поток чтения
+		/// </summary>
+		/// <returns>SocketError.Success если выполнено успешно</returns>
 		protected SocketError Read()
 		{
 			SocketError error = SocketError.Success;
@@ -132,6 +459,10 @@ namespace MyWebSocket.Tcp.Protocol
 				}
 			return error;
 		}
+		/// <summary>
+		/// Читает данные из потока записи и записывает их в сокет
+		/// </summary>
+		/// <returns>SocketError.Success если выполнено успешно</returns>
 		protected SocketError Send()
 		{
 			SocketError error = SocketError.Success;

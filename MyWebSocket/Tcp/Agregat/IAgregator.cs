@@ -6,6 +6,6 @@
         /// 
         /// </summary>
         /// <returns></returns>
-        TaskResult TaskLoopHandlerProtocol();
+        TaskResult HandlerProtocol();
 	}
 }
