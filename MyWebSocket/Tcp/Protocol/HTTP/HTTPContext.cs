@@ -10,7 +10,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 {
 	public class HTTPContext
 	{
-		volatile bool _to_;
+		internal bool _to_;
 		/// <summary>
 		/// Поток
 		/// </summary>
@@ -101,24 +101,23 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					throw new HTTPException("Отправка данных закончена");
 				
 					Response.SetEnd();
-				if (__Encode != null)
-					__Encode.Dispose();
-				// Отправить блок данных chunked 0CRLFCRLF
-				if (Response.TransferEncoding == "chunked")
+				
+			}
+			if (__Encode != null)
+				__Encode.Dispose();
+			// Отправить блок данных chunked 0CRLFCRLF
+			if (Response.TransferEncoding == "chunked")
+			{
+				try
 				{
-					try
-					{
-						__Writer.Eof();
-					}
-					catch (IOException error)
-					{
-						Protocol.HTTPClose();
-						Log.Loging.AddMessage(
-							"Ошибка при записи ответа на запрос HTTP" +
-							error.Message + "./r/n" + error.StackTrace, 
-													"log.log", Log.Log.Fatal);
-
-					}
+					__Writer.Eof();
+				}
+				catch (IOException error)
+				{
+					Protocol.HTTPClose();
+					Log.Loging.AddMessage(
+						"Ошибка при записи ответа на запрос HTTP" +
+						error.Message + "./r/n" + error.StackTrace, "log.log", Log.Log.Fatal);		
 				}
 			}
 		}
@@ -138,10 +137,10 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 
 			lock (__ObSync)
 			{
-				if (!_to_)
-					_to_ = true;
-				else
+				if (_to_)
 					throw new HTTPException("Дождитесь окончание записи");
+				else
+					_to_ = true;
 			}
 
 			return await Task.Run<bool>(() =>
@@ -186,116 +185,114 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		async
 		public Task<bool> AsFile(string path)
 		{
-			FileInfo Info = new FileInfo(path);
+			
 			lock (__ObSync)
 			{
-				if (!_to_)
-					_to_ = true;
+				if (_to_)
+					throw new HTTPException( "Дождитесь окончание записи " + path );
 				else
-					throw new HTTPException("Дождитесь окончание записи");
-				if (Response.ContentType == null
-					|| Response.ContentType.Count == 0)
-				{
-					string ext = string.Empty;
-					if (string.IsNullOrEmpty(Info.Extension))
-						ext = "plain";
-					else
-					{
-						ext = Info.Extension.Substring(1);
-						switch (ext)
-						{
-							case "js":
-								break;
-							case "css":
-								break;
-							case "html":
-								break;
-							default:
-								ext = "plain";
-								break;
-						}
-					}
-					Response.ContentType = new List<string>()
-											   {
-												   "text/" + ext,
-												   "charset=utf-8"
-											   };
-				}
+					_to_ = true;
 			}
-			if (!Info.Exists)
+			return await Task.Run<bool>(() =>
 			{
-				_to_ = false;
-				HandlerError(new HTTPException("Файл не найден " + path, HTTPCode._404_));
-				return false;
-			}
-				return await Task.Run<bool>(() =>
+				int i = 0;
+				int _chunk = 1000 * 32;
+				FileStream stream = null;
+
+				try
 				{
-					int i = 0;
-					int _chunk = 1000 * 32;
-					try
-					{
-						using (FileStream stream = Info.OpenRead())
-						{
-							int _count = (int)(stream.Length / _chunk);
-							int length = (int)(stream.Length - _count * _chunk);
 
-							if (Response.ContentLength == 0
-								 && string.IsNullOrEmpty(
-												Response.TransferEncoding))
-								Response.ContentLength = (int)stream.Length;
-							
-							byte[] buffer = new byte[_chunk];
-							while (i++ < _count)
-							{
-								int recive = 0;
-
-								while ((_chunk - recive) > 0)
-								{
-									recive = stream.Read(buffer, recive, _chunk - recive);
-								}
-
-								if (Protocol.State == States.Close
-									 || Protocol.State == States.Disconnect)
-								{
-									_to_ = false;
-									return false;
-								}
-
-								Message(buffer, 0, _chunk);
-
-							}
-							if (length > 0)
-							{
-								int recive = 0;
-
-								while ((length - recive) > 0)
-								{
-									recive = stream.Read(buffer, recive, length - recive);
-								}
-
-								if (Protocol.State == States.Close
-									 || Protocol.State == States.Disconnect)
-								{
-									_to_ = false;
-									return false;
-								}
-
-								Message(buffer, 0, length);
-
-							}
-						}
-					}
-					catch (Exception error)
+					FileInfo Info = new FileInfo(path);
+					if (!Info.Exists)
 					{
 						_to_ = false;
-						Protocol.HTTPClose();
-						Log.Loging.AddMessage(
-							"Ошибка при отпарвке файла HTTP ответа, " +
-							error.Message + "./r/n" + error.StackTrace,
-																"log.log", Log.Log.Fatal);
+						HandlerError(
+							new HTTPException("Файл не найден " + path, HTTPCode._404_));
+						
+						return false;
 					}
-					return true;
-				});
+
+					stream = Info.OpenRead();
+					int _count = (int)(stream.Length / _chunk);
+					int length = (int)(stream.Length - _count * _chunk);
+
+					if (!Response.IsRes)
+					{
+						if (Response.ContentType == null
+							 || Response.ContentType.Count == 0)
+						{
+							string ext = string.Empty;
+							if (string.IsNullOrEmpty(Info.Extension))
+								ext = "plain";
+							Response.ContentType =
+								new List<string>()
+									{
+										"text/" + ext,
+										"charset=utf-8"
+									};
+						}
+						if (Response.ContentLength == 0
+							 && string.IsNullOrEmpty(Response.TransferEncoding))
+							Response.ContentLength   =   (  int  )stream.Length;
+					}
+					
+					
+					byte[] buffer = new byte[_chunk];
+					while (i++ < _count)
+					{
+						int recive = 0;
+
+						while ((_chunk - recive) > 0)
+						{
+							recive = stream.Read(buffer, recive, _chunk - recive);
+						}
+
+						if (Protocol.State == States.Close
+							 || Protocol.State == States.Disconnect)
+						{
+							_to_ = false;
+							return false;
+						}
+
+						Message(buffer, 0, _chunk);
+
+					}
+					if (length > 0)
+					{
+						int recive = 0;
+
+						while ((length - recive) > 0)
+						{
+							recive = stream.Read(buffer, recive, length - recive);
+						}
+
+						if (Protocol.State == States.Close
+							 || Protocol.State == States.Disconnect)
+						{
+							_to_ = false;
+							return false;
+						}
+
+						Message(buffer, 0, length);
+
+					}
+				}
+				catch (Exception error)
+				{
+					
+					Protocol.HTTPClose();
+					Log.Loging.AddMessage(
+						"Ошибка при отпарвке файла HTTP ответа, " +
+						error.Message + "./r/n" + error.StackTrace, "log.log", Log.Log.Fatal);
+				}
+				finally
+				{
+					_to_ = false;
+					if (stream != null)
+						stream.Dispose();
+				}
+				return true;
+			});
 		}
 		/// <summary>
 		/// Записывает строку в стандартный поток, если заголвок Content-Encoding
@@ -326,42 +323,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		{
 			lock (__ObSync)
 			{
-				if (Response.IsEnd)
-					throw new HTTPException("Отправка данных закончена");
-				if (!Response.IsRes)
-				{
-					if (string.IsNullOrEmpty(Response.StrStr))
-						Response.StrStr = "HTTP/1.1 200 OK";
-
-					if (Response.Connection == "close")
-						Response.SetClose();
-					if (Response.ContentType == null
-						 || Response.ContentType.Count == 0)
-						Response.ContentType = new List<string>
-												   {
-													   "text/plain",
-													   "charset=utf-8"
-												   };
-					if (Response.CacheControl == null
-						 || Response.CacheControl.Count == 0)
-						Response.CacheControl = new List<string>
-													{
-														"no-store",
-														"no-cache",
-													};
-					if (Response.ContentEncoding == "gzip")
-						__Encode = new GZipStream(
-							__Writer, CompressionLevel.Fastest, true);
-					else if (Response.ContentEncoding == "deflate")
-						__Encode = new DeflateStream(
-							__Writer, CompressionLevel.Fastest, true);
-					Log.Loging.AddMessage(
-						"Http заголовки успешно обработаны: \r\n" +
-						"Заголовки зап:\r\n" + Response.ToString(), 
-												"log.log", Log.Log.Info);
-				}
 				try
 				{
+					SetResponse();
 					switch (Response.ContentEncoding)
 					{
 						case "gzip":
@@ -375,17 +339,52 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						break;
 					}
 					Log.Loging.AddMessage(
-						"Http данные успешно добавлены к отправке", 
-												"log.log", Log.Log.Info);
+						"Http данные успешно добавлены к отправке", "log.log", Log.Log.Info);
 				}
-				catch (IOException error)
+				catch (Exception error)
 				{
 					Protocol.HTTPClose();
 					Log.Loging.AddMessage(
 						"Ошибка при записи ответа на запрос HTTP" +
-						error.Message + "./r/n" + error.StackTrace, 
-												"log.log", Log.Log.Fatal);
+						error.Message + "./r/n" + error.StackTrace, "log.log", Log.Log.Fatal);
+
 				}
+			}
+		}
+		private void SetResponse()
+		{
+			if ( !Response.IsRes )
+			{
+				if (string.IsNullOrEmpty(Response.StrStr))
+					Response.StrStr  =  "HTTP/1.1 200 OK";
+
+				if (Response.Connection == "close")
+					Response.SetClose();
+				if (Response.ContentType == null
+					 || Response.ContentType.Count == 0)
+					Response.ContentType = 
+						new List<string>
+						{
+							"text/plain",
+							"charset=utf-8"
+						};
+				if (Response.CacheControl == null
+					 || Response.CacheControl.Count == 0)
+					Response.CacheControl = 
+						new List<string>
+						{
+							"no-store",
+							"no-cache",
+						};
+				if (Response.ContentEncoding == "gzip")
+					__Encode = new GZipStream(
+						__Writer, CompressionLevel.Fastest, true);
+				else if (Response.ContentEncoding == "deflate")
+					__Encode = new DeflateStream(
+						__Writer, CompressionLevel.Fastest, true);
+				Log.Loging.AddMessage(
+						"Http заголовки успешно обработаны: \r\n" +
+						"Заголовки зап:\r\n" + Response.ToString(), "log.log", Log.Log.Info);
 			}
 		}
 		private void HandlerHead()
@@ -410,20 +409,20 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						if (__Reader._Frame.bleng > 0)
 						{
 							throw new HTTPException(
-										"Неверная длина запроса GET", HTTPCode._400_);
+												"Неверная длина запроса GET", HTTPCode._400_);
 						}
 						break;
 						case "POST":
 						if (__Reader._Frame.Handl == 0)
 						{
 							throw new HTTPException(
-										"Неверная длина запроса POST", HTTPCode._400_);
+												"Неверная длина запроса POST", HTTPCode._400_);
 						}
 						break;
 					default:
 							throw new HTTPException(
-										"Метод не поддерживается " +
-												 Request.Method + ".", HTTPCode._501_);
+												"Метод не поддерживается " +
+														Request.Method + ".", HTTPCode._501_);
 				}
 				if (!string.IsNullOrEmpty(Request.Upgrade))
 				{
@@ -434,8 +433,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						}
 						else
 							throw new HTTPException(
-										"Протокол не поддерживается " +
-												Request.Upgrade + ".", HTTPCode._400_);
+												"Протокол не поддерживается " +
+														Request.Upgrade + ".", HTTPCode._400_);
 				}
 				else
 				{
@@ -502,7 +501,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// </summary>
 		/// <param name="_1_error">Ошибка протокола HTTP</param>
 		async
-		protected void HandlerError(HTTPException _1_error)
+		private void HandlerError(HTTPException _1_error)
 		{
 			if (_1_Error != null)
 			{
