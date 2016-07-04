@@ -193,7 +193,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					// проверяет получены или нет заголвоки
 					case 3:
 						Header.StrStr = __Frame.StStr;
-										__Frame.StStr = string.Empty;
 						//////Окончание//////
 						if (@char != CR)
 						{
