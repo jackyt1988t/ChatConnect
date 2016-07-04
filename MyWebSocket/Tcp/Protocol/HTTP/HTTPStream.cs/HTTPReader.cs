@@ -124,8 +124,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						__Frame.Handl = 1;
 						if (__Frame.bleng > LENCHUNK)
 							throw new HTTPException("Превышена длинна тела", HTTPCode._400_);
-						else
-							Header.Body = new byte[__Frame.bleng];
 						break;
 					case 4:
 						if (@char == CR)
@@ -182,18 +180,15 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				{
 					// получает стартовую строку
 					case 0:
-						if (!ReadStStr())
-							return false;
+						ReadStStr(@char)
 						break;
 					// получает параметр заголовка
 					case 1:
-						if (!ReadParam())
-							return false;
+						ReadParam(@char);
 						break;
 					// получает значение заголовка
 					case 2:
-						if (!ReadValue())
-							return false;
+						ReadValue(@char);
 						break;
 					// проверяет получены или нет заголвоки
 					case 3:
@@ -202,8 +197,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						//////Окончание//////
 						if (@char != CR)
 						{
-							if (!ReadParam())
-								return false;
+							ReadParam(@char);
 						}
 						else
 							__Frame.Handl = 5;
@@ -222,13 +216,12 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						__Frame.param = 0;
 						__Frame.value = 0;
 						Header.AddHeader(__Frame.Param, __Frame.Value);
-										 __Frame.Param = string.Empty;
-										 __Frame.Value = string.Empty;
+										__Frame.Param = string.Empty;
+										__Frame.Value = string.Empty;
 						//////Окончание//////
 						if (@char != CR)
 						{
-							if (!ReadParam())
-								return false;
+							ReadParam(@char);
 						}
 						else
 							__Frame.Handl = 5;
@@ -254,7 +247,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						if (@char == LF)
 						{
 							Header.SetReq();
-
 							__Frame.Handl = 0;
 						}
 						else
@@ -285,12 +277,10 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 
 			return false;
 		}
-		private bool ReadParam()
+		private void ReadParam(int @char)
 		{
 			__Frame.Handl = 1;
-
-			int @char = 0;
-			while ((@char = Stream.ReadByte()) > -1)
+			while (true)
 			{
 				if (__Frame.param > PARAM)
 					throw new HTTPException( "Длинна параметра заголовка", HTTPCode._400_ );
@@ -299,48 +289,50 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					throw new HTTPException( "Символ параметра заголовка", HTTPCode._400_ );
 				if (@char == CN)
 				{
-                    __Frame.Handl = 2;
-					return true;
+                    			__Frame.Handl = 2;
+					break;
 				}
 				else
 				{
 					__Frame.param++;
 					__Frame.Param += char.ToLower((char)@char);
 				}
-				__Frame.hleng++;
-				__Frame.alleng++;
+				
+				if (@char = Stream.ReadByte()) > -1)
+					break;
+					
+					__Frame.hleng++;
+					__Frame.alleng++;
 			}
-			return false;
 		}
-		private bool ReadValue()
+		private void ReadValue(int @char)
 		{
 			__Frame.Handl = 2;
-
-			int @char = 0;
-			while ((@char = Stream.ReadByte()) > -1)
+			while (true)
 			{
 				if (__Frame.value > VALUE)
 					throw new HTTPException( "Длинна значения заголовка", HTTPCode._400_ );
 				if (@char == CR)
 				{
 					__Frame.Handl = 6;
-					return true;
+					break;
 				}
 				else
 				{
 					__Frame.value++;
 					__Frame.Value += ( char )@char;
 				}
-				__Frame.hleng++;
-				__Frame.alleng++;
+				
+				if (@char = Stream.ReadByte()) > -1)
+					break;
+					
+					__Frame.hleng++;
+					__Frame.alleng++;
 			}
-			return false;
 		}
-		private bool ReadStStr()
+		private void ReadStStr(int @char)
 		{
 			__Frame.Handl = 0;
-
-			int @char = 0;
 			while ((@char = Stream.ReadByte()) > -1)
 			{
 				if (__Frame.ststr > STSTR)
@@ -348,7 +340,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				if (@char == CR)
 				{
 					__Frame.Handl = 4;
-					return true;
+					break;
 				}
 				else
 				{
@@ -376,10 +368,12 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						}
 					}
 				}
-				__Frame.hleng++;
-				__Frame.alleng++;
+				if (@char = Stream.ReadByte()) > -1)
+					break;
+					
+					__Frame.hleng++;
+					__Frame.alleng++;
 			}
-			return false;
 		}
 	}
 }
