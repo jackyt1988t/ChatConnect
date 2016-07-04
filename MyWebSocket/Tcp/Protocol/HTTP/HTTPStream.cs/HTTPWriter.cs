@@ -7,17 +7,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 	/// <summary>
 	/// Записывет данные в поток
 	/// </summary>
-	public class HTTPWriter : MyStream
+	public class HTTPWriter : Stream
 	{
-		/// <summary>
-		/// Минимальный размер потока
-		/// </summary>
-		public static int MINRESIZE;
-		/// <summary>
-		/// Максимальный размер потока
-		/// </summary>
-		public static int MAXRESIZE;
-
 		private static readonly byte[] ENDCHUNCK;
 		private static readonly byte[] EOFCHUNCK;
 
@@ -26,77 +17,107 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// </summary>
 		public Header Header;
 		/// <summary>
+		/// 
+		/// </summary>
+		public MyStream Stream;
+		/// <summary>
 		/// Информация о записи
 		/// </summary>
-		public HTTPFrame _Frame;
+		public HTTPFrame __Frame;
 		/// <summary>
-		/// Устанавливает позицию прочитанных данных,
-		/// при совободном месте уменьшает поток в 4 раза,
-		/// но не меньше сем указанное минимальное значение.
+		/// Возвращает длинну базового потока
+		/// </summary>
+		
+
+
+		public override long Length
+		{
+			get
+			{
+				return Stream.Length;
+			}
+		}
+		/// <summary>
+		/// Не поддерживается данной реализацией
+		/// </summary>
+		public override bool CanSeek
+		{
+			get
+			{
+				return false;
+			}
+		}
+		/// <summary>
+		/// Указвает возможность чтения в базовый поток
+		/// </summary>
+		public override bool CanRead
+		{
+			get
+			{
+				return true;
+			}
+		}
+		/// <summary>
+		/// Указвает возможность записи в базовый поток
+		/// </summary>
+		public override bool CanWrite
+		{
+			get
+			{
+				return true;
+			}
+		}
+		/// <summary>
+		/// Не поддерживается данной реализацией
 		/// </summary>
 		public override long Position
 		{
 			get
 			{
-				return base.Position;
+				throw new NotImplementedException();
 			}
 
 			set
 			{
-				lock (__Sync)
-				{
-					base.Position = value;
-					if (Count > MINRESIZE)
-					{
-						int resize;
-
-						if (Length > 0)
-							resize = (int)Count / 4;
-						else
-							resize = 0;
-
-						if (resize < MINRESIZE)
-							resize = MINRESIZE;
-						if (resize > (int)Length)
-							Resize(resize);
-					}
-				}
+				throw new NotImplementedException();
 			}
 		}
 
+
+
 		static HTTPWriter()
 		{
-			MINRESIZE = 32000;
-			MAXRESIZE = 1000000;
 			ENDCHUNCK =
 				new byte[] { 0x0D, 0x0A };
 			EOFCHUNCK =
 				new byte[] { 0x30, 0x0D, 0x0A, 0x0D, 0x0A };
 		}
 		/// <summary>
-		/// Создает кольцевой поток указанной емкости
+		/// Создает поток
 		/// </summary>
-		/// <param name="length">длинна потока</param>
-		public HTTPWriter(int length) :
-			base(length)
+		/// <param name="stream">кольцевой поток</param>
+		public HTTPWriter(MyStream stream)
 		{
-			_Frame = new HTTPFrame();
+			if (stream == null)
+				throw new ArgumentNullException( "stream" );
+			Stream = stream;
+			__Frame = new HTTPFrame();
 		}
 		/// <summary>
 		/// Записывает CRLF в поток
 		/// </summary>
 		public void End()
 		{
-			lock (__Sync)
-				base.Write(ENDCHUNCK, 0, 2);
+			lock (Stream.__Sync)
+				Stream.Write(ENDCHUNCK, 0, 2);
 		}
 		/// <summary>
 		/// Записывает 0CRLFCRLF в поток
 		/// </summary>
 		public void Eof()
 		{
-			lock (__Sync)
-				base.Write(EOFCHUNCK, 0, 5);
+			lock (Stream.__Sync)
+				Stream.Write(EOFCHUNCK, 0, 5);
 		}
 		/// <summary>
 		/// Записывет указанную строку в поток.
@@ -116,59 +137,87 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		{
 			Write(  buffer, 0, buffer.Length  );
 		}
+
+
+
+		/// <summary>
+		/// Не поддерживается данной реализацией
+		/// </summary>
+		public override void Flush()
+		{
+			throw new NotImplementedException();
+		}
+		/// <summary>
+		/// Не поддерживается данной реализацией
+		/// </summary>
+		/// <param name="value"></param>
+		public override void SetLength(long value)
+		{
+			throw new NotImplementedException();
+		}
+		/// <summary>
+		/// Не поддерживается данной реализацией
+		/// </summary>
+		/// <param name="offset"></param>
+		/// <param name="origin"></param>
+		/// <returns></returns>
+		
+
+
+		public override long Seek(long offset, SeekOrigin origin)
+		{
+			throw new NotImplementedException();
+		}
+		/// <summary>
+		/// Записывает данные в базовый кольцевой поток
+		/// </summary>
+		/// <param name="buffer">>массив данных для записи</param>
+		/// <param name="offset">начальная позиция</param>
+		/// <param name="length">количество для чтения</param>
+		/// <returns></returns>
+		public override int Read(byte[] buffer, int offset, int length)
+		{
+			return Stream.Read(buffer, offset, length);
+		}
 		/// <summary>
 		/// Записывает указанный массив данных в поток.
 		/// Строка об-ся в соответствии с установленными заголвоками.
 		/// Отправляет http заголвоки есл они еще не были отправлены.
 		/// </summary>
 		/// <param name="buffer">массив данных для записи</param>
-		/// <param name="start">начальная позиция</param>
+		/// <param name="offset">начальная позиция</param>
 		/// <param name="length">количество для записи</param>
-		public override void Write(byte[] buffer, int start, int length)
+		public override void Write(byte[] buffer, int offset, int length)
 		{
-			if (buffer.Length < (length - start))
-				throw new IOException("MAXLENGTH");
-
-			lock (__Sync)
+			lock (Stream.__Sync)
 			{
-				_Frame.Handl++;
+				__Frame.Handl++;
 				if (!Header.IsRes)
 				{
-						byte[] data = Header.ToByte();
-					base.Write(data, 0, data.Length);
-
-					Header.SetRes();
-					_Frame.hleng = data.Length;
+								  Header.SetRes();
+					byte[] data = Header.ToByte();
+					Stream.Write(data, 0, data.Length);
+					
+					__Frame.hleng = 
+								data.Length;
 				}
-				if ((length + 64) > Clear)
-				{
-					int resize = (int)Count * 2;
-					if (resize - (int)Length - 64 < length)
-						resize = (int)Length + length + 64;
-
-					if (resize < MAXRESIZE)
-						Resize (  resize  );
-					else
-						throw new IOException("MAXRESIZE");
-				}
-					_Frame.bleng += length;
+					__Frame.bleng += length;
 				if (!string.IsNullOrEmpty(
 									Header.ContentEncoding))
-					_Frame.bpart += length;
+					__Frame.bpart += length;
 				if (length > 0)
 				{
 					// оптравить форматированные данные
 					if (Header.TransferEncoding != "chunked")
-						base.Write(  buffer, start, length  );
+						Stream.Write( buffer, offset, length );
 					else
 					{
 						byte[] hex = Encoding.UTF8.GetBytes(
-										length.ToString("X"));
-						
-						base.Write(hex, 0, hex.Length);
+										 length.ToString("X"));
+
+						Stream.Write( hex, 0, hex.Length );
 						End();
-						base.Write(  buffer, start, length  );
-						HTTPWriter re = this;
+						Stream.Write( buffer, offset, length );
 						End();
 					}
 				}

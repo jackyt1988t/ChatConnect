@@ -23,20 +23,6 @@ namespace MyWebSocket.Tcp.Protocol
 			get;
 		}
 		/// <summary>
-		/// Кольцевой поток для записи
-		/// </summary>
-		MyStream __Writer
-		{
-			get;
-		}
-		/// <summary>
-		/// Кольцевой поток для чтения
-		/// </summary>
-		MyStream __Reader
-		{
-			get;
-		}
-		/// <summary>
 		/// Новый контекст
 		/// </summary>
 		/// <returns>новый контекст</returns>

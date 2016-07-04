@@ -10,10 +10,19 @@ namespace MyWebSocket.Tcp.Protocol
     public class MyStream : Stream
     {
 #region	public property
-        /// <summary>
-        /// Длинна потока
-        /// </summary>
-        public long Count
+		/// <summary>
+		/// Минимальный размер потока
+		/// </summary>
+		public static int MINRESIZE = 10000;
+		/// <summary>
+		/// Максимальный размер потока
+		/// </summary>
+		public static int MAXRESIZE = 100000000;
+
+		/// <summary>
+		/// Длинна потока
+		/// </summary>
+		public long Count
         {
             get
             {
@@ -116,19 +125,30 @@ namespace MyWebSocket.Tcp.Protocol
                 {
                     if (value < 0)
                         throw new ArgumentOutOfRangeException("value");
+                    if (value > Length)
+                        throw new IOException("Превышена допустимая длинна");
+                    if ((value + __p_r) < Count)
+                        __p_r = value + __p_r;
                     else
                     {
-                        if (value > Length)
-                            throw new IOException("Превышена допустимая длинна");
-                        if ((value + __p_r) < Count)
-                            __p_r = value + __p_r;
-                        else
-                        {
-                            _loop = false;
-                            __p_r = value - (Count - __p_r);
-                        }
+                        _loop = false;
+                        __p_r = value - ( Count - __p_r );
                     }
-                }
+					if (Count > MINRESIZE)
+					{
+						int resize;
+
+						if (Length > 0)
+							resize = (int)Count / 4;
+						else
+							resize = 0;
+
+						if (resize < MINRESIZE)
+							resize = MINRESIZE;
+						if (resize > (int)Length)
+							Resize(resize);
+					}
+				}
             }
         }
 
@@ -341,7 +361,21 @@ namespace MyWebSocket.Tcp.Protocol
                         
                     }
                 }
-            }
+				if (Count > MINRESIZE)
+				{
+					int resize;
+
+					if (Length > 0)
+						resize = (int)Count / 4;
+					else
+						resize = 0;
+
+					if (resize < MINRESIZE)
+						resize = MINRESIZE;
+					if (resize > (int)Length)
+						Resize(resize);
+				}
+			}
             return i;
         }
         /// <summary>
@@ -373,8 +407,18 @@ namespace MyWebSocket.Tcp.Protocol
             lock (__Sync)
             {
                 int i;
-                if (len > Clear)
-                    throw new IOException("Недостаточно свободного места");
+				if (len > Clear)
+				{
+					int resize =   2 * (int)Count;
+
+					if (resize < len)
+						resize = len + (int)Count;
+
+					if (resize > MAXRESIZE)
+						throw new IOException("Недостаточно свободного места");
+					else
+						Resize(resize);
+				}
                 fixed (byte* source = _buffer, target = buffer)
                 {
                     byte* pt = target + pos;

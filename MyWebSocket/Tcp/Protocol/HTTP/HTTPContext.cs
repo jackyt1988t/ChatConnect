@@ -18,7 +18,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// <summary>
 		/// Протолкол HTTP
 		/// </summary>
-		internal BaseProtocol Protocol;
+		internal HTTProtocol Protocol;
 		/// <summary>
 		/// Последняя ошибка
 		/// </summary>
@@ -56,48 +56,39 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			get;
 			private set;
 		}
-		HTTPReader __reader;
 		/// <summary>
 		/// Поток чтения
 		/// </summary>
-		public MyStream __Reader
+		public HTTPReader __Reader
 		{
-			get
-			{
-				return __reader;
-			}
+			get;
 		}
-		HTTPWriter __writer;
 		/// <summary>
 		/// Поток записи
 		/// </summary>
-		public MyStream __Writer
+		public HTTPWriter __Writer
 		{
-			get
-			{
-				return __writer;
-			}
+			get;
 		}
 
 		/// <summary>
 		/// Создает контекст получения, отправки данных
 		/// </summary>
 		/// <param name="protocol">HTTP</param>
-		public HTTPContext(BaseProtocol protocol)
+		public HTTPContext(HTTProtocol protocol)
 		{
 			Request  = new Header();
-			Protocol = protocol;
+			Protocol =     protocol;
 			Response = new Header();
 			__ObSync = new object();
 
-			(__reader =
-			(HTTPReader)protocol.Reader)
-					     ._Frame.Clear();
-			__reader.Header  =  Request;
+			__Reader = new HTTPReader(
+					   protocol.Reader);
+			__Reader.Header  =  Request;
 
-			__writer = new HTTPWriter(
-								  10000);
-			__writer.Header  =  Response;	
+			__Writer = new HTTPWriter(
+					   protocol.Writer);
+			__Writer.Header  =  Response;	
 		}
 		/// <summary>
 		/// Возвращает новый контекст
@@ -129,7 +120,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			{
 				try
 				{
-					__writer.Eof();
+					__Writer.Eof();
 				}
 				catch (IOException error)
 				{
@@ -147,12 +138,12 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		{
 			try
 			{
-				if (!__reader._Frame.GetHead)
+				if (!__Reader.__Frame.GetHead)
 				{
 					HandlerHead();
 				}
 
-				if (!__reader._Frame.GetBody)
+				if (!__Reader.__Frame.GetBody)
 				{
 					HandlerBody();
 				}
@@ -446,19 +437,19 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			   Когда все заголвоки будут получены и пройдут первоначальную обработку произойдет событие EventOpen
 
 		   --------------------------------------------------------------------------------------------------------*/
-			if (__reader.ReadHead())
+			if (__Reader.ReadHead())
 			{
 				switch (Request.Method)
 				{
 					case "GET":
-						if (__reader._Frame.bleng > 0)
+						if (__Reader.__Frame.bleng > 0)
 						{
 							throw new HTTPException(
 												"Неверная длина запроса GET", HTTPCode._400_);
 						}
 						break;
 						case "POST":
-						if (__reader._Frame.Handl == 0)
+						if (__Reader.__Frame.Handl == 0)
 						{
 							throw new HTTPException(
 												"Неверная длина запроса POST", HTTPCode._400_);
@@ -517,9 +508,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			   заголвок в соыбтие EventOpen и при привышении допустимого значения закрыть соединение.
 
 		   --------------------------------------------------------------------------------------------------------*/
-			if (__reader.ReadBody())
+			if (__Reader.ReadBody())
 			{
-				switch (__reader._Frame.Pcod)
+				switch (__Reader.__Frame.Pcod)
 				{
 					case HTTPFrame.DATA:
 						if (!Protocol.TaskResult.Jump)
@@ -568,13 +559,13 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							)))
 								End();
 						break;
-					case 501:
-							Response.StrStr = "HTTP/1.1 501 " + _1_error.Status.ToString();
-							if (await AsMssg(Encoding.UTF8.GetBytes(
-								"501"
-							)))
-								End();
-						break;
+					//case 501:
+					//		Response.StrStr = "HTTP/1.1 501 " + _1_error.Status.ToString();
+					//		if (await AsMssg(Encoding.UTF8.GetBytes(
+					//			"501"
+					//		)))
+					//			End();
+					//	break;
 					default:
 							_1_error.Status  =  HTTPCode._500_;
 						break;
