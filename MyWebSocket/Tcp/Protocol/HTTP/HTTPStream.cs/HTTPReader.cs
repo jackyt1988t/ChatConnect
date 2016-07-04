@@ -200,7 +200,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						break;
 					// проверяет получены или нет заголвоки
 					case 3:
-						Header.StrStr = __Frame.StStr;
+						Header.StrStr = __Frame.StStr.ToString();
 						//////Окончание//////
 						if (@char != CR)
 						{
