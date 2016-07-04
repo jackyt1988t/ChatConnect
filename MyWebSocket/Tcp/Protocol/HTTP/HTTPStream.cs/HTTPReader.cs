@@ -112,16 +112,17 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							break;
 						}
 						else
-							__Frame.Param += char.ToLower((char)@char);
+							__Frame.Param.Append(@char);
 						break;
 					// Проверяет правильность окончания длинны
 					case 3:
 						if (@char != LF)
 							throw new HTTPException("отсутсвует символ[LF]", HTTPCode._400_);
-						if (!int.TryParse(__Frame.Param, out __Frame.bleng))
+						if (!int.TryParse(__Frame.Param.ToString(), out __Frame.bleng))
 							throw new HTTPException("Неверная длинна тела.", HTTPCode._400_);
 						
 						__Frame.Handl = 1;
+						__Frame.Param.Clear();
 						if (__Frame.bleng > LENCHUNK)
 							throw new HTTPException("Превышена длинна тела", HTTPCode._400_);
 						break;
@@ -170,7 +171,14 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// <exception cref="HTTPException">Ошибка http протокола</exception>
 		public bool ReadHead()
 		{
-			int @char = 0;			
+			int @char = 0;
+			if (__Frame.StStr == null)
+				__Frame.StStr = new StringBuilder(STSTR);
+			if (__Frame.Param == null)
+				__Frame.Param = new StringBuilder(PARAM);
+			if (__Frame.Value == null)
+				__Frame.Value = new StringBuilder(VALUE);
+				
 			while ((@char = Stream.ReadByte()) > -1)
 			{
 				if (__Frame.hleng > LENHEAD)
@@ -214,9 +222,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						// добавляем заголвоки и очищаем зависимости
 						__Frame.param = 0;
 						__Frame.value = 0;
-						Header.AddHeader(__Frame.Param, __Frame.Value);
-										__Frame.Param = string.Empty;
-										__Frame.Value = string.Empty;
+						Header.AddHeader(__Frame.Param.ToString(),
+								 __Frame.Value.ToString()
+								 			);
+							    	    __Frame.Param.Clear();
+								    __Frame.Value.Clear();
 						//////Окончание//////
 						if (@char != CR)
 						{
@@ -294,7 +304,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				else
 				{
 					__Frame.param++;
-					__Frame.Param += char.ToLower((char)@char);
+					__Frame.Param.Append(@char);
 				}
 				
 				if (@char = Stream.ReadByte()) > -1)
@@ -319,7 +329,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				else
 				{
 					__Frame.value++;
-					__Frame.Value += ( char )@char;
+					__Frame.Value.Append(@char);
 				}
 				
 				if (@char = Stream.ReadByte()) > -1)
@@ -344,7 +354,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				else
 				{
 					__Frame.ststr++;
-					__Frame.StStr += char.ToLower((char)@char);
+					__Frame.StStr.Append(@char);
 					if (@char == SP)
 					{
 						__Frame.Hand++;
