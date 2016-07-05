@@ -266,7 +266,7 @@ namespace MyWebSocket.Tcp.Protocol
                 if (resize < Length)
                     throw new IOException("Не хватает места для перезаписи");
 		if (resize > MAXRESIZE)
-			throw new IOException("Превышен допустимый размер потока");
+			resize = MAXRESIZE;
 		if (resize < MINRESIZE)
 			resize = MINRESIZE;
 		int offset = 0;
@@ -407,6 +407,8 @@ namespace MyWebSocket.Tcp.Protocol
                             length + (int)Count;
 			Resize(  resize  );
 		}
+		if (length > Clear)
+			throw new IOException(Недостаточно места, MAXRESIZE);
                 fixed (byte* source = Buffer, target = buffer)
                 {
                     byte* pt = target + offset;
