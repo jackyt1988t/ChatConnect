@@ -36,9 +36,13 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// </summary>
 		public Header Header;
 		/// <summary>
-		/// 
+		/// Базовый поток
 		/// </summary>
 		public Stream Stream;
+		/// <summary>
+		/// Храналищи данных, данные входящего запроса 
+		/// </summary>
+		public Stream Archiv;
 		/// <summary>
 		/// Информация о текщем состоянии чтения запроса
 		/// </summary>
@@ -61,6 +65,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		public HTTPReader(Stream stream)
 		{
 			Stream = stream;
+			Archiv = new MyStream(0)
 			__Frame = new HTTPFrame();
 		}
 		/// <summary>
@@ -96,7 +101,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							return __Frame.GetBody;
 						else
 						{
-							Header.SegmentsBuffer.Enqueue(Header.Body);
+							Archiv.Write(Header.Body, 0, __Frame.bleng);
 							if (!string.IsNullOrEmpty( 
 											 __Frame.Param.ToString()))
 								__Frame.Handl = 4;
