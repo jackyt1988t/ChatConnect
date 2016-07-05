@@ -113,22 +113,16 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				else
 					Cancel = true;
 			}
-			if (__Encode != null)
-				__Encode.Dispose();
-			// Отправить блок данных chunked 0CRLFCRLF
-			if (Response.TransferEncoding == "chunked")
+			try
 			{
-				try
-				{
-					__Writer.Eof();
-				}
-				catch (IOException error)
-				{
-					Protocol.Close();
-					Log.Loging.AddMessage(
-						"Ошибка при записи ответа на запрос HTTP" +
-						error.Message + "./r/n" + error.StackTrace, "log.log", Log.Log.Fatal);		
-				}
+				__Writer.Dispose;
+			}
+			catch (IOException error)
+			{
+				Protocol.Close();
+				Log.Loging.AddMessage(
+					"Ошибка при записи ответа на запрос HTTP" +
+					error.Message + "./r/n" + error.StackTrace, "log.log", Log.Log.Fatal);
 			}
 		}
 		/// <summary>
