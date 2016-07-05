@@ -83,11 +83,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			__ObSync = new object();
 
 			__Reader = new HTTPReader(
-					   protocol.Reader);
+					protocol.SslStream);
 			__Reader.Header  =  Request;
 
 			__Writer = new HTTPWriter(
-					   protocol.Writer);
+					protocol.SslStream);
 			__Writer.Header  =  Response;	
 		}
 		/// <summary>
@@ -115,7 +115,10 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			}
 			try
 			{
-				__Writer.Dispose;
+				if (__Encode != null)
+					__Encode.Dispose();
+				if (__Writer != null)
+					__Writer.Dispose();
 			}
 			catch (IOException error)
 			{
@@ -346,18 +349,28 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// установлен в gzip декодируем данные в формате gzip(  быстрое сжатие  )
 		/// </summary>
 		/// <param name="message">массив данных</param>
-		/// <param name="recive">стартовая позиция</param>
+		/// <param name="offset">стартовая позиция</param>
 		/// <param name="length">количество которое необходимо записать</param>
-		public void Message(byte[] message, int recive, int length)
+		public void Message(byte[] message, int offset, int length)
 		{
 			lock (__ObSync)
 			{
 				try
 				{
-					SetResponse():
-					
-					__Writer.Write(message, recive, length);
-					
+					SetResponse();
+					switch (Response.ContentEncoding)
+					{
+						case "gzip":
+						__Encode.Write(message, offset, length);
+						break;
+						case "deflate":
+						__Encode.Write(message, offset, length);
+						break;
+						default:
+						__Writer.Write(message, offset, length);
+						break;
+					}
+
 					Log.Loging.AddMessage(
 						"Http данные успешно добавлены к отправке", "log.log", Log.Log.Info);
 				}
@@ -397,6 +410,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							"no-store",
 							"no-cache",
 						};
+				if (Response.ContentEncoding == "gzip")
+					__Encode = new GZipStream(__Writer, CompressionLevel.Fastest, true);
+				else if (Response.ContentEncoding == "deflate")
+					__Encode = new DeflateStream(__Writer, CompressionLevel.Fastest, true);
+
 				Log.Loging.AddMessage(
 						"Http заголовки успешно обработаны: \r\n" +
 						"Заголовки зап:\r\n" + Response.ToString(), "log.log", Log.Log.Info);
@@ -470,7 +488,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						}
 								Response.TransferEncoding = "chunked";
 
-						Protocol.OnEventOpen(this);
+								Protocol.OnEventOpen(this);
 				}
 			}
 		}

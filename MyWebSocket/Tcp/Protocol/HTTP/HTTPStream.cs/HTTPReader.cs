@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Text;
 
 namespace MyWebSocket.Tcp.Protocol.HTTP
 {
@@ -36,7 +38,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// <summary>
 		/// 
 		/// </summary>
-		public MyStream Stream;
+		public Stream Stream;
 		/// <summary>
 		/// Информация о текщем состоянии чтения запроса
 		/// </summary>
@@ -56,7 +58,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// Создает поток
 		/// </summary>
 		/// <param name="stream">кольцевой потока</param>
-		public HTTPReader(MyStream stream)
+		public HTTPReader(Stream stream)
 		{
 			Stream = stream;
 			__Frame = new HTTPFrame();
@@ -74,7 +76,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				Header.SetEnd();
 				return (__Frame.GetBody = true);
 			}
-
 			int @char = 0;
 			while ((@char = Stream.ReadByte()) > -1)
 			{
@@ -82,9 +83,10 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				{
 					// Записывает тело запроса
 					case 1:
-						if (Header.Body == null)
-							Header.Body = new byte[__Frame.bleng];
+								if (Header.Body == null)
+									Header.Body  =  new byte[ __Frame.bleng ];
 						
+												 Header.Body[ __Frame.bpart++ ]=(byte)@char;
 						int __read = Stream.Read(Header.Body, __Frame.bpart,
 													          __Frame.bleng - __Frame.bpart);
 
@@ -95,7 +97,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						else
 						{
 							Header.SegmentsBuffer.Enqueue(Header.Body);
-							if (!string.IsNullOrEmpty( __Frame.Param ))
+							if (!string.IsNullOrEmpty( 
+											 __Frame.Param.ToString()))
 								__Frame.Handl = 4;
 							else
 							{
@@ -112,7 +115,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							break;
 						}
 						else
-							__Frame.Param.Append(@char);
+							__Frame.Param.Append((char)@char);
 						break;
 					// Проверяет правильность окончания длинны
 					case 3:
@@ -146,7 +149,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							__Frame.Handl = 7;
 						else
 						{
-							__Frame.Param += char.ToLower((char)@char);
+							__Frame.Param.Append(@char);
 						}
 						break;
 					case 7:
@@ -159,8 +162,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							throw new HTTPException("отсутсвует символ[LF]", HTTPCode._400_);
 
 				}
-				__Frame.bpart++;
-				__Frame.alleng++;
+							__Frame.bpart++;
+							__Frame.alleng++;
 			}
 			return false;
 		}
@@ -188,7 +191,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				{
 					// получает стартовую строку
 					case 0:
-						ReadStStr(@char)
+						ReadStStr(@char);
 						break;
 					// получает параметр заголовка
 					case 1:
@@ -223,10 +226,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						__Frame.param = 0;
 						__Frame.value = 0;
 						Header.AddHeader(__Frame.Param.ToString(),
-								 __Frame.Value.ToString()
-								 			);
-							    	    __Frame.Param.Clear();
-								    __Frame.Value.Clear();
+										 __Frame.Value.ToString());
+							    			 __Frame.Param.Clear();
+											 __Frame.Value.Clear();
 						//////Окончание//////
 						if (@char != CR)
 						{
@@ -304,14 +306,15 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				else
 				{
 					__Frame.param++;
-					__Frame.Param.Append(@char);
+					__Frame.Param.Append((char)@char);
 				}
 				
-				if (@char = Stream.ReadByte()) > -1)
+				if ((@char = Stream.ReadByte()) == -1)
 					break;
 					
 					__Frame.hleng++;
 					__Frame.alleng++;
+
 			}
 		}
 		private void ReadValue(int @char)
@@ -329,20 +332,21 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				else
 				{
 					__Frame.value++;
-					__Frame.Value.Append(@char);
+					__Frame.Value.Append((char)@char);
 				}
 				
-				if (@char = Stream.ReadByte()) > -1)
+				if ((@char = Stream.ReadByte()) == -1)
 					break;
 					
 					__Frame.hleng++;
 					__Frame.alleng++;
+
 			}
 		}
 		private void ReadStStr(int @char)
 		{
 			__Frame.Handl = 0;
-			while ((@char = Stream.ReadByte()) > -1)
+			while (true)
 			{
 				if (__Frame.ststr > STSTR)
 					throw new HTTPException( "Длинна стартовой строки", HTTPCode._400_ );
@@ -354,9 +358,10 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				else
 				{
 					__Frame.ststr++;
-					__Frame.StStr.Append(@char);
+					__Frame.StStr.Append((char)@char);
 					if (@char == SP)
 					{
+						
 						__Frame.Hand++;
 						if (__Frame.Hand >= 3)
 							Header.Http += char.ToLower((char)@char);
@@ -377,11 +382,13 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						}
 					}
 				}
-				if (@char = Stream.ReadByte()) > -1)
+
+				if ((@char = Stream.ReadByte()) == -1)
 					break;
 					
 					__Frame.hleng++;
 					__Frame.alleng++;
+
 			}
 		}
 	}

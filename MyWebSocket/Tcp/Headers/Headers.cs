@@ -53,7 +53,7 @@ namespace MyWebSocket.Tcp
             }
             set
             {
-                AddHeader("Upgrade", value.ToString());
+                AddHeader("Connection", value.ToString());
             }
         }
         string contentencoding;

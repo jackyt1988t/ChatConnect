@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net.Security;
 using System.Net.Sockets;
+using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,6 +13,12 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 {
     public class HTTProtocol : BaseProtocol
     {
+		/// <summary>
+		/// Поток шифровния данных
+		/// </summary>
+		public SslStream SslStream;
+
+
 		event PHandlerEvent eventWork;
 		/// <summary>
 		/// Событие которое наступает при проходе по циклу
@@ -131,8 +140,23 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				eventconnect -= value;
 			}
 		}
-		protected object SyncEvent = new object();
-
+		private object SyncEvent = new object();
+		private static X509Certificate2 sertificate ;
+		static HTTProtocol()
+		{
+			try
+			{
+				sertificate = new X509Certificate2("server.pfx", "Tv7bU9m");
+			}
+			catch (Exception error)
+			{
+				;
+			}
+		}
+		/// <summary>
+		/// Создает объект обработки данных
+		/// </summary>
+		/// <param name="tcp">tcp/ip соединеине</param>
 		public HTTProtocol(Socket tcp)
         {
 			Tcp = tcp;
@@ -144,25 +168,48 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					new TaskResult();
 				Request  = new Header();
                 Response = new Header();
-			Writer = new MyStream(  0  );
-			Reader = new MyStream(20000);
-			ContextRq = ContextRs = 
-					  new HTTPContext(this);
-			AllContext = new Queue<IContext>();
 			
-			OnEventConnect();
-			Interlocked.CompareExchange(ref state, 0, 3);
-		}
+			TCPStream = new TcpStream();
+			SslStream = new SslStream(
+					   TCPStream, false);
+			
 
+			ContextRq = ContextRs = 
+					new HTTPContext(this);
+			AllContext = new Queue<IContext>();
+
+			Authentcate();
+			OnEventConnect();
+			
+			Interlocked.CompareExchange(ref state, 0, 3);
+
+			
+		}
+		async
+		internal void Authentcate()
+		{
+			try
+			{
+				await SslStream.AuthenticateAsServerAsync(sertificate, false, SslProtocols.Ssl3, true);
+			}
+			catch (AuthenticationException exc)
+			{
+				;
+			}
+			catch (Exception exc)
+			{
+				return;
+			}
+		}
 		/// <summary>
 		/// Потокобезопасный запуск события Work
 		/// желательно запускать в обработчике Work
 		/// </summary>
 		internal void OnEventWork()
 		{
-			if (ContextRs.Cancel && Writer.Empty)
+			if (ContextRs.Cancel 
+				 && TCPStream.Writer.Empty)
 			{
-				Writer.Dispose();
 				ContextRs = AllContext.Dequeue();
 			}
 
@@ -376,7 +423,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						if (error == SocketError.WouldBlock
 						 || error == SocketError.NoBufferSpaceAvailable)
 						{
-							if (!Reader.Empty)
+							if (SslStream.IsAuthenticated && !TCPStream.Reader.Empty)
 								ContextRq.Handler();
 						}
 						else
@@ -395,7 +442,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			}
 						else
 						{
-							if (!Reader.Empty)
+							if (SslStream.IsAuthenticated && !TCPStream.Reader.Empty)
 								ContextRq.Handler();
 						}
         }
@@ -411,7 +458,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             if (Tcp.Poll(0, SelectMode.SelectWrite))
             {
                 SocketError error;
-                if (!Writer.Empty)
+                if (!TCPStream.Writer.Empty)
                 {
                     if ((error = Send()) != SocketError.Success)
                     {

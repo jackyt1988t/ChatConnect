@@ -58,7 +58,7 @@ namespace MyWebSocket.Tcp.Protocol
 		/// <summary>
 		/// Содержит Полученные заголовки
 		/// </summary>
-		public virtual Header Request
+		public Header Request
 		{
 			get;
 			protected set;
@@ -66,23 +66,7 @@ namespace MyWebSocket.Tcp.Protocol
 		/// <summary>
 		/// Содержит Отправленные заголовки
 		/// </summary>
-		public virtual Header Response
-		{
-			get;
-			protected set;
-		}
-		/// <summary>
-		/// Кольцевой буффер хранения данных
-		/// </summary>
-		public virtual MyStream Reader
-		{
-			get;
-			protected set;
-		}
-		/// <summary>
-		/// Кольцевой буфер хранения данных
-		/// </summary>
-		public virtual MyStream Writer
+		public Header Response
 		{
 			get;
 			protected set;
@@ -104,6 +88,14 @@ namespace MyWebSocket.Tcp.Protocol
 			protected set;
 		}
 		/// <summary>
+		/// Кольцевой буффер хранения данных
+		/// </summary>
+		public TcpStream TCPStream
+		{
+			get;
+			protected set;
+		}
+		/// <summary>
 		/// Состояние обработки текущего протоколв
 		/// </summary>
 		public TaskResult TaskResult
@@ -111,15 +103,17 @@ namespace MyWebSocket.Tcp.Protocol
 			get;
 			protected set;
 		}
+		
 		/// <summary>
 		/// 
 		/// </summary>
 		public Queue<IContext> AllContext;
+		
 
 		/// <summary>
 		/// 
 		/// </summary>
-		volatile
+		volatile 
 		protected int state;
 
 		/// <summary>
@@ -156,10 +150,10 @@ namespace MyWebSocket.Tcp.Protocol
 			Dispose(true);
 			if (Tcp != null)
 				Tcp.Dispose();
-			if (Writer != null)
-				Writer.Dispose();
-			if (Reader != null)
-				Reader.Dispose();
+			if (TCPStream.Writer != null)
+				TCPStream.Writer.Dispose();
+			if (TCPStream.Reader != null)
+				TCPStream.Reader.Dispose();
 			GC.SuppressFinalize(this);
 		}
 		/// <summary>
@@ -189,18 +183,18 @@ namespace MyWebSocket.Tcp.Protocol
 		protected SocketError Read()
 		{
 			SocketError error = SocketError.Success;
-				lock (Reader.__Sync)			
+				lock (TCPStream.Reader.__Sync)			
 				{
 					int count = 
 					   LENGTHREAD;
 					int start =
-					   (int)Reader.PointW;
+					   (int)TCPStream.Reader.PointW;
 					byte[] buffer =
-							Reader.Buffer;
+							TCPStream.Reader.Buffer;
 				
-					if (Reader.Count - start < count)
+					if (TCPStream.Reader.Count - start < count)
 						count =
-							  (int)(Reader.Count - start);
+						  (int)(TCPStream.Reader.Count - start);
 			
 					int length = Tcp.Receive(buffer, start, count, SocketFlags.None, out error);
 					if (length > 0)
@@ -208,7 +202,7 @@ namespace MyWebSocket.Tcp.Protocol
 						Len -= length;
 						try
 						{
-							Reader.SetLength(length);
+							TCPStream.Reader.SetLength(length);
 						}
 						catch (IOException)
 						{
@@ -226,26 +220,26 @@ namespace MyWebSocket.Tcp.Protocol
 		{
 			SocketError error = SocketError.Success;
 			
-				lock (Writer.__Sync)
+				lock (TCPStream.Writer.__Sync)
 				{
 					int start =
-						(int)Writer.PointR;
+						(int)TCPStream.Writer.PointR;
 					int write =
-						(int)Writer.Length;
+						(int)TCPStream.Writer.Length;
 					if (write > LENGTHWRITE)
 						write = LENGTHWRITE;
 					byte[] buffer =
-							Writer.Buffer;
+							 TCPStream.Writer.Buffer;
 
-					if (Writer.Count - start < write)
+					if (TCPStream.Writer.Count - start < write)
 						write =
-						  (int)(Writer.Count - start);
+						  (int)(TCPStream.Writer.Count - start);
 					int length = Tcp.Send(buffer, start, write, SocketFlags.None, out error);
 					if (length > 0)
 					{
 						try
 						{
-							Writer.Position = length;
+						TCPStream.Writer.Position = length;
 						}
 						catch (IOException)
 						{
@@ -259,10 +253,10 @@ namespace MyWebSocket.Tcp.Protocol
 		{
 			SocketError error = SocketError.Success;
 			
-				lock (Writer.__Sync)
+				lock (TCPStream.Writer.__Sync)
 				{
 
-					if (Writer.Empty)
+					if (TCPStream.Writer.Empty)
 						start = Tcp.Send(buffer, start, write, SocketFlags.None, out error);
 
 					int length = write - start;
@@ -270,7 +264,7 @@ namespace MyWebSocket.Tcp.Protocol
 					{
 						try
 						{
-							Writer.Write(buffer, write - length, length);
+							TCPStream.Writer.Write(buffer, write - length, length);
 						}
 						catch (IOException)
 						{

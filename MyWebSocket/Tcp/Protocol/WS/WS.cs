@@ -401,7 +401,7 @@ override
                     if (Interlocked.CompareExchange(ref state, 1, 0) != 0)
                         return TaskResult;
                         read();
-                        if (!Reader.Empty)
+                        if (!TCPStream.Reader.Empty)
                             Data();
 				/*==================================================================
 					Проверяет возможность отправки данных. Если данные можно 
@@ -444,7 +444,7 @@ override
 						if (!___Close.Req)
 						{
 							Read();
-							if (!Reader.Empty)
+							if (!TCPStream.Reader.Empty)
 								Data();
 						}
 							write();
@@ -468,7 +468,7 @@ override
 			catch (WSException err)
 			{
 				ErrorServer(err);
-				Reader.Reset();
+				TCPStream.Reader.Reset();
 			}
 			catch (Exception exc)
 			{
@@ -530,7 +530,7 @@ override
                 Если есть данные и сокет доступен для записи отправляем данные. Если во время отправки произошла
                  ошибка, обрабатываем.
             */
-            if (!Writer.Empty && Tcp.Poll(0, SelectMode.SelectWrite))
+            if (!TCPStream.Writer.Empty && Tcp.Poll(0, SelectMode.SelectWrite))
 			{
 					if ((error = Send()) != SocketError.Success)
 					{

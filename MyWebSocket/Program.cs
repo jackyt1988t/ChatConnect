@@ -144,14 +144,17 @@ namespace Example
                 };
                 Http.EventClose += (object sender, PEventArgs e) =>
                 {
-					HTTPContext[] cntx = 
-							e.sender as HTTPContext[];
-					foreach (HTTPContext ctx in cntx)
+					IContext[] cntx = 
+							e.sender as IContext[];
+					foreach (IContext ctx in cntx)
 					{
-						if (ctx.Request.Path == "/subscribe")
+						HTTPContext hctx =  (HTTPContext)ctx;
+						if (hctx == null)
+							continue;
+						if (hctx.Request.Path == "/subscribe")
 						{
 							lock (Polling)
-								Polling.Remove(ctx);
+								Polling.Remove(hctx);
 						}
 					}
                     Console.WriteLine("CLOSE");
@@ -162,7 +165,7 @@ namespace Example
                 };
             };
 					//Log.Loging.Mode = Log.Log.Debug;
-                    WServer Server = new WServer("0.0.0.0", 8081, 2);
+                    WServer Server = new WServer("0.0.0.0", 443, 2);
         }
     }
 }

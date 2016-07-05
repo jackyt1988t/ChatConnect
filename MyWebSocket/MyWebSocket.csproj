@@ -91,8 +91,9 @@
     <Compile Include="Tcp\Headers\Except.cs" />
     <Compile Include="Tcp\Headers\Headers.cs" />
     <Compile Include="Tcp\Headers\IHeaders.cs" />
+    <Compile Include="Tcp\Protocol\BASE\Stream\BaseStream.cs" />
     <Compile Include="Tcp\Protocol\BASE\Base.cs" />
-    <Compile Include="Tcp\Protocol\BASE\IContext.cs" />
+    <Compile Include="Tcp\Protocol\IContext.cs" />
     <Compile Include="Tcp\Protocol\EventArg.cs" />
     <Compile Include="Tcp\Protocol\HTTP\HTTP.cs" />
     <Compile Include="Tcp\Protocol\HTTP\HTTPCode\HTTPCode.cs" />

@@ -16,22 +16,8 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		}
 		bool Rchunk;
 		WSSampleReader reader;
-		public override MyStream Reader
-		{
-			get
-			{
-				return reader;
-			}
-		}
 		bool Wchunk;
 		WSSampleWriter writer;
-		public override MyStream Writer
-		{
-			get
-			{
-				return writer;
-			}
-		}
 		
 		/// <summary>
 		/// Ининцилазириует класс протокола WS без подключения
@@ -53,9 +39,9 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			this()
 		{
 			Tcp = http.Tcp;
-			if (http.Reader.Length > 0)
-				http.Reader.CopyTo(reader,
-						 (int)http.Reader.Length);
+			if (http.TCPStream.Reader.Length > 0)
+				http.TCPStream.Reader.CopyTo(reader,
+						 (int)http.TCPStream.Reader.Length);
 
 			Policy.SetPolicy(0, 1, 1, 1, 0, 32000);
 			Request = http.Request;

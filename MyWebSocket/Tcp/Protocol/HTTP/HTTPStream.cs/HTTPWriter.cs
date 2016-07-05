@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.IO.Compression;
 using System.Text;
 
 namespace MyWebSocket.Tcp.Protocol.HTTP
@@ -16,26 +17,24 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// Заголвоки запрос
 		/// </summary>
 		public Header Header;
-		public Stream stream;
 		/// <summary>
 		/// 
 		/// </summary>
-		public MyStream Stream;
+		public Stream Stream;
 		/// <summary>
 		/// Информация о записи
 		/// </summary>
 		public HTTPFrame __Frame;
+
+
 		/// <summary>
-		/// Возвращает длинну базового потока
+		/// Не поддерживается данной реализацией
 		/// </summary>
-		
-
-
 		public override long Length
 		{
 			get
 			{
-				return Stream.Length;
+				throw new NotImplementedException();
 			}
 		}
 		/// <summary>
@@ -55,7 +54,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		{
 			get
 			{
-				return true;
+				return false;
 			}
 		}
 		/// <summary>
@@ -97,10 +96,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// Создает поток
 		/// </summary>
 		/// <param name="stream">кольцевой поток</param>
-		public HTTPWriter(MyStream stream)
+		public HTTPWriter(Stream stream)
 		{
 			if (stream == null)
 				throw new ArgumentNullException( "stream" );
+			
 			Stream = stream;
 			__Frame = new HTTPFrame();
 		}
@@ -109,16 +109,14 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// </summary>
 		public void End()
 		{
-			lock (Stream.__Sync)
-				Stream.Write(ENDCHUNCK, 0, 2);
+			Stream.Write(ENDCHUNCK, 0, 2);
 		}
 		/// <summary>
 		/// Записывает 0CRLFCRLF в поток
 		/// </summary>
 		public void Eof()
 		{
-			lock (Stream.__Sync)
-				Stream.Write(EOFCHUNCK, 0, 5);
+			Stream.Write(EOFCHUNCK, 0, 5);
 		}
 		/// <summary>
 		/// Записывет указанную строку в поток.
@@ -136,10 +134,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// <param name="buffer">массив данных для записи</param>
 		public void Write(byte[] buffer)
 		{
-			Write(  buffer, 0, buffer.Length  );
+			Stream.Write(buffer, 0, buffer.Length);
 		}
-
-
 
 		/// <summary>
 		/// Не поддерживается данной реализацией
@@ -148,48 +144,34 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		{
 			throw new NotImplementedException();
 		}
-		public ovverride void Dispose()
-		{
-			if (Header.ContentEncoding == "gzip"
-			  || Header.ContentEncoding == "deflate")
-				stream.Dispose();
-			if (Header.TransferEncoding == "chunked")
-				Eof();
-			Header = null;
-			Stream = null;
-			base.Dispose();
-		}
 		/// <summary>
 		/// Не поддерживается данной реализацией
 		/// </summary>
-		/// <param name="value"></param>
-		public override void SetLength(long value)
+		/// <param name="value">...</param>
+		public override void SetLength(  long value  )
 		{
 			throw new NotImplementedException();
 		}
 		/// <summary>
 		/// Не поддерживается данной реализацией
 		/// </summary>
-		/// <param name="offset"></param>
-		/// <param name="origin"></param>
-		/// <returns></returns>
-		
-
-
+		/// <param name="offset">...</param>
+		/// <param name="origin">...</param>
+		/// <returns>...</returns>
 		public override long Seek(long offset, SeekOrigin origin)
 		{
 			throw new NotImplementedException();
 		}
 		/// <summary>
-		/// Записывает данные в базовый кольцевой поток
+		/// Не поддерживается данной реализацией
 		/// </summary>
-		/// <param name="buffer">>массив данных для записи</param>
-		/// <param name="offset">начальная позиция</param>
-		/// <param name="length">количество для чтения</param>
-		/// <returns></returns>
+		/// <param name="buffer">...</param>
+		/// <param name="offset">...</param>
+		/// <param name="length">...</param>
+		/// <returns>...</returns>
 		public override int Read(byte[] buffer, int offset, int length)
 		{
-			return Stream.Read(buffer, offset, length);
+			throw new NotImplementedException();
 		}
 		/// <summary>
 		/// Записывает указанный массив данных в поток.
@@ -201,44 +183,63 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// <param name="length">количество для записи</param>
 		public override void Write(byte[] buffer, int offset, int length)
 		{
-			lock (Stream.__Sync)
+			__Frame.Handl++;
+			if (!Header.IsRes)
 			{
-				__Frame.Handl++;
-				if (!Header.IsRes)
-				{
-								  Header.SetRes();
-					byte[] data = Header.ToByte();
-					Stream.Write(data, 0, data.Length);
-					
-					if (Header.ContentEncoding == "gzip")
-						stream = new GZipStream(
-							Stream, CompressionLevel.Fastest, true);
-					else if (Header.ContentEncoding == "deflate")
-						stream = new DeflateStream(
-							Stream, CompressionLevel.Fastest, true);
-					
-					__Frame.hleng = 
-								data.Length;
-				}
-					
-					__Frame.bpart += length;
-				if (length > 0)
-				{
-					// оптравить форматированные данные
-					if (Header.TransferEncoding != "chunked")
-						stream.Write( buffer, offset, length );
-					else
-					{
-						byte[] hex = Encoding.UTF8.GetBytes(
-										 length.ToString("X"));
+							  Header.SetRes();
+				byte[] data = Header.ToByte();
+				Stream.Write(data, 0, data.Length);
 
-						Stream.Write( hex, 0, hex.Length );
-						End();
-						stream.Write( buffer, offset, length );
-						End();
-					}
+					if (Header.ContentLength > 0)
+						__Frame.bleng = 
+							   Header.ContentLength;
+					
+							__Frame.hleng = 
+										data.Length;
+			}
+
+			if (length > 0)
+			{
+				// оптравить форматированные данные
+				if (Header.TransferEncoding == "chunked")
+				{
+					byte[] hex = Encoding.UTF8.GetBytes(length.ToString("X"));
+
+					Stream.Write( hex, 0, hex.Length );
+					End();
+					Stream.Write( buffer, offset, length );
+					End();
+
+						__Frame.bpart += length;
+						__Frame.bleng += length;
+				}
+				else
+				{
+					if ( __Frame.bpart + length > __Frame.bleng )
+						throw new HTTPException("Превышенна длинна Content-Length");
+					else
+						__Frame.bpart += length;
+
+					Stream.Write( buffer, offset, length );
 				}
 			}
+		}
+
+		/// <summary>
+		/// Очищает управляемые и некправляемые ресурсы занимаемые объектом
+		/// </summary>
+		/// <param name="disposing"></param>
+		protected override void Dispose(bool disposing)
+		{
+			if (Header.TransferEncoding == "chunked")
+				Eof();
+			Header = null;
+			Stream = null;
+			if (disposing)
+			{
+				
+			}
+			base.Dispose(disposing);
 		}
 	}
 }
