@@ -134,21 +134,14 @@ namespace MyWebSocket.Tcp.Protocol
                         _loop = false;
                         __p_r = value - ( Count - __p_r );
                     }
-					if (Count > MINRESIZE)
-					{
-						int resize;
-
-						if (Length > 0)
-							resize = (int)Count / 4;
-						else
-							resize = 0;
-
-						if (resize < MINRESIZE)
-							resize = MINRESIZE;
-						if (resize > (int)Length)
-							Resize(resize);
-					}
-				}
+			if (Count > MINRESIZE)
+			{
+				int resize = 
+				    (int)Count / 4;
+				if (resize > Length)
+					Resize(resize);
+			}
+		}
             }
         }
 
@@ -264,22 +257,27 @@ namespace MyWebSocket.Tcp.Protocol
         /// изменяет емкость(длинну) кольцевого потока
         /// </summary>
         /// <param name="length">емкость потока</param>
-        public virtual void Resize(int length)
+        public virtual void Resize(int resize)
         {
-            if (length < 0)
+            if (resize < 0)
                 throw new ArgumentOutOfRangeException("length");
             lock (__Sync)
             {
-                if (length < Length)
+                if (resize < Length)
                     throw new IOException("Не хватает места для перезаписи");
-                int recive = (int)Length;
-                byte[] buffer = new byte[length];
-                this.Read(  buffer, 0, recive  );
+		if (resize > MAXRESIZE)
+			throw new IOException("Превышен допустимый размер потока");
+		if (resize < MINRESIZE)
+			resize = MINRESIZE;
+		int offset = 0;
+                int length = (int)Length;
+                byte[] buffer = new byte[resize];
+                Read(  buffer, offset, length  );
 
-                __p_r = 0;
-                _loop = false;
+		_loop = false;
+                __p_r = offset;
                 __p_w = recive;
-                __len = length;
+                __len = resize;
                 _buffer = buffer;
             }
         }
@@ -361,21 +359,14 @@ namespace MyWebSocket.Tcp.Protocol
                         
                     }
                 }
-				if (Count > MINRESIZE)
-				{
-					int resize;
-
-					if (Length > 0)
-						resize = (int)Count / 4;
-					else
-						resize = 0;
-
-					if (resize < MINRESIZE)
-						resize = MINRESIZE;
-					if (resize > (int)Length)
-						Resize(resize);
-				}
-			}
+		if (Count > MINRESIZE)
+		{
+			int resize = 
+			    (int)Count / 4;
+			if (resize > Length)
+				Resize(resize);
+		}
+	    }
             return i;
         }
         /// <summary>
@@ -392,37 +383,34 @@ namespace MyWebSocket.Tcp.Protocol
         /// Читает данные из потока
         /// </summary>
         /// <param name="buffer">буффер в который будут записаны данные</param>
-        /// <param name="pos">начальная позиция</param>
-        /// <param name="len">количество которое необходимо прочитать</param>
-        unsafe public override void Write(byte[] buffer, int pos, int len)
+        /// <param name="offset">начальная позиция</param>
+        /// <param name="length">количество которое необходимо прочитать</param>
+        unsafe public override void Write(byte[] buffer, int offset, int length)
         {
             if (buffer == null)
                 throw new ArgumentNullException("buffer");
-            if (pos < 0)
-                throw new ArgumentOutOfRangeException("pos");
-            if (len < 0)
-                throw new ArgumentOutOfRangeException("len");
-            if ((pos + len) > buffer.Length)
-                throw new ArgumentOutOfRangeException("len + pos");
+            if (offset < 0)
+                throw new ArgumentOutOfRangeException("offset");
+            if (length < 0)
+                throw new ArgumentOutOfRangeException("length");
+            if ((offset + length) > buffer.Length)
+                throw new ArgumentOutOfRangeException("length + offset");
             lock (__Sync)
             {
                 int i;
-				if (len > Clear)
-				{
-					int resize =   2 * (int)Count;
+		if (length > Clear)
+		{
+                    int resize = 2 * (int)Count;
 
-					if (resize < len)
-						resize = len + (int)Count;
-
-					if (resize > MAXRESIZE)
-						throw new IOException("Недостаточно свободного места");
-					else
-						Resize(resize);
-				}
-                fixed (byte* source = _buffer, target = buffer)
+                    if (resize < length)
+                        resize = 
+                            length + (int)Count;
+			Resize(  resize  );
+		}
+                fixed (byte* source = Buffer, target = buffer)
                 {
-                    byte* pt = target + pos;
-                    for (i = 0; i < len; i++)
+                    byte* pt = target + offset;
+                    for (i = 0; i < length; i++)
                     {
                         byte* ps = source + PointW;
 
