@@ -16,6 +16,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// Заголвоки запрос
 		/// </summary>
 		public Header Header;
+		public Stream stream;
 		/// <summary>
 		/// 
 		/// </summary>
@@ -147,6 +148,17 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		{
 			throw new NotImplementedException();
 		}
+		public ovverride void Dispose()
+		{
+			if (Header.ContentEncoding == "gzip"
+			  || Header.ContentEncoding == "deflate")
+				stream.Dispose();
+			if (Header.TransferEncoding == "chunked")
+				Eof();
+			Header = null;
+			Stream = null;
+			base.Dispose();
+		}
 		/// <summary>
 		/// Не поддерживается данной реализацией
 		/// </summary>
@@ -198,18 +210,23 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					byte[] data = Header.ToByte();
 					Stream.Write(data, 0, data.Length);
 					
+					if (Header.ContentEncoding == "gzip")
+						stream = new GZipStream(
+							Stream, CompressionLevel.Fastest, true);
+					else if (Header.ContentEncoding == "deflate")
+						stream = new DeflateStream(
+							Stream, CompressionLevel.Fastest, true);
+					
 					__Frame.hleng = 
 								data.Length;
 				}
-					__Frame.bleng += length;
-				if (!string.IsNullOrEmpty(
-									Header.ContentEncoding))
+					
 					__Frame.bpart += length;
 				if (length > 0)
 				{
 					// оптравить форматированные данные
 					if (Header.TransferEncoding != "chunked")
-						Stream.Write( buffer, offset, length );
+						stream.Write( buffer, offset, length );
 					else
 					{
 						byte[] hex = Encoding.UTF8.GetBytes(
@@ -217,7 +234,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 
 						Stream.Write( hex, 0, hex.Length );
 						End();
-						Stream.Write( buffer, offset, length );
+						stream.Write( buffer, offset, length );
 						End();
 					}
 				}
