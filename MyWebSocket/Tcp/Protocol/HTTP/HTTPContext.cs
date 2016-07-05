@@ -360,19 +360,10 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			{
 				try
 				{
-					SetResponse();
-					switch (Response.ContentEncoding)
-					{
-						case "gzip":
-						__Encode.Write(message, recive, length);
-						break;
-						case "deflate":
-						__Encode.Write(message, recive, length);
-						break;
-						default:
-						__Writer.Write(message, recive, length);
-						break;
-					}
+					SetResponse():
+					
+					__Writer.Write(message, recive, length);
+					
 					Log.Loging.AddMessage(
 						"Http данные успешно добавлены к отправке", "log.log", Log.Log.Info);
 				}
@@ -412,12 +403,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							"no-store",
 							"no-cache",
 						};
-				if (Response.ContentEncoding == "gzip")
-					__Encode = new GZipStream(
-						__Writer, CompressionLevel.Fastest, true);
-				else if (Response.ContentEncoding == "deflate")
-					__Encode = new DeflateStream(
-						__Writer, CompressionLevel.Fastest, true);
 				Log.Loging.AddMessage(
 						"Http заголовки успешно обработаны: \r\n" +
 						"Заголовки зап:\r\n" + Response.ToString(), "log.log", Log.Log.Info);
