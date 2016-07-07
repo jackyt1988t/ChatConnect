@@ -14,10 +14,26 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
     public class HTTProtocol : BaseProtocol
     {
 		/// <summary>
-		/// Поток шифровния данных
+		/// шифровать данные
+		/// </summary>
+		public bool Security;
+		/// <summary>
+		/// Поток шифрования данных
 		/// </summary>
 		public SslStream SslStream;
-
+		/// <summary>
+		/// Возвращает действительный поток данных
+		/// </summary>
+		public GetStream
+		{
+			get
+			{
+				if (Security)
+					return SslStream;
+				else
+					return TcpStream;
+			}
+		}
 
 		event PHandlerEvent eventWork;
 		/// <summary>
@@ -141,7 +157,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			}
 		}
 		private object SyncEvent = new object();
-		private static X509Certificate2 sertificate ;
+		private static X509Certificate2 sertificate;
 		static HTTProtocol()
 		{
 			try
@@ -170,10 +186,10 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 Response = new Header();
 			
 			TCPStream = new TcpStream();
+		if (Security)
 			SslStream = new SslStream(
-					   TCPStream, false);
+					TcpStream, false);
 			
-
 			ContextRq = ContextRs = 
 					new HTTPContext(this);
 			AllContext = new Queue<IContext>();
@@ -465,7 +481,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 	{
 		if (!TCPStream.Reader.Empty)
 		{
-			if (SslStream.IsAuthenticated)
+			if (!Security || SslStream.IsAuthenticated)
 			{
 				ContextRq.Handler();
 			}
