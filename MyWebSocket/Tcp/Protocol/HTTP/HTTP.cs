@@ -477,7 +477,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							}
 							catch (AuthenticationException error)
 							{
-								Error(new HTTPException("Ошибка авторизации SSL: " + error.Message, HTTPCode._500_));
+								Error(new HTTPException("Ошибка авторизации https соединения: " + error.Message, HTTPCode._500_));
 							}
 							catch (IOException error)
 							{
