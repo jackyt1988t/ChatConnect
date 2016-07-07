@@ -145,10 +145,14 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					HandlerBody();
 				}
 			}
+			catch (IOException error)
+			{
+				;
+			}
 			catch (HTTPException error)
 			{
-					HandlerError(error);
-					Log.Loging.AddMessage("Ошибка об-тки HTTP запроса", "log.log", Log.Log.Info);
+				HandlerError(error);
+				Log.Loging.AddMessage("Ошибка об-тки HTTP запроса", "log.log", Log.Log.Info);
 			}
 		}
 		/// <summary>

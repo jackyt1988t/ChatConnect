@@ -342,7 +342,8 @@ namespace MyWebSocket.Tcp.Protocol
         unsafe public override int Read(byte[] buffer, int offset, int length)
         {
             int i = 0;
-            if (buffer == null)
+            
+			if (buffer == null)
                 throw new ArgumentNullException("buffer");
             if (offset < 0)
                 throw new ArgumentOutOfRangeException("offset");
@@ -352,7 +353,7 @@ namespace MyWebSocket.Tcp.Protocol
                 throw new ArgumentOutOfRangeException("length + offset");
             lock (__Sync)
             {
-                if (length  > Length)
+				if (length  > Length)
                     length = (int)Length;
                 fixed (byte* source = buffer, target = _buffer)
                 {

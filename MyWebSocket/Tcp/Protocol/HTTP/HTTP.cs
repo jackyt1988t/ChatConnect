@@ -178,7 +178,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					new HTTPContext(this);
 			AllContext = new Queue<IContext>();
 
-			Authentcate();
+			Handshake();
 			OnEventConnect();
 			
 			Interlocked.CompareExchange(ref state, 0, 3);
@@ -186,19 +186,32 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			
 		}
 		async
-		internal void Authentcate()
+		internal void Handshake()
 		{
-			try
+			await Task.Run(() => {
+				ReqAsServer();
+			});		
+		}
+		internal void ReqAsServer()
+		{
+			while (!SslStream.IsAuthenticated)
 			{
-				await SslStream.AuthenticateAsServerAsync(sertificate, false, SslProtocols.Ssl3, true);
-			}
-			catch (AuthenticationException exc)
-			{
-				;
-			}
-			catch (Exception exc)
-			{
-				return;
+				try
+				{
+					if (TCPStream.Reader.Empty)
+						Thread.Sleep(20);
+					else
+						SslStream.AuthenticateAsServer(sertificate, true, 
+													   SslProtocols.Tls, true);
+				}
+				catch (IOException exc)
+				{
+					return;
+				}
+				catch (Exception exc)
+				{
+					return;
+				}
 			}
 		}
 		/// <summary>
