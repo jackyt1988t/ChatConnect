@@ -471,18 +471,18 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			}
 			else
 			{
-				try
-				{
-					SslStream.AuthenticateAsServer(sertificate, false, SslProtocols.Tls, true);
-				}
-				catch (AuthenticationException error)
-				{
-					Error(new HTTPException("Ошибка авторизации SSL: " + error.Message, HTTPCode._500_));
-				}
-				catch (IOException error)
-				{
+						try
+						{
+							SslStream.AuthenticateAsServer(sertificate, false, SslProtocols.Tls, true);
+						}
+						catch (AuthenticationException error)
+						{
+							Error(new HTTPException("Ошибка авторизации SSL: " + error.Message, HTTPCode._500_));
+						}
+						catch (IOException error)
+						{
 										
-				}
+						}
 			}
 		}
 	}
