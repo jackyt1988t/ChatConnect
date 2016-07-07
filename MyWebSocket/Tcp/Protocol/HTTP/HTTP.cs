@@ -178,28 +178,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					new HTTPContext(this);
 			AllContext = new Queue<IContext>();
 
-			Authentcate();
 			OnEventConnect();
 			
 			Interlocked.CompareExchange(ref state, 0, 3);
 
 			
-		}
-		async
-		internal void Authentcate()
-		{
-			try
-			{
-				await SslStream.AuthenticateAsServerAsync(sertificate, false, SslProtocols.Ssl3, true);
-			}
-			catch (AuthenticationException exc)
-			{
-				;
-			}
-			catch (Exception exc)
-			{
-				return;
-			}
 		}
 		/// <summary>
 		/// Потокобезопасный запуск события Work
@@ -423,8 +406,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						if (error == SocketError.WouldBlock
 						 || error == SocketError.NoBufferSpaceAvailable)
 						{
-							if (SslStream.IsAuthenticated && !TCPStream.Reader.Empty)
-								ContextRq.Handler();
+							Handler();
 						}
 						else
 						{
@@ -442,8 +424,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			}
 						else
 						{
-							if (SslStream.IsAuthenticated && !TCPStream.Reader.Empty)
-								ContextRq.Handler();
+							Handler();
 						}
         }
         /// <summary>
@@ -480,5 +461,30 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 }
             }
         }
+	private void Handler()
+	{
+		if (!TCPStream.Reader.Empty)
+		{
+			if (SslStream.IsAuthenticated)
+			{
+				ContextRq.Handler();
+			}
+			else
+			{
+				try
+				{
+					SslStream.AuthenticateAsServer(sertificate, false, SslProtocols.Tls, true);
+				}
+				catch (AuthenticationException error)
+				{
+					Error(new HTTPException("Ошибка авторизации SSL: " + error.Message, HTTPCode._500_));
+				}
+				catch (IOException error)
+				{
+										
+				}
+			}
+		}
+	}
     }
 }
