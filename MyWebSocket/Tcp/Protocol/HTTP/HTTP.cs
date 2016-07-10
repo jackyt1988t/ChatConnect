@@ -14,10 +14,26 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
     public class HTTProtocol : BaseProtocol
     {
 		/// <summary>
-		/// Поток шифровния данных
+		/// шифровать данные
+		/// </summary>
+		public bool Security;
+		/// <summary>
+		/// Поток шифрования данных
 		/// </summary>
 		public SslStream SslStream;
-
+		/// <summary>
+		/// Возвращает действительный поток данных
+		/// </summary>
+		public GetStream
+		{
+			get
+			{
+				if (Security)
+					return SslStream;
+				else
+					return TcpStream;
+			}
+		}
 
 		event PHandlerEvent eventWork;
 		/// <summary>
@@ -141,7 +157,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			}
 		}
 		private object SyncEvent = new object();
-		private static X509Certificate2 sertificate ;
+		private static X509Certificate2 sertificate;
 		static HTTProtocol()
 		{
 			try
@@ -170,49 +186,19 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 Response = new Header();
 			
 			TCPStream = new TcpStream();
+		if (Security)
 			SslStream = new SslStream(
-					   TCPStream, false);
+					TcpStream, false);
 			
-
 			ContextRq = ContextRs = 
 					new HTTPContext(this);
 			AllContext = new Queue<IContext>();
 
-			Handshake();
 			OnEventConnect();
 			
 			Interlocked.CompareExchange(ref state, 0, 3);
 
 			
-		}
-		async
-		internal void Handshake()
-		{
-			await Task.Run(() => {
-				ReqAsServer();
-			});		
-		}
-		internal void ReqAsServer()
-		{
-			while (!SslStream.IsAuthenticated)
-			{
-				try
-				{
-					if (TCPStream.Reader.Empty)
-						Thread.Sleep(20);
-					else
-						SslStream.AuthenticateAsServer(sertificate, true, 
-													   SslProtocols.Tls, true);
-				}
-				catch (IOException exc)
-				{
-					return;
-				}
-				catch (Exception exc)
-				{
-					return;
-				}
-			}
 		}
 		/// <summary>
 		/// Потокобезопасный запуск события Work
@@ -436,8 +422,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						if (error == SocketError.WouldBlock
 						 || error == SocketError.NoBufferSpaceAvailable)
 						{
-							if (SslStream.IsAuthenticated && !TCPStream.Reader.Empty)
-								ContextRq.Handler();
+							Handler();
 						}
 						else
 						{
@@ -455,8 +440,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			}
 						else
 						{
-							if (SslStream.IsAuthenticated && !TCPStream.Reader.Empty)
-								ContextRq.Handler();
+							Handler();
 						}
         }
         /// <summary>
@@ -493,5 +477,30 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 }
             }
         }
+	private void Handler()
+	{
+		if (!TCPStream.Reader.Empty)
+		{
+			if (!Security || SslStream.IsAuthenticated)
+			{
+				ContextRq.Handler();
+			}
+			else
+			{
+							try
+							{
+								SslStream.AuthenticateAsServer(sertificate, false, SslProtocols.Tls, true);
+							}
+							catch (AuthenticationException error)
+							{
+								Error(new HTTPException("Ошибка авторизации https соединения: " + error.Message, HTTPCode._500_));
+							}
+							catch (IOException error)
+							{
+										
+							}
+			}
+		}
+	}
     }
 }

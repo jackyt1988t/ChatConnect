@@ -28,13 +28,13 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 
 
 		/// <summary>
-		/// Не поддерживается данной реализацией
+		/// Возвращает длинну базового потока
 		/// </summary>
 		public override long Length
 		{
 			get
 			{
-				throw new NotImplementedException();
+				Stream.Length;
 			}
 		}
 		/// <summary>
