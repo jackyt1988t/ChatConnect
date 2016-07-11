@@ -65,7 +65,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		public HTTPReader(Stream stream)
 		{
 			Stream = stream;
-			Archiv = new MyStream(0)
+			Archiv = new MyStream(0);
 			__Frame = new HTTPFrame();
 		}
 		/// <summary>

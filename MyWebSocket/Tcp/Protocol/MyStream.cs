@@ -408,17 +408,17 @@ namespace MyWebSocket.Tcp.Protocol
             lock (__Sync)
             {
                 int i;
-		if (length > Clear)
-		{
+				if (length > Clear)
+				{
                     int resize = 2 * (int)Count;
 
                     if (resize < length)
                         resize = 
                             length + (int)Count;
-			Resize(  resize  );
-		}
-		if (length > Clear)
-			throw new IOException("Недостаточно места, MAXRESIZE");
+					Resize(  resize  );
+				}
+			if (length > Clear)
+				throw new IOException("Недостаточно места, MAXRESIZE");
                 fixed (byte* source = Buffer, target = buffer)
                 {
                     byte* pt = target + offset;

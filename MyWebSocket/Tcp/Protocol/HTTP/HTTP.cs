@@ -1,31 +1,33 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net.Security;
 using System.Net.Sockets;
-using System.Security.Authentication;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenSSL.SSL;
+using OpenSSL.X509;
+using OpenSSL.Core;
 
 namespace MyWebSocket.Tcp.Protocol.HTTP
 {
     public class HTTProtocol : BaseProtocol
     {
+		
 		/// <summary>
 		/// шифровать данные
 		/// </summary>
-		public bool Security;
+		public static bool Security;
 		/// <summary>
-		/// Поток шифрования данных
+		/// Путь к сертификату
 		/// </summary>
-		public SslStream SslStream;
+		public static string Path_Pem;
 		/// <summary>
-		/// Возвращает действительный поток данных
+		/// Возвращает поток данных
 		/// </summary>
-		public GetStream
+		public Stream GetStream
 		{
+			
 			get
 			{
 				if (Security)
@@ -34,6 +36,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					return TcpStream;
 			}
 		}
+		/// <summary>
+		/// Поток шифрования данных
+		/// </summary>
+		public SslStreamServer SslStream;
+		
 
 		event PHandlerEvent eventWork;
 		/// <summary>
@@ -157,12 +164,12 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			}
 		}
 		private object SyncEvent = new object();
-		private static X509Certificate2 sertificate;
+		private static X509Certificate sertificate;
 		static HTTProtocol()
 		{
 			try
 			{
-				sertificate = new X509Certificate2("server.pfx", "Tv7bU9m");
+				sertificate = X509Certificate.FromPKCS12(BIO.File("server.pfx", "r"), "Tv7bU9m");
 			}
 			catch (Exception error)
 			{
@@ -175,6 +182,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// <param name="tcp">tcp/ip соединеине</param>
 		public HTTProtocol(Socket tcp)
         {
+			
 			Tcp = tcp;
             State = 
 				States.Connection;
@@ -185,20 +193,37 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				Request  = new Header();
                 Response = new Header();
 			
-			TCPStream = new TcpStream();
-		if (Security)
-			SslStream = new SslStream(
-					TcpStream, false);
-			
-			ContextRq = ContextRs = 
-					new HTTPContext(this);
+			TcpStream = new TcpStream();
+			Security = true;
+			if (Security)
+				SslStream = new SslStreamServer(TcpStream, 
+					sertificate, 
+							false, 
+								null, 
+									SslProtocols.Tls, 
+										SslStrength.All, 
+													true, 
+													(sender, cert, chain, depth, result) =>
+													{
+														return true;
+													});			
+			ContextRq = ContextRs = new HTTPContext( this );
+
 			AllContext = new Queue<IContext>();
 
 			OnEventConnect();
 			
-			Interlocked.CompareExchange(ref state, 0, 3);
+			Interlocked.CompareExchange(  ref state, 0, 3  );
 
 			
+		}
+		/// <summary>
+		/// Создает новый контекст ддля обработки
+		/// </summary>
+		internal void NewContext(IContext cntx)
+		{
+			AllContext.Enqueue(
+				(ContextRq = ContextRq.Context()));
 		}
 		/// <summary>
 		/// Потокобезопасный запуск события Work
@@ -207,7 +232,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		internal void OnEventWork()
 		{
 			if (ContextRs.Cancel 
-				 && TCPStream.Writer.Empty)
+				 && TcpStream.Writer.Empty)
 			{
 				ContextRs = AllContext.Dequeue();
 			}
@@ -227,8 +252,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// </summary>
 		internal void OnEventData(IContext cntx)
 		{
-			AllContext.Enqueue(
-				(ContextRq = ContextRq.Context()));
 
 			string s = "data";
 			string m = "Получены все данные";
@@ -376,6 +399,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 								}
 								if (state == 7)
 								{
+									Dispose();
 									OnEventClose();
 									if (Tcp.Connected)
 										Tcp.Close( 0 );
@@ -393,14 +417,28 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             }
             return TaskResult;
         }
-        public override string ToString()
+
+#region ovverride
+		public override string ToString()
         {
             return "HTTP";
         }
-        /// <summary>
-        /// получает данные
-        /// </summary>
-        private void read()
+		public override void Dispose(bool disposing)
+		{			
+			if (disposing)
+			{
+				
+			}
+			if (SslStream != null)
+				SslStream.Dispose();
+			base.Dispose(disposing);
+		}
+#endregion
+
+		/// <summary>
+		/// получает данные
+		/// </summary>
+		private void read()
         {
 			/*
                 Если функция Poll Вернет true проверяем наличие данных, если данных нет значит соединение
@@ -455,7 +493,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             if (Tcp.Poll(0, SelectMode.SelectWrite))
             {
                 SocketError error;
-                if (!TCPStream.Writer.Empty)
+                if (!TcpStream.Writer.Empty)
                 {
                     if ((error = Send()) != SocketError.Success)
                     {
@@ -469,7 +507,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 								Close();
 							else
 							{
-								Error(new HTTPException("Ошибка чтения http данных: " + error.ToString(), HTTPCode._500_));
+								Error(new HTTPException("Ошибка чтения http данных: " + error.ToString(),HTTPCode._500_));
 							}
 
 						}
@@ -477,30 +515,26 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 }
             }
         }
-	private void Handler()
-	{
-		if (!TCPStream.Reader.Empty)
+		private void Handler()
 		{
-			if (!Security || SslStream.IsAuthenticated)
+			if (!TcpStream.Reader.Empty)
 			{
-				ContextRq.Handler();
-			}
-			else
-			{
+				if (!Security || SslStream.HandshakeComplete)
+				{
+					ContextRq.Handler();
+				}
+				else
+				{
 							try
 							{
-								SslStream.AuthenticateAsServer(sertificate, false, SslProtocols.Tls, true);
+								SslStream.AuthenticateServer();
 							}
-							catch (AuthenticationException error)
+							catch (Exception error)
 							{
-								Error(new HTTPException("Ошибка авторизации https соединения: " + error.Message, HTTPCode._500_));
+								Error(new HTTPException("Ошибка авторизации https соединения: " + error.ToString(), HTTPCode._500_));
 							}
-							catch (IOException error)
-							{
-										
-							}
+				}
 			}
 		}
-	}
     }
 }

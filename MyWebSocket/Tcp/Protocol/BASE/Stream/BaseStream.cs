@@ -24,13 +24,13 @@ namespace MyWebSocket.Tcp.Protocol
 		}
 
 		/// <summary>
-		/// Не поддерживается данной реализацией
+		/// Количество байт доступных для чтения
 		/// </summary
 		public override long Length
 		{
 			get
 			{
-				throw new NotImplementedException();
+				return Reader.Length;
 			}
 		}
 		

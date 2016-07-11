@@ -46,9 +46,9 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			this()
 		{
 			Tcp = http.Tcp;
-			if (http.TCPStream.Reader.Length > 0)
-				http.TCPStream.Reader.CopyTo(TCPStream.Reader,
-									(int)http.TCPStream.Reader.Length);
+			if (http.TcpStream.Reader.Length > 0)
+				http.TcpStream.Reader.CopyTo(TcpStream.Reader,
+									(int)http.TcpStream.Reader.Length);
 
 			Policy.SetPolicy(0, 1, 1, 1, 0, 32000);
 			//Request = http.ContextRq.Request;

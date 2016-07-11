@@ -82,12 +82,10 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			Response = new Header();
 			__ObSync = new object();
 
-			__Reader = new HTTPReader(
-					protocol.SslStream);
+			__Reader = new HTTPReader(protocol.GetStream);
 			__Reader.Header  =  Request;
 
-			__Writer = new HTTPWriter(
-					protocol.SslStream);
+			__Writer = new HTTPWriter(protocol.GetStream);
 			__Writer.Header  =  Response;	
 		}
 		/// <summary>
@@ -122,10 +120,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			}
 			catch (IOException error)
 			{
-				Protocol.Close();
 				Log.Loging.AddMessage(
 					"Ошибка при записи ответа на запрос HTTP" +
-					error.Message + "./r/n" + error.StackTrace, "log.log", Log.Log.Fatal);
+					error.Message + "./r/n" + error.StackTrace, "log.log", Log.Log.Info);
+				HandlerError(new HTTPException("Ошибка получения http данных " +
+														  error.Message, HTTPCode._500_));
 			}
 		}
 		/// <summary>
@@ -145,14 +144,20 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					HandlerBody();
 				}
 			}
-			catch (IOException error)
-			{
-				;
-			}
+			
 			catch (HTTPException error)
 			{
 				HandlerError(error);
-				Log.Loging.AddMessage("Ошибка об-тки HTTP запроса", "log.log", Log.Log.Info);
+				
+				Log.Loging.AddMessage("Ошибка об-тки HTTP запроса " +
+									  "Ошибка: " + error.Message, "log.log", Log.Log.Info);
+			}
+			catch (IOException error)
+			{
+				Log.Loging.AddMessage("Ошибка об-тки HTTP запроса " +
+									  "Ошибка: " + error.Message, "log.log", Log.Log.Info);
+				HandlerError(new HTTPException("Ошибка получения http данных " +
+															 error.Message, HTTPCode._500_));
 			}
 		}
 		/// <summary>
@@ -283,7 +288,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							recive = stream.Read(buffer, recive, _chunk - recive);
 						}
 
-						if (Protocol.State == States.Close
+						if (Cancel
+							 ||Protocol.State == States.Close
 							 || Protocol.State == States.Disconnect)
 						{
 							_to_ = false;
@@ -302,7 +308,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							recive = stream.Read(buffer, recive, length - recive);
 						}
 
-						if (Protocol.State == States.Close
+						if (Cancel
+							 || Protocol.State == States.Close
 							 || Protocol.State == States.Disconnect)
 						{
 							_to_ = false;
@@ -516,6 +523,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					case HTTPFrame.DATA:
 						if (!Protocol.TaskResult.Jump)
 						{
+							Protocol.NewContext(this);
 							Protocol.OnEventData(this);
 
 							Log.Loging.AddMessage(
@@ -540,6 +548,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		async
 		private void HandlerError(HTTPException _1_error)
 		{
+			if (!Request.IsReq)
+				Protocol.NewContext(this);
+
 			if (_1_Error != null)
 			{
 					Response.ClearHeaders();
@@ -594,8 +605,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 								End();
 						break;
 				}
-			}
-					
+			}	
 		}
 	}
 }

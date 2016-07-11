@@ -90,7 +90,7 @@ namespace MyWebSocket.Tcp.Protocol
 		/// <summary>
 		/// Кольцевой буффер хранения данных
 		/// </summary>
-		public TcpStream TCPStream
+		public TcpStream TcpStream
 		{
 			get;
 			protected set;
@@ -148,12 +148,7 @@ namespace MyWebSocket.Tcp.Protocol
 		public virtual void Dispose()
 		{
 			Dispose(true);
-			if (Tcp != null)
-				Tcp.Dispose();
-			if (TCPStream.Writer != null)
-				TCPStream.Writer.Dispose();
-			if (TCPStream.Reader != null)
-				TCPStream.Reader.Dispose();
+			
 			GC.SuppressFinalize(this);
 		}
 		/// <summary>
@@ -162,11 +157,12 @@ namespace MyWebSocket.Tcp.Protocol
 		/// <param name="disposing">если true очитстить неуправляемые ресурсы</param>
 		public virtual void Dispose(bool disposing)
 		{
-			Dispose();
-			if (disposing)
-			{
-				
-			}
+			if (Tcp != null)
+				Tcp.Dispose();
+			if (TcpStream.Writer != null)
+				TcpStream.Writer.Dispose();
+			if (TcpStream.Reader != null)
+				TcpStream.Reader.Dispose();
 		}
 		/// <summary>
 		/// Не поддерживается текущей реализацией
@@ -183,18 +179,18 @@ namespace MyWebSocket.Tcp.Protocol
 		protected SocketError Read()
 		{
 			SocketError error = SocketError.Success;
-				lock (TCPStream.Reader.__Sync)			
+				lock (TcpStream.Reader.__Sync)			
 				{
 					int count = 
 					   LENGTHREAD;
 					int start =
-					   (int)TCPStream.Reader.PointW;
+					   (int)TcpStream.Reader.PointW;
 					byte[] buffer =
-							TCPStream.Reader.Buffer;
+							TcpStream.Reader.Buffer;
 				
-					if (TCPStream.Reader.Count - start < count)
+					if (TcpStream.Reader.Count - start < count)
 						count =
-						  (int)(TCPStream.Reader.Count - start);
+						  (int)(TcpStream.Reader.Count - start);
 			
 					int length = Tcp.Receive(buffer, start, count, SocketFlags.None, out error);
 					if (length > 0)
@@ -202,7 +198,7 @@ namespace MyWebSocket.Tcp.Protocol
 						Len -= length;
 						try
 						{
-							TCPStream.Reader.SetLength(length);
+							TcpStream.Reader.SetLength(length);
 						}
 						catch (IOException)
 						{
@@ -220,26 +216,26 @@ namespace MyWebSocket.Tcp.Protocol
 		{
 			SocketError error = SocketError.Success;
 			
-				lock (TCPStream.Writer.__Sync)
+				lock (TcpStream.Writer.__Sync)
 				{
 					int start =
-						(int)TCPStream.Writer.PointR;
+						(int)TcpStream.Writer.PointR;
 					int write =
-						(int)TCPStream.Writer.Length;
+						(int)TcpStream.Writer.Length;
 					if (write > LENGTHWRITE)
 						write = LENGTHWRITE;
 					byte[] buffer =
-							 TCPStream.Writer.Buffer;
+							 TcpStream.Writer.Buffer;
 
-					if (TCPStream.Writer.Count - start < write)
+					if (TcpStream.Writer.Count - start < write)
 						write =
-						  (int)(TCPStream.Writer.Count - start);
+						  (int)(TcpStream.Writer.Count - start);
 					int length = Tcp.Send(buffer, start, write, SocketFlags.None, out error);
 					if (length > 0)
 					{
 						try
 						{
-						TCPStream.Writer.Position = length;
+						TcpStream.Writer.Position = length;
 						}
 						catch (IOException)
 						{
@@ -253,10 +249,10 @@ namespace MyWebSocket.Tcp.Protocol
 		{
 			SocketError error = SocketError.Success;
 			
-				lock (TCPStream.Writer.__Sync)
+				lock (TcpStream.Writer.__Sync)
 				{
 
-					if (TCPStream.Writer.Empty)
+					if (TcpStream.Writer.Empty)
 						start = Tcp.Send(buffer, start, write, SocketFlags.None, out error);
 
 					int length = write - start;
@@ -264,7 +260,7 @@ namespace MyWebSocket.Tcp.Protocol
 					{
 						try
 						{
-							TCPStream.Writer.Write(buffer, write - length, length);
+							TcpStream.Writer.Write(buffer, write - length, length);
 						}
 						catch (IOException)
 						{

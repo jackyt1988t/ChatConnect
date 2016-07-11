@@ -37,7 +37,7 @@ namespace MyWebSocket.Tcp.Protocol
 		/// <summary>
 		/// Поток чтения данных
 		/// </summary>
-		TcpStream TCPStream
+		TcpStream TcpStream
 		{
 			get;
 		}

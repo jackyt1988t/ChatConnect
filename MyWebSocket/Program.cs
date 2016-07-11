@@ -97,46 +97,51 @@ namespace Example
                 HTTProtocol Http = obj as HTTProtocol;
                 Http.EventData += async (object sender, PEventArgs e) =>
                 {
-					HTTPContext ctx = e.sender as HTTPContext;
-                    switch (ctx.Request.Path)
-                    {
-                        case "/":
+					try
+					{
+						HTTPContext ctx = e.sender as HTTPContext;
+						switch (ctx.Request.Path)
+						{
+							case "/":
 							if (await ctx.AsFile("Html/index.html"))
 								ctx.End();
 							break;
-                        case "/message":
-                        lock (Array)
-                        {
-                            for (int i = 0; i < Array.Count; i++)
-                            {
-                                Array[i].Message(ctx.Request.Body, WSOpcod.Text, WSFin.Last);
-                            }
-                        }
-                        lock (Polling)
-                        {
-							int count = Polling.Count;
-							for (int i = 0; i < count; i++)
-                            {
-                                Polling[0].Message(ctx.Request.Body);
-								Polling[0].End();
-								Polling.RemoveAt(0);
-                            }
-							ctx.Message("Данные получены");
-							ctx.End();
-                        }
-                        break;
-                        case "/subscribe":
-						if (poll)
-							;
-							poll = true;
-							lock (Polling)
-								Polling.Add(ctx);
-                        break;
-                        default:
+							//                 case "/message":
+							//                 lock (Array)
+							//                 {
+							//                     for (int i = 0; i < Array.Count; i++)
+							//                     {
+							//                         Array[i].Message(ctx.Request.Body, WSOpcod.Text, WSFin.Last);
+							//                     }
+							//                 }
+							//                 lock (Polling)
+							//                 {
+							//int count = Polling.Count;
+							//for (int i = 0; i < count; i++)
+							//                     {
+							//                         Polling[0].Message(ctx.Request.Body);
+							//	Polling[0].End();
+							//	Polling.RemoveAt(0);
+							//                     }
+							//ctx.Message("Данные получены");
+							//ctx.End();
+							//                 }
+							//                 break;
+							//                 case "/subscribe":
+							//poll = true;
+							//lock (Polling)
+							//	Polling.Add(ctx);
+							//break;
+							default:
 							if (await ctx.AsFile("Html" + ctx.Request.Path))
 								ctx.End();
-						break;
-                    }
+							break;
+						}
+					}
+					catch (Exception exc)
+					{
+						;
+					}
                 };
                 Http.EventError += (object sender, PEventArgs e) =>
                 {
@@ -144,20 +149,21 @@ namespace Example
                 };
                 Http.EventClose += (object sender, PEventArgs e) =>
                 {
-					IContext[] cntx = 
-							e.sender as IContext[];
-					foreach (IContext ctx in cntx)
-					{
-						HTTPContext hctx =  (HTTPContext)ctx;
-						if (hctx == null)
-							continue;
-						if (hctx.Request.Path == "/subscribe")
-						{
-							lock (Polling)
-								Polling.Remove(hctx);
-						}
-					}
-                    Console.WriteLine("CLOSE");
+					Console.WriteLine("CLOSE");
+					//IContext[] cntx = 
+					//		e.sender as IContext[];
+					//foreach (IContext ctx in cntx)
+					//{
+					//	HTTPContext hctx =  (HTTPContext)ctx;
+					//	if (hctx == null)
+					//		continue;
+					//	if (hctx.Request.Path == "/subscribe")
+					//	{
+					//		lock (Polling)
+					//			Polling.Remove(hctx);
+					//	}
+					//}
+					
                 };
                 Http.EventOnOpen += (object sender, PEventArgs e) =>
                 {

@@ -34,7 +34,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		{
 			get
 			{
-				Stream.Length;
+				return Stream.Length;
 			}
 		}
 		/// <summary>
