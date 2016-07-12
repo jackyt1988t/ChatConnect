@@ -18,34 +18,25 @@ namespace MyWebSocket.Tcp.Protocol.WS
 
 		public bool ReadBody()
         {
-			int @char = 0;
-
 			if (  __Frame.BitLeng == 0  )
 				return true;
-            if (  __Frame.BitMask == 0  )
-            {
-				while ((@char = Stream.ReadByte()) > -1)
-					{
-					__Frame.DataBody[__Frame.PartBody++] = (byte)@char;
+           __Frame.PartBody += Stream.Read(__Frame.DataBody, 
+											(int)__Frame.PartBody, 
+												(int)(__Frame.LengBody - __Frame.PartBody));
 
-					if (__Frame.PartBody == __Frame.LengBody)
-					{
-						return (__Frame.GetsBody = true);
-					}
-				}
-			}
-            else
-            {
-				while ((@char = Stream.ReadByte()) > -1)
+			if (__Frame.PartBody == __Frame.LengBody)
+			{
+				if (  __Frame.BitMask == 1  )
 				{
-					__Frame.DataBody[__Frame.PartBody++] = (byte)(@char ^ __Frame.DataMask[__Frame.PartBody % 4]);
-
-					if (__Frame.PartBody == __Frame.LengBody)
+					int part = 0;
+					while (part++ < __Frame.PartBody)
 					{
-						return (__Frame.GetsBody = true);
+						__Frame.DataBody[part] = (byte)(__Frame.DataBody[part] ^ __Frame.DataMask[part % 4]);
 					}
 				}
-            }
+				
+				return (__Frame.GetsBody = true);
+			}
             return false;
         }
         public bool ReadHead()
@@ -112,7 +103,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
                         /*  Обработчик.  */
                         __Frame.Handler += 1;
 						__Frame.DataHead[__Frame.PartHead] = (byte)@char;
-						__Frame.LengBody = __Frame.LengBody | (long)(@char << 48);
+						__Frame.LengBody = __Frame.LengBody | ((long)@char << 48);
                         break;
                     case 4:
                         /*  Обработчик.  */
@@ -196,6 +187,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
                 {
 						if (__Frame.LengBody > -1)
 							__Frame.DataBody = new byte[__Frame.LengBody];
+
 					return (__Frame.GetHead = true);
                 }
             }
