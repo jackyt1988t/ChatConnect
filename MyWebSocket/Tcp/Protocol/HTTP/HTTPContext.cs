@@ -198,6 +198,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					}
 					
 					Message(msg, i * _chunk, _chunk);
+					        Thread.Sleep(5);
 
 				}
 				if (length > 0)
@@ -210,6 +211,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					}
 					
 					Message(msg, (i - 1) * _chunk, length);
+					        Thread.Sleep(5);
 
 				}
 				return true;
@@ -297,6 +299,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						}
 
 						Message(buffer, 0, _chunk);
+						        Thread.Sleep(5);
 
 					}
 					if (length > 0)
@@ -317,6 +320,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						}
 
 						Message(buffer, 0, length);
+						        Thread.Sleep(5);
 
 					}
 				}
