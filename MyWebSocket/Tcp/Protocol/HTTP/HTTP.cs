@@ -163,8 +163,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				eventconnect -= value;
 			}
 		}
-		private object SyncEvent = new object();
-		private static X509Certificate sertificate;
+		protected object SyncEvent = new object();
+		protected static X509Certificate sertificate;
 		static HTTProtocol()
 		{
 			try
@@ -218,7 +218,14 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			
 		}
 		/// <summary>
-		/// Создает новый контекст ддля обработки
+		/// Освобождаем ресурсы перед очисткой
+		/// </summary>
+		~HTTProtocol()
+		{
+			Dispose();
+		}
+		/// <summary>
+		/// Создает новый контекст для обработки
 		/// </summary>
 		internal void NewContext(IContext cntx)
 		{
@@ -399,7 +406,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 								}
 								if (state == 7)
 								{
-									Dispose();
 									OnEventClose();
 									if (Tcp.Connected)
 										Tcp.Close( 0 );
@@ -418,11 +424,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             return TaskResult;
         }
 
-#region ovverride
-		public override string ToString()
-        {
-            return "HTTP";
-        }
+		#region ovverride
+		/// <summary>
+		/// Очищает данные связанные с объектом
+		/// </summary>
+		/// <param name="disposing">true чтобы очистить неуправляеме объекты</param>
 		public override void Dispose(bool disposing)
 		{			
 			if (disposing)
@@ -433,7 +439,16 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				SslStream.Dispose();
 			base.Dispose(disposing);
 		}
-#endregion
+		/// <summary>
+		/// Возврощает информацию о текущем объекте
+		/// </summary>
+		/// <returns>информацию о текущем объекте</returns>
+		public override string ToString()
+        {
+            return "HTTP";
+        }
+		
+		#endregion
 
 		/// <summary>
 		/// получает данные

@@ -1,71 +1,48 @@
 ﻿using System;
+using System.IO;
 
 namespace MyWebSocket.Tcp.Protocol.WS
 {
-    class WSReaderN13 : MyStream
+    class WSReaderN13
     {
 		byte _ngHead;
-		public WSN13 _Frame;
+		public WSN13 __Frame;
+		public Stream Stream;
 
-		public WSReaderN13() : 
-			base(1024)
-		{
-			_Frame = new WSN13();
-		}
-		public WSReaderN13(int length) :
-			base(length)
+		public WSReaderN13(Stream stream, WSN13 frame) :
+			base()
         {
-			_Frame  =  new WSN13();
+			Stream = stream;
+			__Frame = frame;
         }
 
-		public override void Reset()
-		{
-			base.Reset();
-			_Frame.Null();
-		}
-		unsafe public bool ReadBody()
+		public bool ReadBody()
         {
-			if (  _Frame.BitLeng == 0  )
+			int @char = 0;
+
+			if (  __Frame.BitLeng == 0  )
 				return true;
-            if (  _Frame.BitMask == 0  )
+            if (  __Frame.BitMask == 0  )
             {
-				fixed (byte* sourse = _buffer, target = _Frame.DataBody)
-				{
-					byte* ps = sourse + PointR;
-					byte* pt = target + _Frame.PartBody;
-
-					while (!Empty)
+				while ((@char = Stream.ReadByte()) > -1)
 					{
-						*pt = *ps;
-						ps++;
-						pt++;						
-						PointR++;
+					__Frame.DataBody[__Frame.PartBody++] = (byte)@char;
 
-						if (++_Frame.PartBody == _Frame.LengBody)
-						{
-							return (_Frame.GetsBody = true);
-						}
+					if (__Frame.PartBody == __Frame.LengBody)
+					{
+						return (__Frame.GetsBody = true);
 					}
 				}
 			}
             else
             {
-				fixed (byte * sourse = _buffer, target = _Frame.DataBody)
+				while ((@char = Stream.ReadByte()) > -1)
 				{
-					byte* ps = sourse + PointR;
-					byte* pt = target + _Frame.PartBody;
+					__Frame.DataBody[__Frame.PartBody++] = (byte)(@char ^ __Frame.DataMask[__Frame.PartBody % 4]);
 
-					while (!Empty)
+					if (__Frame.PartBody == __Frame.LengBody)
 					{
-						*pt = (byte)(*ps ^ _Frame.DataMask[_Frame.PartBody % 4]);
-						ps++;
-						pt++;
-						PointR++;
-
-						if (++_Frame.PartBody == _Frame.LengBody)
-						{
-							return (_Frame.GetsBody = true);
-						}
+						return (__Frame.GetsBody = true);
 					}
 				}
             }
@@ -73,145 +50,153 @@ namespace MyWebSocket.Tcp.Protocol.WS
         }
         public bool ReadHead()
         {
-            while (!Empty)
+			int @char = 0;
+			while ((@char = Stream.ReadByte()) > -1)
             {
-                switch (_Frame.Handler)
+                switch (__Frame.Handler)
                 {
                     case 0:
 
-						_Frame.BitFin  = (Buffer[PointR] & 0x80) >> 7;
-                        _Frame.BitRsv1 = (Buffer[PointR] & 0x40) >> 6;
-						_Frame.BitRsv2 = (Buffer[PointR] & 0x20) >> 5;
-						_Frame.BitRsv3 = (Buffer[PointR] & 0x10) >> 4;
-                        _Frame.BitPcod = (Buffer[PointR] & 0x0F);
+						__Frame.BitFin  = (@char & 0x80) >> 7;
+                        __Frame.BitRsv1 = (@char & 0x40) >> 6;
+						__Frame.BitRsv2 = (@char & 0x20) >> 5;
+						__Frame.BitRsv3 = (@char & 0x10) >> 4;
+                        __Frame.BitPcod = (@char & 0x0F);
 
                         /* Общая длинна  */
-                        _Frame.LengHead = 2;
+                        __Frame.LengHead = 2;
                         /* Длинна ответа */
-                        _Frame.PartHead = 0;
+                        __Frame.PartHead = 0;
                         /* Длинна ответа */
-                        _Frame.PartBody = 0;
+                        __Frame.PartBody = 0;
                         /*  Обработчик.  */
-                        _Frame.Handler += 1;
+                        __Frame.Handler += 1;
 
-						_ngHead = Buffer[PointR];
+						_ngHead = (byte)@char;
 						break;
                     case 1:
-						_Frame.BitMask = (Buffer[PointR] & 0x80) >> 7;
-                        _Frame.BitLeng = (Buffer[PointR] & 0x7F);
+						__Frame.BitMask = (@char & 0x80) >> 7;
+                        __Frame.BitLeng = (@char & 0x7F);
 			
-						if (_Frame.BitMask == 1)
-							_Frame.LengHead += 4;
-                        if (_Frame.BitLeng == 127)
+						if (__Frame.BitMask == 1)
+							__Frame.LengHead += 4;
+                        if (__Frame.BitLeng == 127)
                         {
-                            _Frame.Handler += 1;
-                            _Frame.LengHead += 8;
+                            __Frame.Handler += 1;
+                            __Frame.LengHead += 8;
                         }
-                        else if (_Frame.BitLeng == 126)
+                        else if (__Frame.BitLeng == 126)
                         {
-                            _Frame.Handler += 7;
-                            _Frame.LengHead += 2;
+                            __Frame.Handler += 7;
+                            __Frame.LengHead += 2;
                         }
-                        else if (_Frame.BitLeng <= 125)
+                        else if (__Frame.BitLeng <= 125)
                         {
-                            _Frame.Handler += 9;
-                            _Frame.LengBody = _Frame.BitLeng;
+                            __Frame.Handler += 9;
+                            __Frame.LengBody = __Frame.BitLeng;
                         }
 						
-						_Frame.DataHead = 
-							new byte[_Frame.LengHead];
-						_Frame.DataHead[0] = _ngHead;
-						_Frame.DataHead[_Frame.PartHead] = Buffer[PointR];
+						__Frame.DataHead = 
+							new byte[__Frame.LengHead];
+						__Frame.DataHead[0] = _ngHead;
+						__Frame.DataHead[__Frame.PartHead] = (byte)@char;
 						
 						break;
                     case 2:
                         /*  Обработчик.  */
-                        _Frame.Handler += 1;
-						_Frame.DataHead[_Frame.PartHead] = Buffer[PointR];
-                                         _Frame.LengBody = (long)(Buffer[PointR] << 56);
+                        __Frame.Handler += 1;
+						__Frame.DataHead[__Frame.PartHead] = (byte)@char;
+                                         __Frame.LengBody  =  @char << 56;
                         break;
                     case 3:
                         /*  Обработчик.  */
-                        _Frame.Handler += 1;
-						_Frame.DataHead[_Frame.PartHead] = Buffer[PointR];
-						_Frame.LengBody = _Frame.LengBody | (long)(Buffer[PointR] << 48);
+                        __Frame.Handler += 1;
+						__Frame.DataHead[__Frame.PartHead] = (byte)@char;
+						__Frame.LengBody = __Frame.LengBody | (long)(@char << 48);
                         break;
                     case 4:
                         /*  Обработчик.  */
-                        _Frame.Handler += 1;
-						_Frame.DataHead[_Frame.PartHead] = Buffer[PointR];
-						_Frame.LengBody = _Frame.LengBody | (long)(Buffer[PointR] << 40);
+                        __Frame.Handler += 1;
+						__Frame.DataHead[__Frame.PartHead] = (byte)@char;
+						__Frame.LengBody = __Frame.LengBody | ((long)@char << 40);
                         break;
                     case 5:
                         /*  Обработчик.  */
-                        _Frame.Handler += 1;
-						_Frame.DataHead[_Frame.PartHead] = Buffer[PointR];
-						_Frame.LengBody = _Frame.LengBody | (long)(Buffer[PointR] << 32);
+                        __Frame.Handler += 1;
+						__Frame.DataHead[__Frame.PartHead] = (byte)@char;
+						__Frame.LengBody = __Frame.LengBody | ((long)@char << 32);
                         break;
                     case 6:
                         /*  Обработчик.  */
-                        _Frame.Handler += 1;
-						_Frame.DataHead[_Frame.PartHead] = Buffer[PointR];
-						_Frame.LengBody = _Frame.LengBody | (long)(Buffer[PointR] << 24);
+                        __Frame.Handler += 1;
+						__Frame.DataHead[__Frame.PartHead] = (byte)@char;
+						__Frame.LengBody = __Frame.LengBody | ((long)@char << 24);
                         break;
                     case 7:
                         /*  Обработчик.  */
-                        _Frame.Handler += 1;
-						_Frame.DataHead[_Frame.PartHead] = Buffer[PointR];
-						_Frame.LengBody = _Frame.LengBody | (long)(Buffer[PointR] << 16);
+                        __Frame.Handler += 1;
+						__Frame.DataHead[__Frame.PartHead] = (byte)@char;
+						__Frame.LengBody = __Frame.LengBody | ((long)@char << 16);
                         break;
                     case 8:
                         /*  Обработчик.  */
-                        _Frame.Handler += 1;
-						_Frame.DataHead[_Frame.PartHead] = Buffer[PointR];
-						_Frame.LengBody = _Frame.LengBody | (long)(Buffer[PointR] << 08);
+                        __Frame.Handler += 1;
+						__Frame.DataHead[__Frame.PartHead] = (byte)@char;
+						__Frame.LengBody = __Frame.LengBody | ((long)@char << 08);
                         break;
                     case 9:
                         /*  Обработчик.  */
-                        _Frame.Handler += 1;
-						_Frame.DataHead[_Frame.PartHead] = Buffer[PointR];
-						_Frame.LengBody = _Frame.LengBody | (long)(Buffer[PointR] << 00);
+                        __Frame.Handler += 1;
+						__Frame.DataHead[__Frame.PartHead] = (byte)@char;
+						__Frame.LengBody = __Frame.LengBody | ((long)@char << 00);
                         break;
                     case 10:
                         /*  Обработчик.  */
-                        _Frame.Handler += 1;
-						_Frame.DataMask = new byte[4];
-						_Frame.DataMask[0] = Buffer[PointR];
-						_Frame.DataHead[_Frame.PartHead] = Buffer[PointR];
+                        __Frame.Handler += 1;
 						
-                                          		_Frame.MaskVal = (Buffer[PointR] << 24);
+						__Frame.MaskVal = @char << 24;
+						__Frame.DataMask = new byte[4];
+						__Frame.DataMask[0] = (byte)@char;
+						__Frame.DataHead[__Frame.PartHead] = (byte)@char;
+						
                         break;
                     case 11:
                         /*  Обработчик.  */
-                        _Frame.Handler += 1;
-						_Frame.DataMask[1] = Buffer[PointR];
-						_Frame.DataHead[_Frame.PartHead] = Buffer[PointR];
+                        __Frame.Handler += 1;
 						
-                        		_Frame.MaskVal = _Frame.MaskVal | (Buffer[PointR] << 16);
+						__Frame.MaskVal = __Frame.MaskVal 
+										  | (@char << 16);
+						__Frame.DataMask[1] = (byte)@char;
+						__Frame.DataHead[__Frame.PartHead] = (byte)@char;
+						
+                        		
                         break;
                     case 12:
                         /*  Обработчик.  */
-                        _Frame.Handler += 1;
-						_Frame.DataMask[2] = Buffer[PointR];
-						_Frame.DataHead[_Frame.PartHead] = Buffer[PointR];
+                        __Frame.Handler += 1;
+						__Frame.MaskVal = __Frame.MaskVal 
+										  | (@char << 08);
+						__Frame.DataMask[2] = (byte)@char;
+						__Frame.DataHead[__Frame.PartHead] = (byte)@char;
 						
-								_Frame.MaskVal = _Frame.MaskVal | (Buffer[PointR] << 08);
+								
                         break;
                     case 13:
-						_Frame.DataMask[3] = Buffer[PointR];
-						_Frame.DataHead[_Frame.PartHead] = Buffer[PointR];
-								_Frame.MaskVal = _Frame.MaskVal | (Buffer[PointR] << 00);
+						__Frame.MaskVal = __Frame.MaskVal 
+										  | (@char << 00);
+						__Frame.DataMask[3] = (byte)@char;
+						__Frame.DataHead[__Frame.PartHead] = (byte)@char;
+								
                         break;
                 }
 
-				PointR++;
-                _Frame.PartHead++;
+                __Frame.PartHead++;
 
-                if (_Frame.PartHead == _Frame.LengHead)
+                if (__Frame.PartHead == __Frame.LengHead)
                 {
-					if (_Frame.LengBody > -1)
-						_Frame.DataBody = new byte[_Frame.LengBody];
-					return (_Frame.GetsHead = true);
+						if (__Frame.LengBody > -1)
+							__Frame.DataBody = new byte[__Frame.LengBody];
+					return (__Frame.GetHead = true);
                 }
             }
             return false;

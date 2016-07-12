@@ -153,6 +153,7 @@
     </Compile>
     <Compile Include="Tcp\Protocol\WS\WStream\WSSampleWriter.cs" />
     <Compile Include="Tcp\Protocol\WS\WStream\WSWriterN13.cs" />
+    <Compile Include="Tcp\Protocol\WS\WS№13\WSContext№13.cs" />
     <Compile Include="Tcp\WServer.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>

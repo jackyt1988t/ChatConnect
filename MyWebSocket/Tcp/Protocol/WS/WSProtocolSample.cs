@@ -102,7 +102,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 				writer._Frame.LengBody = length;
 				writer._Frame.DataBody = message;
 				writer._Frame.InitializationHeader();
-				if (Debug)
+				if (DebugPrint)
 					WSDebug.DebugSample(writer._Frame);
 				if (!Message(writer._Frame.DataHead, 0, (int)writer._Frame.LengHead))
 					return false;
@@ -152,7 +152,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 				if (!reader.ReadBody())
 					return;
 
-				if (Debug)
+				if (DebugPrint)
 					WSDebug.DebugSample(reader._Frame);
 				switch (reader._Frame.BitPcod)
 				{

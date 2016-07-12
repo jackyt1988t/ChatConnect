@@ -128,7 +128,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			writer._Frame.DataBody = message;
 
 			writer._Frame.InitializationHeader();
-			if (Debug)
+			if (DebugPrint)
 				WSDebug.DebugN13( writer._Frame );
 			lock (Sync)
 			{
@@ -153,75 +153,75 @@ namespace MyWebSocket.Tcp.Protocol.WS
 
 		protected override void Data()
 		{
-			if (reader._Frame.GetsHead && reader._Frame.GetsBody)
-				reader._Frame.Null();
+			if (reader.__Frame.GetHead && reader.__Frame.GetsBody)
+				reader.__Frame.Null();
 
-			if (!reader._Frame.GetsHead)
+			if (!reader.__Frame.GetHead)
 			{
 				if (!reader.ReadHead())
 					return;
-				if (reader._Frame.BitRsv1 == Policy.Bit2)
+				if (reader.__Frame.BitRsv1 == Policy.Bit2)
 					throw new WSException("Неверный бит rcv1", WsError.HeaderFrameError, WSClose.PolicyViolation);
-				if (reader._Frame.BitRsv2 == Policy.Bit3)
+				if (reader.__Frame.BitRsv2 == Policy.Bit3)
 					throw new WSException("Неверный бит rcv2", WsError.HeaderFrameError, WSClose.PolicyViolation);
-				if (reader._Frame.BitRsv3 == Policy.Bit4)
+				if (reader.__Frame.BitRsv3 == Policy.Bit4)
 					throw new WSException("Неверный бит rcv3", WsError.HeaderFrameError, WSClose.PolicyViolation);
-				if (reader._Frame.BitMask == Policy.Mask)
+				if (reader.__Frame.BitMask == Policy.Mask)
 					throw new WSException("Неверный бит mask", WsError.HeaderFrameError, WSClose.PolicyViolation);
-				if (reader._Frame.LengBody < 0 || reader._Frame.LengBody > Policy.MaxLeng)
+				if (reader.__Frame.LengBody < 0 || reader.__Frame.LengBody > Policy.MaxLeng)
 				{
-					string length = reader._Frame.LengBody.ToString("X");
+					string length = reader.__Frame.LengBody.ToString("X");
 					throw new WSException("Длинна: " + length, WsError.HeaderFrameError, WSClose.PolicyViolation);
 				}
 			}
-			if (!reader._Frame.GetsBody)
+			if (!reader.__Frame.GetsBody)
 			{
 				if (!reader.ReadBody())
 					return;
 
-				if (Debug)
-					WSDebug.DebugN13(reader._Frame);
-				switch (reader._Frame.BitPcod)
+				if (DebugPrint)
+					WSDebug.DebugN13(reader.__Frame);
+				switch (reader.__Frame.BitPcod)
 				{
 					
 					case WSN13.TEXT:
 						if (Rchunk)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
-						if (reader._Frame.BitFin == 1)
-							OnEventData(new WSData(reader._Frame.DataBody, WSOpcod.Text, WSFin.Last));
+						if (reader.__Frame.BitFin == 1)
+							OnEventData(new WSData(reader.__Frame.DataBody, WSOpcod.Text, WSFin.Last));
 						else
 						{
 							Rchunk = true;
-							OnEventChunk(new WSData(reader._Frame.DataBody, WSOpcod.Text, WSFin.Next));
+							OnEventChunk(new WSData(reader.__Frame.DataBody, WSOpcod.Text, WSFin.Next));
 						}
 						break;
 					case WSN13.PING:
-						if (reader._Frame.BitFin == 0)
+						if (reader.__Frame.BitFin == 0)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
 
-							OnEventPing(new WSData(reader._Frame.DataBody, WSOpcod.Ping, WSFin.Last));
-							Message(   reader._Frame.DataBody, 0, (int)reader._Frame.LengBody, WSOpcod.Pong, WSFin.Last   );
+							OnEventPing(new WSData(reader.__Frame.DataBody, WSOpcod.Ping, WSFin.Last));
+							Message(   reader.__Frame.DataBody, 0, (int)reader.__Frame.LengBody, WSOpcod.Pong, WSFin.Last   );
 						break;
 					case WSN13.PONG:
-						if (reader._Frame.BitFin == 0)
+						if (reader.__Frame.BitFin == 0)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
-						if (PingControl.SetPing.ToString() != Encoding.UTF8.GetString(reader._Frame.DataBody))
+						if (PingControl.SetPing.ToString() != Encoding.UTF8.GetString(reader.__Frame.DataBody))
 							throw new WSException("Неверный бит fin.", WsError.PongBodyIncorrect,WSClose.PolicyViolation);
 							PingControl.GetPong = new TimeSpan( DateTime.Now.Ticks );
 
-							OnEventPong(new WSData(reader._Frame.DataBody, WSOpcod.Pong, WSFin.Last));
+							OnEventPong(new WSData(reader.__Frame.DataBody, WSOpcod.Pong, WSFin.Last));
 						break;
 					case WSN13.CLOSE:
-						if (reader._Frame.BitFin == 0)
+						if (reader.__Frame.BitFin == 0)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
 						
 						string message;
 						WSClose __close;
 					
-						if (reader._Frame.LengBody > 1)
+						if (reader.__Frame.LengBody > 1)
 						{
-							int number = reader._Frame.DataBody[0] << 8;
-								number = reader._Frame.DataBody[1] | number;
+							int number = reader.__Frame.DataBody[0] << 8;
+								number = reader.__Frame.DataBody[1] | number;
 							
 							if (number >= 1000 && number <= 1012)
 								__close = (WSClose)number;
@@ -231,37 +231,37 @@ namespace MyWebSocket.Tcp.Protocol.WS
 							else
 								__close = (WSClose.Abnormal);
 						
-						if (reader._Frame.LengBody < 3)
+						if (reader.__Frame.LengBody < 3)
 							message = string.Empty;
 						else
-							message = Encoding.UTF8.GetString(reader._Frame.DataBody, 2, (int)(reader._Frame.LengBody - 2));
+							message = Encoding.UTF8.GetString(reader.__Frame.DataBody, 2, (int)(reader.__Frame.LengBody - 2));
 							CloseServer(__close, message, false);
 						break;
 					case WSN13.BINNARY:
 						if (Rchunk)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
-						if (reader._Frame.BitFin == 1)
-							OnEventData(new WSData(reader._Frame.DataBody, WSOpcod.Binnary, WSFin.Last));
+						if (reader.__Frame.BitFin == 1)
+							OnEventData(new WSData(reader.__Frame.DataBody, WSOpcod.Binnary, WSFin.Last));
 						else
 						{
 							Rchunk = true;
-							OnEventChunk(new WSData(reader._Frame.DataBody, WSOpcod.Binnary, WSFin.Next));
+							OnEventChunk(new WSData(reader.__Frame.DataBody, WSOpcod.Binnary, WSFin.Next));
 						}
 						break;
 					case WSN13.CONTINUE:
 						if (!Rchunk)
 							throw new WSException("Неверный бит fin.", WsError.HeaderFrameError, WSClose.PolicyViolation);
-						if (reader._Frame.BitFin == 1)
+						if (reader.__Frame.BitFin == 1)
 						{
 							Rchunk = false;
-							OnEventData(new WSData(reader._Frame.DataBody, WSOpcod.Continue, WSFin.Last));
+							OnEventData(new WSData(reader.__Frame.DataBody, WSOpcod.Continue, WSFin.Last));
 						}
 						else
-							OnEventChunk(new WSData(reader._Frame.DataBody, WSOpcod.Continue, WSFin.Next));
+							OnEventChunk(new WSData(reader.__Frame.DataBody, WSOpcod.Continue, WSFin.Next));
 						break;
 					default:
 						throw new WSException("Опкод не поддерживается " + 
-												     reader._Frame.BitPcod, WsError.PcodNotSuported, WSClose.UnsupportedData);
+												     reader.__Frame.BitPcod, WsError.PcodNotSuported, WSClose.UnsupportedData);
 				}			
 			}
 		}

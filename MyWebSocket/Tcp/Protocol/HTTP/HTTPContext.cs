@@ -2,9 +2,13 @@
 
 using System.IO;
 using System.IO.Compression;
-using System.Text;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+
+	using System.Text;
+
+		using System.Threading;
+		using System.Threading.Tasks;
+
+			using System.Collections.Generic;
 
 namespace MyWebSocket.Tcp.Protocol.HTTP
 {
@@ -123,6 +127,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				Log.Loging.AddMessage(
 					"Ошибка при записи ответа на запрос HTTP" +
 					error.Message + "./r/n" + error.StackTrace, "log.log", Log.Log.Info);
+
 				HandlerError(new HTTPException("Ошибка получения http данных " +
 														  error.Message, HTTPCode._500_));
 			}
@@ -160,10 +165,15 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 															 error.Message, HTTPCode._500_));
 			}
 		}
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="msg"></param>
+		/// <returns></returns>
 		async
-		public bool AsMssg(string msg)
+		public Task<bool> AsMssg(string msg)
 		{
-			return await AsMssg(Encoding.UTF8.GetBytes(msg);
+			return await AsMssg(Encoding.UTF8.GetBytes(msg));
 		}
 		/// <summary>
 		/// 
@@ -272,8 +282,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 								ext = "plain";
 							else
 								ext = Info.Extension.Substring(1);
-							Response.ContentType =
-								new List<string>()
+								Response.ContentType =
+									new List<string>()
 									{
 										"text/" + ext,
 										"charset=utf-8"
@@ -295,8 +305,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							recive = stream.Read(buffer, recive, _chunk - recive);
 						}
 
-						if (Cancel
-							 ||Protocol.State == States.Close
+						if (Protocol.State == States.Close
 							 || Protocol.State == States.Disconnect)
 						{
 							_to_ = false;
@@ -316,8 +325,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 							recive = stream.Read(buffer, recive, length - recive);
 						}
 
-						if (Cancel
-							 || Protocol.State == States.Close
+						if (Protocol.State == States.Close
 							 || Protocol.State == States.Disconnect)
 						{
 							_to_ = false;
@@ -375,6 +383,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		{
 			lock (__ObSync)
 			{
+				if (Cancel)
+					throw new HTTPException("Отправка данных закончена");
 				try
 				{
 					SetResponse();

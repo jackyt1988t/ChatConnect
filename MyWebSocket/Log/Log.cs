@@ -33,9 +33,7 @@ namespace MyWebSocket.Log
             if (mode < Mode)
                 return;
             
-            message = DateTime.Now.ToString() + NewLine 
-                               + mode.ToString() + ": " 
-                                   + message + NewLine;
+            message = DateTime.Now.ToString() + mode.ToString() + ": " + NewLine + message;
                                     
             StreamWriter writer = null;
             try

@@ -24,7 +24,7 @@ namespace MyWebSocket.Tcp
 			Protocol = new HTTProtocol(tcp);
 			Container.Enqueue(this);
 		}
- static public void Loop()
+		static public void Loop()
 		{
 			short loop = 0;
 			while ( true )

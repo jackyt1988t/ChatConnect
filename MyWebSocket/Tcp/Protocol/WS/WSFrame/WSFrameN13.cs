@@ -98,7 +98,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		/// <summary>
 		/// 
 		/// </summary>
-		public bool SetsHead
+		public bool SetHead
 		{
 			get;
 			private set;
@@ -106,7 +106,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		/// <summary>
 		/// Если заголвоки получены true
 		/// </summary>
-        public bool GetsHead
+        public bool GetHead
         {
             get;
             set;
@@ -195,17 +195,17 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			DataHead = null;
 			DataBody = null;
 			DataMask = null;
-			GetsHead = false;
+			GetHead = false;
 			GetsBody = false;
-			SetsHead = false;
+			SetHead = false;
 		}
 		unsafe public void InitializationHeader()
 		{
-			if (SetsHead)
+			if (SetHead)
 				return;
 						
             LengHead = 2;
-			SetsHead = true;
+			SetHead = true;
 			if (BitMask == 1)
             {
 				MaskVal = new Random().Next();
