@@ -160,6 +160,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 															 error.Message, HTTPCode._500_));
 			}
 		}
+		async
+		public bool AsMssg(string msg)
+		{
+			return await AsMssg(Encoding.UTF8.GetBytes(msg);
+		}
 		/// <summary>
 		/// 
 		/// </summary>
