@@ -231,7 +231,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// </summary>
 		internal void NewContext(IContext cntx)
 		{
-			AllContext.Enqueue(ContextRq = ContextRq.Context());
+			AllContext.Enqueue(ContextRq = cntx.Context());
 		}
 		/// <summary>
 		/// Потокобезопасный запуск события Work
