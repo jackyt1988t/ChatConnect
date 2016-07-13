@@ -107,8 +107,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				else
 					_ow_ = true;
 				
-				__Writer.CopyTo(  Protocol.GetStream  );
-				__Writer.Stream = Protocol.GetStream;
+				__Writer.Stream.CopyTo( Protocol.GetStream );
+				__Writer.Stream    =    Protocol.GetStream;
 			}
 		}
 		/// <summary>
