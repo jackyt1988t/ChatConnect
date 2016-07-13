@@ -107,8 +107,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				else
 					_ow_ = true;
 				
-				__Writer.Stream.CopyTo(   Protocol.GetStream   );
-				__Writer.Stream.Dispise();
+				  __Writer.Stream.CopyTo( Protocol.GetStream );
+				  __Writer.Stream.Dispise();
 
 				if (!Cancel)
 					__Writer.Stream = Protocol.GetStream;
@@ -123,7 +123,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			//if ( Request.Upgrade == "websocket" )
 				//return null;
 			//else
-				return new HTTPContext(Protocol);
+				return new HTTPContext(Protocol, Cancel);
 		}
 		/// <summary>
 		/// 
