@@ -225,10 +225,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			Dispose();
 		}
 
-		internal void EndContext(IContext cntx)
-		{
-			(ContextRs = AllContext.Dequeue()).Refresh();
-		}
 		/// <summary>
 		/// Создает новый контекст для обработки
 		/// </summary>
@@ -242,10 +238,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// </summary>
 		internal void OnEventWork()
 		{
-			if (ContextRs.Cancel 
-				 && TcpStream.Writer.Empty)
+			if (ContextRs.Cancel)
 			{
-				ContextRs = AllContext.Dequeue();
+				(ContextRs = AllContext.Dequeue()).Refresh();
 			}
 
 			string s = "work";
