@@ -6,7 +6,7 @@ using MyWebSocket.Tcp.Protocol.HTTP;
 
 namespace MyWebSocket.Tcp.Protocol.WS
 {
-	public abstract class WS : HTTProtocol
+	public abstract class WSProtocol : HTTProtocol
 	{
 		private static readonly string S_WORK = "work";
 		private static readonly string S_SEND = "send";
@@ -68,7 +68,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		private  event PHandlerEvent __EventPing;
 		private  event PHandlerEvent __EventPong;
 
-		public WS(Socket tcp) : 
+		public WSProtocol(Socket tcp) : 
 			base(tcp)
 			{
 			

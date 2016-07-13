@@ -13,81 +13,81 @@ namespace Example
     {
         static void Main(string[] args)
         {
-            List<WS> Array = new List<WS>();
-            List<HTTPContext> Polling = new List<HTTPContext>();
-            WS.EventConnect += (object o, PEventArgs e) =>
-            {
-                WS ws = o as WS;
+       //     List<WS> Array = new List<WS>();
+       //     List<HTTPContext> Polling = new List<HTTPContext>();
+       //     WS.EventConnect += (object o, PEventArgs e) =>
+       //     {
+       //         WS ws = o as WS;
 
-                List<string> Text = new List<string>();
-                ws.EventData += (object obj, PEventArgs a) =>
-                {
-                    WSData data = a.sender as WSData;
+       //         List<string> Text = new List<string>();
+       //         ws.EventData += (object obj, PEventArgs a) =>
+       //         {
+       //             WSData data = a.sender as WSData;
 
-                    if (data.Opcod  ==  WSOpcod.Text)
-                    {
-                        Text.Add(data.ToString());
+       //             if (data.Opcod  ==  WSOpcod.Text)
+       //             {
+       //                 Text.Add(data.ToString());
 
-                        string text = string.Empty;
-                        for (int i = 0; i < Text.Count; i++)
-                        {
-                            text += Text[i];
-                        }
-                        Text.Clear();
+       //                 string text = string.Empty;
+       //                 for (int i = 0; i < Text.Count; i++)
+       //                 {
+       //                     text += Text[i];
+       //                 }
+       //                 Text.Clear();
 
-                        lock (Array)
-                        {
-                            for (int i = 0; i < Array.Count; i++)
-                            {
-                                Array[i].Message(text);
-                            }
-                        }
-                        lock (Polling)
-                        {
-                            for (int i = 0; i < Polling.Count; i++)
-                            {
-                                Polling[i].Message(text);
-								Polling[i].End();
+       //                 lock (Array)
+       //                 {
+       //                     for (int i = 0; i < Array.Count; i++)
+       //                     {
+       //                         Array[i].Message(text);
+       //                     }
+       //                 }
+       //                 lock (Polling)
+       //                 {
+       //                     for (int i = 0; i < Polling.Count; i++)
+       //                     {
+       //                         Polling[i].Message(text);
+							//	Polling[i].End();
 
-							}
-                        }
-                    }
-                    else
-                    {
-                        ws.Close(WSClose.Normal);
-                    }
+							//}
+       //                 }
+       //             }
+       //             else
+       //             {
+       //                 ws.Close(WSClose.Normal);
+       //             }
 
-                };
-                ws.EventChunk += (object obj, PEventArgs a) =>
-                {
-                    WSData data = a.sender as WSData;
+       //         };
+       //         ws.EventChunk += (object obj, PEventArgs a) =>
+       //         {
+       //             WSData data = a.sender as WSData;
 
-                    if (data.Opcod  ==  WSOpcod.Text)
-                    {
-                        Text.Add(data.ToString());
-                    }
-                    else
-                    {
-                        ws.Close(WSClose.Normal);
-                    }
-                };
-                ws.EventError += (object sender, PEventArgs a) =>
-                {
-                    Console.WriteLine(a.sender.ToString());
-                };
-                ws.EventClose += (object sender, PEventArgs a) =>
-                {
-                    lock (Array)
-                        Array.Remove(ws);
-                    Console.WriteLine(a.sender.ToString());
-                };
-                ws.EventOnOpen += (object sender, PEventArgs a) =>
-                {
-                    lock (Array)
-                        Array.Add(ws);
-                    Console.WriteLine("Соединение WS Установлено");
-                };
-            };
+       //             if (data.Opcod  ==  WSOpcod.Text)
+       //             {
+       //                 Text.Add(data.ToString());
+       //             }
+       //             else
+       //             {
+       //                 ws.Close(WSClose.Normal);
+       //             }
+       //         };
+       //         ws.EventError += (object sender, PEventArgs a) =>
+       //         {
+       //             Console.WriteLine(a.sender.ToString());
+       //         };
+       //         ws.EventClose += (object sender, PEventArgs a) =>
+       //         {
+       //             lock (Array)
+       //                 Array.Remove(ws);
+       //             Console.WriteLine(a.sender.ToString());
+       //         };
+       //         ws.EventOnOpen += (object sender, PEventArgs a) =>
+       //         {
+       //             lock (Array)
+       //                 Array.Add(ws);
+       //             Console.WriteLine("Соединение WS Установлено");
+       //         };
+       //     };
 
             HTTProtocol.EventConnect += (object obj, PEventArgs a) =>
             {

@@ -62,7 +62,7 @@ namespace MyWebSocket.Tcp
 				case TaskOption.Protocol:
 					if (TaskResult.Protocol == TaskProtocol.WSN13)
 					{
-						Protocol = new WSProtocolN13((HTTProtocol)Protocol);
+						//Protocol = new WSProtocolN13((HTTProtocol)Protocol);
 						Container.Enqueue(this);
 					}
 					break;

@@ -18,6 +18,8 @@ namespace MyWebSocket.Tcp.Protocol
 		{
 			get;
 		}
+
+		IContext Refresh();
 		/// <summary>
 		/// Новый контекст
 		/// </summary>

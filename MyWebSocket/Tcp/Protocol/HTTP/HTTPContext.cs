@@ -92,27 +92,28 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				__Reader = new HTTPReader( Protocol.GetStream );
 				__Reader.Header = Request;
 			
-			if (_ow_)
+			if (!_ow_)
 				__Writer = new HTTPWriter( new MyStream(4096) );
 			else
 				__Writer = new HTTPWriter( Protocol.GetStream );
 				__Writer.Header = Response;	
 		}
-		internal void Refresh()
+		public IContext Refresh()
 		{
 			lock (__ObSync)
 			{
-				if (_ow_)
-					return;
-				else
+				if (!_ow_)
+				{
 					_ow_ = true;
-				
-				  __Writer.Stream.CopyTo( Protocol.GetStream );
-				  __Writer.Stream.Dispise();
 
-				if (!Cancel)
-					__Writer.Stream = Protocol.GetStream;
+					__Writer.Stream.CopyTo( Protocol.GetStream );
+					__Writer.Stream.Dispose();
+
+					if (!Cancel)
+						__Writer.Stream  =  Protocol.GetStream;
+				}
 			}
+				return this;
 		}
 		/// <summary>
 		/// Возвращает новый контекст
