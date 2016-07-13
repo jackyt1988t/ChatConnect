@@ -15,6 +15,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 	public class HTTPContext : IContext
 	{
 		internal bool _to_;
+		internal bool _ow_;
 		/// <summary>
 		/// Поток
 		/// </summary>
@@ -87,10 +88,30 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			__ObSync = new object();
 
 			__Reader = new HTTPReader(protocol.GetStream);
-			__Reader.Header  =  Request;
-
-			__Writer = new HTTPWriter(protocol.GetStream);
-			__Writer.Header  =  Response;	
+			__Reader.Header = Request;
+			
+			if (protocol.AllContext == 0)
+			{
+				_ow_ = true;
+				
+				__Writer = new HTTPWriter(new MyStream());
+			}
+			else
+				__Writer = new HTTPWriter(protocol.GetStream);
+				__Writer.Header = Response;	
+		}
+		internal void Refresh()
+		{
+			lock (__ObSync)
+			{
+				if (_ow_)
+					return;
+				else
+					_ow_ = true;
+				
+				__Writer.CopyTo(  Protocol.GetStream  );
+				__Writer.Stream = Protocol.GetStream;
+			}
 		}
 		/// <summary>
 		/// Возвращает новый контекст
@@ -119,8 +140,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			{
 				if (__Encode != null)
 					__Encode.Dispose();
+
 				if (__Writer != null)
 					__Writer.Dispose();
+
+					Protocol.EndContext(this);
 			}
 			catch (IOException error)
 			{
