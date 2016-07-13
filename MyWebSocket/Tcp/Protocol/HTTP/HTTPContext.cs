@@ -89,13 +89,13 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			Response = new Header();
 			__ObSync = new object();
 
-			__Reader = new HTTPReader(Protocol.GetStream);
-			__Reader.Header = Request;
+				__Reader = new HTTPReader( Protocol.GetStream );
+				__Reader.Header = Request;
 			
 			if (_ow_)
-				__Writer = new HTTPWriter(new MyStream());
+				__Writer = new HTTPWriter( new MyStream(4096) );
 			else
-				__Writer = new HTTPWriter(Protocol.GetStream);
+				__Writer = new HTTPWriter( Protocol.GetStream );
 				__Writer.Header = Response;	
 		}
 		internal void Refresh()
@@ -107,8 +107,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				else
 					_ow_ = true;
 				
-				__Writer.Stream.CopyTo( Protocol.GetStream );
-				__Writer.Stream    =    Protocol.GetStream;
+				__Writer.Stream.CopyTo(   Protocol.GetStream   );
+				__Writer.Stream.Dispise();
+
+				if (!Cancel)
+					__Writer.Stream = Protocol.GetStream;
 			}
 		}
 		/// <summary>
@@ -117,9 +120,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// <returns></returns>
 		public IContext Context()
 		{
-			if ( Request.Upgrade == "websocket" )
-				return null;
-			else
+			//if ( Request.Upgrade == "websocket" )
+				//return null;
+			//else
 				return new HTTPContext(Protocol);
 		}
 		/// <summary>
