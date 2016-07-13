@@ -80,24 +80,22 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// Создает контекст получения, отправки данных
 		/// </summary>
 		/// <param name="protocol">HTTP</param>
-		public HTTPContext(HTTProtocol protocol)
+		public HTTPContext(HTTProtocol protocol, bool ow)
 		{
+			_ow_ = ow;
+
 			Request  = new Header();
 			Protocol =     protocol;
 			Response = new Header();
 			__ObSync = new object();
 
-			__Reader = new HTTPReader(protocol.GetStream);
+			__Reader = new HTTPReader(Protocol.GetStream);
 			__Reader.Header = Request;
 			
-			if (protocol.AllContext == 0)
-			{
-				_ow_ = true;
-				
+			if (_ow_)
 				__Writer = new HTTPWriter(new MyStream());
-			}
 			else
-				__Writer = new HTTPWriter(protocol.GetStream);
+				__Writer = new HTTPWriter(Protocol.GetStream);
 				__Writer.Header = Response;	
 		}
 		internal void Refresh()
@@ -140,11 +138,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			{
 				if (__Encode != null)
 					__Encode.Dispose();
-
+				
 				if (__Writer != null)
 					__Writer.Dispose();
-
-					Protocol.EndContext(this);
 			}
 			catch (IOException error)
 			{
