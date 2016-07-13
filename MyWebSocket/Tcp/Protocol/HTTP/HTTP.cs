@@ -224,13 +224,17 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		{
 			Dispose();
 		}
+
+		internal void EndContext(IContext cntx)
+		{
+			(ContextRs = AllContext.Dequeue()).Refresh();
+		}
 		/// <summary>
 		/// Создает новый контекст для обработки
 		/// </summary>
 		internal void NewContext(IContext cntx)
 		{
-			AllContext.Enqueue(
-				(ContextRq = ContextRq.Context()));
+			AllContext.Enqueue(ContextRq = ContextRq.Context());
 		}
 		/// <summary>
 		/// Потокобезопасный запуск события Work
