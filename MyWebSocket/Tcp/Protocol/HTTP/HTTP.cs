@@ -207,8 +207,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 													{
 														return true;
 													});			
-			ContextRq = ContextRs = new HTTPContext( this );
-
+			ContextRq =
+			ContextRs = 
+			    new HTTPContext( this, true );
 			AllContext = new Queue<IContext>();
 
 			OnEventConnect();
