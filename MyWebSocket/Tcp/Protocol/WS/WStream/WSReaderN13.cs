@@ -6,10 +6,10 @@ namespace MyWebSocket.Tcp.Protocol.WS
     class WSReaderN13
     {
 		byte _ngHead;
-		public WSN13 __Frame;
+		public WSFrameN13 __Frame;
 		public Stream Stream;
 
-		public WSReaderN13(Stream stream, WSN13 frame) :
+		public WSReaderN13(Stream stream, WSFrameN13 frame) :
 			base()
         {
 			Stream = stream;
@@ -35,7 +35,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 					}
 				}
 				
-				return (__Frame.GetsBody = true);
+				return (__Frame.GetBody = true);
 			}
             return false;
         }

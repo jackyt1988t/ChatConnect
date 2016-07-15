@@ -2,7 +2,7 @@
 
 namespace MyWebSocket.Tcp.Protocol.WS
 {
-    class WSN13
+    class WSFrameN13
     {
         public const int TEXT     = 0x01;
 		public const int PING     = 0x09;
@@ -114,7 +114,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		/// <summary>
 		/// Если тело получено true
 		/// </summary>
-        public bool GetsBody
+        public bool GetBody
         {
             get;
             set;
@@ -176,7 +176,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
             set;
         }
 
-		public void Null()
+		public void Reset()
 		{
 			BitFin = 0;
 			Handler = 0;
@@ -196,10 +196,10 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			DataBody = null;
 			DataMask = null;
 			GetHead = false;
-			GetsBody = false;
+			GetBody = false;
 			SetHead = false;
 		}
-		unsafe public void InitializationHeader()
+		unsafe public void InitData()
 		{
 			if (SetHead)
 				return;

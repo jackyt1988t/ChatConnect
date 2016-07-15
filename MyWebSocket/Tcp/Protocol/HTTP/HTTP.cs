@@ -13,7 +13,16 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 {
     public class HTTProtocol : BaseProtocol
     {
-		
+		private static readonly string S_WORK    = "work";
+		private static readonly string S_SEND    = "send";
+		private static readonly string S_DATA    = "data";
+		private static readonly string S_PING    = "ping";
+		private static readonly string S_PONG    = "pong";
+		private static readonly string S_CHUNK   = "chunk";
+		private static readonly string S_ERROR   = "error";
+		private static readonly string S_CLOSE   = "close";
+		private static readonly string S_CONNECT = "connect";
+
 		/// <summary>
 		/// шифровать данные
 		/// </summary>
@@ -76,6 +85,39 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			{
 				lock (SyncEvent)
 					eventData -= value;
+			}
+		}
+		event PHandlerEvent __EventPing;
+		public event PHandlerEvent EventPing
+		{
+			add
+			{
+				lock (SyncEvent)
+					__EventPing += value;
+
+			}
+			remove
+			{
+				lock (SyncEvent)
+					__EventPing -= value;
+			}
+		}
+		event PHandlerEvent __EventPong;
+		/// <summary>
+		/// Событие которое наступает когда приходит фрейм понг
+		/// </summary>
+		public event PHandlerEvent EventPong
+		{
+			add
+			{
+				lock (SyncEvent)
+					__EventPong += value;
+
+			}
+			remove
+			{
+				lock (SyncEvent)
+					__EventPong -= value;
 			}
 		}
 		event PHandlerEvent eventclose;
@@ -288,7 +330,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// Потокобезопасный запуск события Close
 		/// желательно запускать в обработчике Close
 		/// </summary>
-		internal void OnEventClose()
+		protected internal void OnEventClose()
 		{
 			string s = "close";
 			string m = "Соединение было закрыто";
@@ -304,7 +346,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// <summary>
 		/// Потокобезопасный запуск события OnOpen 
 		/// </summary>
-		internal void OnEventOpen(IContext cntx)
+		protected internal void OnEventOpen(IContext cntx)
 		{
 
 			string s = "connect";
@@ -320,7 +362,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// Потокобезопасный запуск события Error
 		/// желательно запускать в обработчике Error
 		/// </summary>
-		internal void OnEventError(Exception error)
+		protected internal void OnEventError(Exception error)
 		{
 
 			string s = "error";
@@ -348,6 +390,24 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			if (e != null)
 				e(this, new PEventArgs(s, m, null));
 
+		}
+		internal void OnEventPing(IContext cntx)
+		{
+			//string m = "Получен фрейм Ping";
+			PHandlerEvent e;
+			lock (SyncEvent)
+				e = __EventPing;
+			if (e != null)
+				e(this, new PEventArgs(S_PING, string.Empty, cntx));
+		}
+		internal void OnEventPong(IContext cntx)
+		{
+			//string m = "Получен фрейм Pong";
+			PHandlerEvent e;
+			lock (SyncEvent)
+				e = __EventPong;
+			if (e != null)
+				e(this, new PEventArgs(S_PONG, string.Empty, cntx));
 		}
 
 		public override TaskResult HandlerProtocol()

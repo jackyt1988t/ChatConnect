@@ -194,8 +194,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						__Frame.bleng = 
 							   Header.ContentLength;
 					
-							__Frame.hleng = 
-										data.Length;
+						__Frame.hleng = data.Length;
 			}
 
 			if (length > 0)

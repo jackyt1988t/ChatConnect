@@ -5,11 +5,11 @@ namespace MyWebSocket.Tcp.Protocol.WS
 {
 	static class WSDebug
 	{
-		public static void DebugN13(WSN13 frame)
+		public static void DebugN13(WSFrameN13 frame)
 		{
 			StringBuilder debug = new StringBuilder(6000);
 			debug.AppendLine("*******Protcool N13*******");
-			if (frame.GetsBody)
+			if (frame.GetBody)
 				debug.AppendLine("Get Frame");
 			else
 				debug.AppendLine("Send Frame");
@@ -37,22 +37,22 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			  debug.Append("PCOD: 0x" + frame.BitPcod.ToString("X"));
 			switch (frame.BitPcod)
 			{
-				case WSN13.TEXT:
+				case WSFrameN13.TEXT:
 					debug.AppendLine(" --> Text");
 					break;
-				case WSN13.PING:
+				case WSFrameN13.PING:
 					debug.AppendLine(" --> Ping");
 					break;
-				case WSN13.PONG:
+				case WSFrameN13.PONG:
 					debug.AppendLine(" --> Pong");
 					break;
-				case WSN13.CLOSE:
+				case WSFrameN13.CLOSE:
 					debug.AppendLine(" --> Close");
 					break;
-				case WSN13.BINNARY:
+				case WSFrameN13.BINNARY:
 					debug.AppendLine(" --> binnary");
 					break;
-				case WSN13.CONTINUE:
+				case WSFrameN13.CONTINUE:
 					debug.AppendLine(" --> Continue");
 					break;
 				default:

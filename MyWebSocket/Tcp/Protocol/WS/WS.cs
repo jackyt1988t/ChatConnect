@@ -74,7 +74,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			
 			}
 
-		public void OnEventPing(IContext cntx)
+		protected internal void OnEventPing(IContext cntx)
 		{
 			//string m = "Получен фрейм Ping";
 			PHandlerEvent e;
@@ -83,7 +83,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			if (e != null)
 				e(this, new PEventArgs(S_PING, string.Empty, cntx));
 		}
-		public void OnEventPong(IContext cntx)
+		protected internal void OnEventPong(IContext cntx)
 		{
 			//string m = "Получен фрейм Pong";
 			PHandlerEvent e;

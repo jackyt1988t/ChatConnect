@@ -3,12 +3,14 @@
 using System.IO;
 using System.IO.Compression;
 
-	using System.Text;
+using System.Text;
 
-		using System.Threading;
-		using System.Threading.Tasks;
+using System.Threading;
+using System.Threading.Tasks;
 
-			using System.Collections.Generic;
+using System.Collections.Generic;
+using MyWebSocket.Tcp.Protocol.WS;
+using MyWebSocket.Tcp.Protocol.WS.WS_13;
 
 namespace MyWebSocket.Tcp.Protocol.HTTP
 {
@@ -564,18 +566,25 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				switch (__Reader.__Frame.Pcod)
 				{
 					case HTTPFrame.DATA:
+						Protocol.NewContext(this);
 						if (!Protocol.TaskResult.Jump)
 						{
-							Protocol.NewContext(this);
 							Protocol.OnEventData(this);
 
 							Log.Loging.AddMessage(
 								"Все данные Http запроса получены", "log.log", Log.Log.Info);
 						}
 						else
-							Protocol.TaskResult.Option = TaskOption.Protocol;
+						{
+							WSContext_13.Handshake(Request, Response);
+							Message(string.Empty);
+							End();
+
+							Log.Loging.AddMessage(
+								"Выполнен переход на WS протокол.", "log.log", Log.Log.Info);
+					}
 						break;
-					case HTTPFrame.CHUNK:
+						case HTTPFrame.CHUNK:
 							Protocol.OnEventChunk(this);
 
 							Log.Loging.AddMessage(
