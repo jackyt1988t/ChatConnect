@@ -169,8 +169,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				{
 					HandlerHead();
 				}
-
-				if (!__Reader.__Frame.GetBody)
+				if (!__Reader.__Frame.GetBody && __Reader.__Frame.GetHead)
 				{
 					HandlerBody();
 				}

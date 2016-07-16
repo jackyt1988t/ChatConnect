@@ -139,12 +139,11 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 		{
 			try
 			{
-				if (!Request.GetHead)
+				if (!__Reader.__Frame.GetHead)
 				{
 					HandlerHead();
 				}
-
-				if (!Request.GetBody)
+				if (!__Reader.__Frame.GetBody && __Reader.__Frame.GetHead)
 				{
 					HandlerBody();
 				}
@@ -239,7 +238,7 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 
 		private void HandlerHead()
 		{
-			if (!__Reader.ReadHead())
+			if (__Reader.ReadHead())
 			{
 				if (Request.BitRsv1 == 1)
 					throw new WSException("Неверный бит rcv1",
@@ -268,7 +267,7 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 		}
 		private void HandlerBody()
 		{
-			if (!__Reader.ReadBody())
+			if (__Reader.ReadBody())
 			{
 				//if (Debug)
 				//WSDebug.DebugN13(__Reader._Frame);
