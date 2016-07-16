@@ -193,7 +193,7 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 			lock (__ObSync)
 			{
 				Response.BitFin   = 1;
-				Response.BitPcod  = WSFrameN13.BINNARY;
+				Response.BitPcod  = WSFrameN13.TEXT;
 				Response.BitMask  = 0;
 				Response.PartBody = 0;				
 				Response.DataBody = _buffer;
