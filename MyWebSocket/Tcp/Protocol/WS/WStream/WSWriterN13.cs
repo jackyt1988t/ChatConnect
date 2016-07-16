@@ -67,11 +67,11 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			}
 		}
 
-		public WSWriterN13(Stream stream) : 
+		public WSWriterN13(Stream stream, WSFrameN13 frame) : 
 			base()
 		{
 			Stream = stream;
-			__Frame = new WSFrameN13();
+			__Frame = frame;
 		}
 
 		public void Write(WSFrameN13 frame)

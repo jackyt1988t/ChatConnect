@@ -28,8 +28,8 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			{
 				if (  __Frame.BitMask == 1  )
 				{
-					int part = 0;
-					while (part++ < __Frame.PartBody)
+					
+					for (int part = 0;part < __Frame.LengBody; part++)
 					{
 						__Frame.DataBody[part] = (byte)(__Frame.DataBody[part] ^ __Frame.DataMask[part % 4]);
 					}

@@ -8,7 +8,7 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 {
 	class WSContext_13 : IContext
 	{
-		internal const string CHECKKEY = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+		internal const string KEY = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
 		internal bool _to_;
 		internal bool _ow_;
@@ -32,8 +32,10 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 		/// </summary>
 		public bool Cancel
 		{
-			get;
-			private set;
+			get
+			{
+				return false;
+			}
 		}		
 		/// <summary>
 		/// Синхронизация текущего объекта
@@ -72,29 +74,37 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 		/// Создает контекст получения, отправки данных
 		/// </summary>
 		/// <param name="protocol">HTTP</param>
-		public WSContext_13(HTTProtocol protocol)
+		public WSContext_13(HTTProtocol protocol, bool ow)
 		{
-			Request = new WSFrameN13();
-			Protocol = protocol;
+			_ow_ = ow;
+
+			Request  = new WSFrameN13();
+			
 			Response = new WSFrameN13();
-			__ObSync = new object();
+			__ObSync =	   new object();
+			Protocol =         protocol;
 
 			__Reader = new WSReaderN13(protocol.GetStream, Request);
-
-			//__Writer = new WSWriterN13(protocol.GetStream);
+			if (!_ow_)
+				__Writer = new WSWriterN13(new MyStream(4096), Response);
+			else
+				__Writer = new WSWriterN13(Protocol.GetStream, Response);
 		}
 		static
 		public void Handshake(Header request, Header response)
 		{
 			using (SHA1 crypt = SHA1.Create())
 			{
-				byte[] strkey = Encoding.UTF8.GetBytes(request["sec-websocket-key"] + CHECKKEY);
-							string numhex = Convert.ToBase64String(crypt.ComputeHash(strkey));
+				byte[] key = Encoding.UTF8.GetBytes(
+					request["sec-websocket-key"] + KEY);
+				string hex = Convert.ToBase64String(
+									 crypt.ComputeHash(key));
 
-				response.StrStr = "HTTP/1.1 101 Switching Protocols";
+				response.StrStr =
+					"HTTP/1.1 101 Switching Protocols";
 				response.AddHeader("Upgrade", "WebSocket");
 				response.AddHeader("Connection", "Upgrade");
-				response.AddHeader("Sec-WebSocket-Accept", numhex);
+				response.AddHeader("Sec-WebSocket-Accept", hex);
 			}
 		}
 		public IContext Refresh()
@@ -120,7 +130,7 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 		/// <returns></returns>
 		public IContext Context()
 		{
-			return new WSContext_13(Protocol);
+			throw new NotImplementedException();
 		}
 		/// <summary>
 		/// 
@@ -144,18 +154,27 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 			{
 				HandlerError(error);
 
-				Log.Loging.AddMessage("Ошибка об-тки HTTP запроса " +
+				Log.Loging.AddMessage("Ошибка об-тки WS запроса " +
 									  "Ошибка: " + error.Message, "log.log", Log.Log.Info);
 			}
 			catch (IOException error)
 			{
-				Log.Loging.AddMessage("Ошибка об-тки HTTP запроса " +
-									  "Ошибка: " + error.Message, "log.log", Log.Log.Info);
+				Log.Loging.AddMessage("Ошибка об-тки WS запроса " +
+									  "Ошибка: " + error.Message, "log.log", Log.Log.Debug);
 
 				HandlerError(new WSException("Ошибка получения http данных " +
 											 "Ошибка: " + error.Message,
 													WsError.CriticalError,
 															WSClose.Abnormal));
+			}
+			finally
+			{
+				if (Request.GetHead && Request.GetBody)
+				{
+					Request.Reset();
+
+					Log.Loging.AddMessage("WS запрос обработан.", "log.log", Log.Log.Info);
+				}
 			}
 		}
 		/// <summary>
@@ -165,7 +184,24 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 		/// <param name="message"></param>
 		public void Message(string message)
 		{
-			Message(Encoding.UTF8.GetBytes(message));
+			if (_out_next_)
+				throw new WSException("данные отправлены не полностью");
+
+			byte[] _buffer = 
+			   Encoding.UTF8.GetBytes(message);
+
+			lock (__ObSync)
+			{
+				Response.BitFin   = 1;
+				Response.BitPcod  = WSFrameN13.BINNARY;
+				Response.BitMask  = 0;
+				Response.PartBody = 0;				
+				Response.DataBody = _buffer;
+				Response.LengBody = 
+							 _buffer.Length;
+
+					__Writer.Write( Response );
+			}
 		}
 		/// <summary>
 		/// Записываем данные в стандартный поток, если заголвок Content-Encoding
@@ -185,16 +221,20 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 		/// <param name="length">количество которое необходимо записать</param>
 		public void Message(byte[] message, int offset, int length)
 		{
-			WSFrameN13 frame = new WSFrameN13();
+			if (_out_next_)
+				throw new WSException("данные отправлены не полностью");
 
-			frame.BitFin   = 1;
-			frame.BitPcod  = WSFrameN13.TEXT;
-			frame.BitMask  = 0;
-			frame.PartBody = offset;
-			frame.LengBody = length;
-			frame.DataBody = message;
-
-				__Writer.Write(frame);
+			lock (__ObSync)
+			{
+				Response.BitFin   = 1;
+				Response.BitPcod  = WSFrameN13.BINNARY;
+				Response.BitMask  = 0;
+				Response.PartBody = offset;
+				Response.LengBody = length;
+				Response.DataBody = message;
+				
+					__Writer.Write( Response );
+			}
 		}
 
 		private void HandlerHead()
@@ -235,7 +275,7 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 				switch (Request.BitPcod)
 				{
 					case WSFrameN13.TEXT:
-					if (_out_next_)
+					if (_in_next)
 						throw new WSException("Неверный бит fin.", 
 												WsError.HeaderFrameError, 
 													WSClose.PolicyViolation);
@@ -243,7 +283,7 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 						Protocol.OnEventData(this);
 					else
 					{
-						_out_next_ = true;
+						_in_next = true;
 						Protocol.OnEventChunk(this);
 					}
 					break;
@@ -253,6 +293,7 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 											WsError.HeaderFrameError, 
 												WSClose.PolicyViolation);
 
+						Protocol.NewContext(this);
 						Protocol.OnEventPing(this);
 					//Message(Request.DataBody, 0, (int)Request.LengBody, WSOpcod.Pong, WSFin.Last);
 					break;
@@ -262,8 +303,9 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 												WsError.HeaderFrameError, 
 													WSClose.PolicyViolation);
 
-					Protocol.OnEventPong(this);
-					break;
+						Protocol.NewContext(this);
+						Protocol.OnEventPong(this);
+						break;
 					case WSFrameN13.CLOSE:
 					if (__Reader.__Frame.BitFin == 0)
 						throw new WSException("Неверный бит fin.", 
@@ -274,7 +316,7 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 
 					break;
 					case WSFrameN13.BINNARY:
-					if (_out_next_)
+					if (_in_next)
 						throw new WSException("Неверный бит fin.", 
 												WsError.HeaderFrameError, 
 													WSClose.PolicyViolation);
@@ -283,18 +325,18 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 						Protocol.OnEventData(this);
 					else
 					{
-						_out_next_ = true;
+						_in_next = true;
 						Protocol.OnEventChunk(this);
 					}
 					break;
 					case WSFrameN13.CONTINUE:
-					if (!_out_next_)
+					if (!_in_next)
 						throw new WSException("Неверный бит fin.", 
 												WsError.HeaderFrameError, 
 													WSClose.PolicyViolation);
 					if (__Reader.__Frame.BitFin == 1)
 					{
-						_out_next_ = false;
+						Protocol.NewContext(this);
 						Protocol.OnEventData(this);
 					}
 					else
@@ -312,19 +354,27 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 			string message = string.Empty;
 			WSClose __close = WSClose.Abnormal;
 
-			if (Request.LengBody > 1)
+			if (Request.LengBody < 2)
+				Protocol.Close();
+			else
 			{
 				int number = Request.DataBody[0] << 8;
 				number = Request.DataBody[1] | number;
 
-				if (number >= 1000 && number <= 1012)
-					__close = (WSClose)number;
+				if (number < 1000 || number > 1012)
+					Protocol.Close();
+				{
+					__close = 
+						(WSClose)number;
+					Protocol.Close(true);
+				}
 			}
 			if (Request.LengBody > 2)
 				message = Encoding.UTF8.GetString(Request.DataBody, 2, (int)(Request.LengBody - 2));
 		}
 		protected void HandlerError(WSException _1_error)
 		{
+					Protocol.Close(true);
 		}
 	}
 }

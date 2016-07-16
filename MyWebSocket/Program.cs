@@ -1,177 +1,133 @@
 ﻿using System;
 using System.Collections.Generic;
- 
+using System.Text;
 using MyWebSocket.Tcp;
 using MyWebSocket.Tcp.Protocol;
-using MyWebSocket.Tcp.Protocol.WS;
+
 using MyWebSocket.Tcp.Protocol.HTTP;
 
+using MyWebSocket.Tcp.Protocol.WS;
+using MyWebSocket.Tcp.Protocol.WS.WS_13;
 
 namespace Example
 {
-    class Program
+	static class WSHandler
+	{
+		public static PHandlerEvent Data = (object obj, PEventArgs a) =>
+		{
+			WSContext_13 ctx =
+					a.sender as WSContext_13;
+
+			ctx.Message("Привет я плучил твое сообщение " + 
+							Encoding.UTF8.GetString(ctx.Request.DataBody));
+		};
+		public static PHandlerEvent Error = (object sender, PEventArgs a) =>
+		{
+			Console.WriteLine(a.sender.ToString());
+		};
+		public static PHandlerEvent Close = (object sender, PEventArgs a) =>
+		{
+			Console.WriteLine("WS соединение закрыто");
+		};
+	}
+	static class HTTPHandler
+	{
+		static Queue<IContext> Container =
+									 new Queue<IContext>();
+		public static PHandlerEvent Data = async 
+									(object obj, PEventArgs a) =>
+		{
+			try
+			{
+				HTTPContext ctx = 
+					a.sender as HTTPContext;
+
+				switch (ctx.Request.Path)
+				{
+					case "/":
+						if (await ctx.AsFile("Html/index.html"))
+							ctx.End();
+						break;
+					case "/message":
+						lock (Container)
+						{
+							foreach (HTTPContext c in Container)
+							{
+								try
+								{
+									c.Message(ctx.Request.Body);
+									c.End();
+								}
+								catch (Exception exc)
+								{
+									;
+								}
+							}
+						}
+
+						ctx.Message(string.Empty);
+						ctx.End();
+
+						break;
+					case "/subscribe":
+						lock (Container)
+							Container.Enqueue(ctx);
+						break;
+					default:
+						if (await ctx.AsFile("Html" + ctx.Request.Path))
+							ctx.End();
+						break;
+				}
+			}
+			catch (Exception exc)
+			{
+				;
+			}
+		};
+		public static PHandlerEvent Error = (object sender, PEventArgs a) =>
+		{
+			Console.WriteLine(a.sender.ToString());
+		};
+		public static PHandlerEvent Close = (object sender, PEventArgs a) =>
+		{
+			Console.WriteLine("HTTP соединение закрыто");
+		};
+	}
+	class Program
     {
         static void Main(string[] args)
         {
-       //     List<WS> Array = new List<WS>();
-       //     List<HTTPContext> Polling = new List<HTTPContext>();
-       //     WS.EventConnect += (object o, PEventArgs e) =>
-       //     {
-       //         WS ws = o as WS;
 
-       //         List<string> Text = new List<string>();
-       //         ws.EventData += (object obj, PEventArgs a) =>
-       //         {
-       //             WSData data = a.sender as WSData;
+			HTTProtocol.EventConnect += (object obj, PEventArgs a) =>
+			{
+				Console.WriteLine("HTTP");
+				
+				HTTProtocol Http = obj as HTTProtocol;
+				Http.EventData += HTTPHandler.Data;
+				Http.EventError += HTTPHandler.Error;
+				Http.EventClose += HTTPHandler.Close;
 
-       //             if (data.Opcod  ==  WSOpcod.Text)
-       //             {
-       //                 Text.Add(data.ToString());
-
-       //                 string text = string.Empty;
-       //                 for (int i = 0; i < Text.Count; i++)
-       //                 {
-       //                     text += Text[i];
-       //                 }
-       //                 Text.Clear();
-
-       //                 lock (Array)
-       //                 {
-       //                     for (int i = 0; i < Array.Count; i++)
-       //                     {
-       //                         Array[i].Message(text);
-       //                     }
-       //                 }
-       //                 lock (Polling)
-       //                 {
-       //                     for (int i = 0; i < Polling.Count; i++)
-       //                     {
-       //                         Polling[i].Message(text);
-							//	Polling[i].End();
-
-							//}
-       //                 }
-       //             }
-       //             else
-       //             {
-       //                 ws.Close(WSClose.Normal);
-       //             }
-
-       //         };
-       //         ws.EventChunk += (object obj, PEventArgs a) =>
-       //         {
-       //             WSData data = a.sender as WSData;
-
-       //             if (data.Opcod  ==  WSOpcod.Text)
-       //             {
-       //                 Text.Add(data.ToString());
-       //             }
-       //             else
-       //             {
-       //                 ws.Close(WSClose.Normal);
-       //             }
-       //         };
-       //         ws.EventError += (object sender, PEventArgs a) =>
-       //         {
-       //             Console.WriteLine(a.sender.ToString());
-       //         };
-       //         ws.EventClose += (object sender, PEventArgs a) =>
-       //         {
-       //             lock (Array)
-       //                 Array.Remove(ws);
-       //             Console.WriteLine(a.sender.ToString());
-       //         };
-       //         ws.EventOnOpen += (object sender, PEventArgs a) =>
-       //         {
-       //             lock (Array)
-       //                 Array.Add(ws);
-       //             Console.WriteLine("Соединение WS Установлено");
-       //         };
-       //     };
-
-            HTTProtocol.EventConnect += (object obj, PEventArgs a) =>
-            {
-                Console.WriteLine("HTTP");
-
-                bool poll = false;
-                HTTProtocol Http = obj as HTTProtocol;
-                Http.EventData += async (object sender, PEventArgs e) =>
-                {
-					try
-					{
-						HTTPContext ctx = e.sender as HTTPContext;
-						switch (ctx.Request.Path)
-						{
-							case "/":
-							if (await ctx.AsFile("Html/index.html"))
-								ctx.End();
-							break;
-							//                 case "/message":
-							//                 lock (Array)
-							//                 {
-							//                     for (int i = 0; i < Array.Count; i++)
-							//                     {
-							//                         Array[i].Message(ctx.Request.Body, WSOpcod.Text, WSFin.Last);
-							//                     }
-							//                 }
-							//                 lock (Polling)
-							//                 {
-							//int count = Polling.Count;
-							//for (int i = 0; i < count; i++)
-							//                     {
-							//                         Polling[0].Message(ctx.Request.Body);
-							//	Polling[0].End();
-							//	Polling.RemoveAt(0);
-							//                     }
-							//ctx.Message("Данные получены");
-							//ctx.End();
-							//                 }
-							//                 break;
-							//                 case "/subscribe":
-							//poll = true;
-							//lock (Polling)
-							//	Polling.Add(ctx);
-							//break;
-							default:
-							if (await ctx.AsFile("Html" + ctx.Request.Path))
-								ctx.End();
-							break;
-						}
-					}
-					catch (Exception exc)
-					{
-						;
-					}
-                };
-                Http.EventError += (object sender, PEventArgs e) =>
-                {
-                    Console.WriteLine("ERROR");
-                };
-                Http.EventClose += (object sender, PEventArgs e) =>
-                {
-					Console.WriteLine("CLOSE");
-					//IContext[] cntx = 
-					//		e.sender as IContext[];
-					//foreach (IContext ctx in cntx)
-					//{
-					//	HTTPContext hctx =  (HTTPContext)ctx;
-					//	if (hctx == null)
-					//		continue;
-					//	if (hctx.Request.Path == "/subscribe")
-					//	{
-					//		lock (Polling)
-					//			Polling.Remove(hctx);
-					//	}
-					//}
+				Http.EventOnOpen += (object sender, PEventArgs e) =>
+				{
+					Console.WriteLine("Соединение Http Установлено");
 					
-                };
-                Http.EventOnOpen += (object sender, PEventArgs e) =>
-                {
-                    Console.WriteLine("Соединение Http Установлено");
-                };
-            };
-					//Log.Loging.Mode = Log.Log.Debug;
-                    WServer Server = new WServer("0.0.0.0", 443, 2);
-        }
-    }
+					HTTPContext ctx =
+					e.sender as HTTPContext;
+
+					if (!string.IsNullOrEmpty(ctx.Request.Upgrade))
+					{
+						Http.EventData -= HTTPHandler.Data;
+						Http.EventError -= HTTPHandler.Error;
+						Http.EventClose -= HTTPHandler.Close;
+
+						Http.EventData += WSHandler.Data;
+						Http.EventError += WSHandler.Error;
+						Http.EventClose += WSHandler.Close;
+					}
+				};
+			};
+
+			WServer Server = new WServer("0.0.0.0", 443, 2);
+		}
+	}
 }

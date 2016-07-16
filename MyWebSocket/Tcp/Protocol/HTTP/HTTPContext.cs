@@ -30,7 +30,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// Последняя ошибка
 		/// </summary>
 		internal HTTPException _1_Error;
-
+		
 		/// <summary>
 		/// Закончена обр-ка
 		/// </summary>
@@ -123,10 +123,10 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// <returns></returns>
 		public IContext Context()
 		{
-			//if ( Request.Upgrade == "websocket" )
-				//return null;
-			//else
+			if (!Protocol.TaskResult.Jump)
 				return new HTTPContext(Protocol, Cancel);
+			else
+				return new WSContext_13(Protocol, Cancel);
 		}
 		/// <summary>
 		/// 
@@ -473,7 +473,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 
 				Log.Loging.AddMessage(
 						"Http заголовки успешно обработаны: \r\n" +
-						"Заголовки зап:\r\n" + Response.ToString(), "log.log", Log.Log.Info);
+						"Заголовки уст.:\r\n" + Response.ToString(), "log.log", Log.Log.Info);
 			}
 		}
 		private void HandlerHead()
@@ -492,6 +492,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		   --------------------------------------------------------------------------------------------------------*/
 			if (__Reader.ReadHead())
 			{
+				Log.Loging.AddMessage(
+						"Http заголовки успешно получены: \r\n" +
+						"Заголовки зап.: \r\n" + Request.ToString(), "log.log", Log.Log.Info);
 				switch (Request.Method)
 				{
 					case "GET":
@@ -544,8 +547,10 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						}
 								Response.TransferEncoding = "chunked";
 
-								Protocol.OnEventOpen(this);
+								
 				}
+				
+				Protocol.OnEventOpen(this);
 			}
 		}
 		private void HandlerBody()

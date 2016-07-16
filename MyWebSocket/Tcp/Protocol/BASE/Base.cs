@@ -11,6 +11,10 @@ namespace MyWebSocket.Tcp.Protocol
 	public class BaseProtocol : IProtocol, IDisposable
 	{
 		/// <summary>
+		/// Время закрытия
+		/// </summary>
+		public static int TIMEWAIT = 2;
+		/// <summary>
 		/// Длинна чтения сокета
 		/// </summary
 		public static int LENGTHREAD = 1000 * 8;
@@ -50,7 +54,7 @@ namespace MyWebSocket.Tcp.Protocol
 		/// <summary>
 		/// Объект для синхронизации
 		/// </summary>
-		public object ObSync
+		public object __ObSync
 		{
 			get;
 			protected set;
@@ -72,6 +76,14 @@ namespace MyWebSocket.Tcp.Protocol
 			protected set;
 		}
 		/// <summary>
+		/// Время начала закрытия соединения
+		/// </summary>
+		public TimeSpan TimeClose
+		{
+			get;
+			protected set;
+		}
+		/// <summary>
 		/// 
 		/// </summary>
 		public IContext ContextRs;
@@ -87,6 +99,7 @@ namespace MyWebSocket.Tcp.Protocol
 			get;
 			protected set;
 		}
+		
 		/// <summary>
 		/// Кольцевой буффер хранения данных
 		/// </summary>
@@ -95,6 +108,7 @@ namespace MyWebSocket.Tcp.Protocol
 			get;
 			protected set;
 		}
+		
 		/// <summary>
 		/// Состояние обработки текущего протоколв
 		/// </summary>
@@ -114,19 +128,28 @@ namespace MyWebSocket.Tcp.Protocol
 		/// 
 		/// </summary>
 		volatile 
-		protected int state;
+		protected int state = 0;
+		/// <summary>
+		/// 
+		/// </summary>
+		protected bool waitclose = false;
 
 		/// <summary>
 		/// Закрывает HTTP соединение, если оно еще не закрыто
 		/// </summary>
-		/// <returns></returns>
-		public void Close()
+		/// <param name="wait">false если закрыть сразу</param>
+		public void Close(bool wait = false)
 		{
-			lock (ObSync)
+			lock (__ObSync)
 			{
 				if (state < 5)
 					state = 5;
 			}
+			if (wait)
+				waitclose = wait;
+
+			TimeClose = new TimeSpan(DateTime.Now.Ticks + 
+									 TimeSpan.TicksPerSecond * TIMEWAIT);
 		}
 		/// <summary>
 		/// Обрабатывает происходящие ошибки и назначает оьраьотчики
@@ -134,7 +157,7 @@ namespace MyWebSocket.Tcp.Protocol
 		/// <param name="error">Ошибка</param>
 		public void Error(Exception error)
 		{
-			lock (ObSync)
+			lock (__ObSync)
 			{
 				if (state > 4)
 					state = 7;

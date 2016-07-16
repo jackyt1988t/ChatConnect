@@ -205,6 +205,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				eventconnect -= value;
 			}
 		}
+
+		protected bool queuemode = false;
 		protected object SyncEvent = new object();
 		protected static X509Certificate sertificate;
 		static HTTProtocol()
@@ -229,7 +231,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
             State = 
 				States.Connection;
 					
-			ObSync = new object();
+			__ObSync = new object();
             TaskResult   =
 					new TaskResult();
 				Request  = new Header();
@@ -250,8 +252,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 														return true;
 													});			
 			ContextRq =
-			ContextRs = 
-			    new HTTPContext( this, true );
+			ContextRs =
+				new HTTPContext( this, true );
 			AllContext = new Queue<IContext>();
 
 			OnEventConnect();
@@ -267,24 +269,25 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		{
 			Dispose();
 		}
-
 		/// <summary>
 		/// Создает новый контекст для обработки
 		/// </summary>
 		internal void NewContext(IContext cntx)
 		{
-			AllContext.Enqueue(ContextRq = cntx.Context());
+			if (!queuemode)
+			{
+				AllContext.Enqueue(ContextRq = cntx.Context());
+			}
 		}
+		
 		/// <summary>
 		/// Потокобезопасный запуск события Work
 		/// желательно запускать в обработчике Work
 		/// </summary>
 		internal void OnEventWork()
 		{
-			if (ContextRs.Cancel)
-			{
-				(ContextRs = AllContext.Dequeue()).Refresh();
-			}
+				if (ContextRs.Cancel)
+					(ContextRs = AllContext.Dequeue()).Refresh();
 
 			string s = "work";
 			string m = "Цикл обработки";
@@ -349,7 +352,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		protected internal void OnEventOpen(IContext cntx)
 		{
 
-			string s = "connect";
+			string s = "open";
 			string m = "Соединение было установлено, протокол ws";
 
 			PHandlerEvent e;
@@ -453,7 +456,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 ==============================================================*/
 								if (state == 4)
 								{
-									/////Ошибка/////
 									OnEventError(Exception);
 									Interlocked.Exchange(ref state, 0);
 								}
@@ -462,7 +464,19 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 ==============================================================*/
 								if (state == 5)
 								{
-									state = 7;
+									if (!waitclose
+									  || TimeClose.Ticks  <  DateTime.Now.Ticks)
+										state = 7;
+									else
+									{
+										read();
+										write();
+										if (ContextRs.Cancel)
+											(ContextRs = 
+												AllContext.Dequeue()).Refresh();
+									}
+									
+									
 								}
 								if (state == 7)
 								{
