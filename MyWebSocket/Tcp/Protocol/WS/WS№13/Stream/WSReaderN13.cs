@@ -3,17 +3,18 @@ using System.IO;
 
 namespace MyWebSocket.Tcp.Protocol.WS
 {
-    class WSReaderN13
+    public class WSReaderN13
     {
 		byte _ngHead;
-		public WSFrameN13 __Frame;
-		public Stream Stream;
+		
+        public Stream Stream;
+        public WSFrameN13 __Frame;
 
-		public WSReaderN13(Stream stream, WSFrameN13 frame) :
+		public WSReaderN13(Stream stream) :
 			base()
         {
 			Stream = stream;
-			__Frame = frame;
+            __Frame = new WSFrameN13();
         }
 
 		public bool ReadBody()

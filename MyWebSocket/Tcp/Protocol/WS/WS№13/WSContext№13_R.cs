@@ -3,10 +3,11 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using MyWebSocket.Tcp.Protocol.HTTP;
+using System.Collections.Generic;
 
 namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 {
-	class WSContext_13 : IContext
+	public class WSContext_13_R : IContext
 	{
 		internal const string KEY = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
@@ -14,10 +15,7 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 		internal bool _ow_;
 		internal bool _in_next;
 		internal bool _out_next_;
-		/// <summary>
-		/// Поток
-		/// </summary>
-		internal Stream __Encode;
+
 		/// <summary>
 		/// Протолкол HTTP
 		/// </summary>
@@ -45,16 +43,6 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 			get;
 			private set;
 		}
-		public WSFrameN13 Request
-		{
-			get;
-			private set;
-		}
-		public WSFrameN13 Response
-		{
-			get;
-			private set;
-		}
 		/// <summary>
 		/// Поток чтения
 		/// </summary>
@@ -62,34 +50,29 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 		{
 			get;
 		}
-		/// <summary>
-		/// Поток записи
-		/// </summary>
-		public WSWriterN13 __Writer
-		{
-			get;
-		}
+        public List<WSFrameN13> Request
+        {
+            get;
+            private set;
+        }
 
-		/// <summary>
-		/// Создает контекст получения, отправки данных
-		/// </summary>
-		/// <param name="protocol">HTTP</param>
-		public WSContext_13(HTTProtocol protocol, bool ow)
-		{
-			_ow_ = ow;
+        /// <summary>
+        /// Создает контекст получения, отправки данных
+        /// </summary>
+        /// <param name="protocol">HTTP</param>
+        public WSContext_13_R(HTTProtocol protocol, bool ow)
+        {
+            _ow_ = ow;
 
-			Request  = new WSFrameN13();
-			
-			Response = new WSFrameN13();
-			__ObSync =	   new object();
-			Protocol =         protocol;
+            Request  = 
+                 new List<WSFrameN13>();
 
-			__Reader = new WSReaderN13(protocol.GetStream, Request);
-			if (!_ow_)
-				__Writer = new WSWriterN13(new MyStream(4096), Response);
-			else
-				__Writer = new WSWriterN13(Protocol.GetStream, Response);
-		}
+            __ObSync =     new object();
+            Protocol =         protocol;
+            
+            __Reader = new WSReaderN13(Protocol.GetStream);
+        }
+
 		static
 		public void Handshake(Header request, Header response)
 		{
@@ -109,20 +92,7 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 		}
 		public IContext Refresh()
 		{
-			lock (__ObSync)
-			{
-				if (!_ow_)
-				{
-					_ow_ = true;
-
-					__Writer.Stream.CopyTo( Protocol.GetStream );
-					__Writer.Stream.Dispose();
-
-					if (!Cancel)
-						__Writer.Stream  =  Protocol.GetStream;
-				}
-			}
-			return this;
+            throw new NotImplementedException("Refresh");
 		}
 		/// <summary>
 		/// Возвращает новый контекст
@@ -130,7 +100,11 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 		/// <returns></returns>
 		public IContext Context()
 		{
-			throw new NotImplementedException();
+            IContext cntx;
+            lock (Protocol.AllContext)
+                Protocol.AllContext.Enqueue(
+                    cntx = new WSContext_13_W(Protocol, false));
+            return cntx;
 		}
 		/// <summary>
 		/// 
@@ -168,97 +142,60 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 			}
 			finally
 			{
-				if (Request.GetHead && Request.GetBody)
-				{
-					Request.Reset();
-
+                if (__Reader.__Frame.GetHead && __Reader.__Frame.GetBody)
 					Log.Loging.AddMessage("WS запрос обработан.", "log.log", Log.Log.Info);
-				}
 			}
 		}
 		/// <summary>
-		/// Записывает строку в стандартный поток, если заголвок Content-Encoding
-		/// установлен в gzip декодируем данные в формате gzip(  быстрое сжатие  ) 
+        /// tНе поодерживается, объект использкется для чтения данных
 		/// </summary>
 		/// <param name="message"></param>
 		public void Message(string message)
 		{
-			if (_out_next_)
-				throw new WSException("данные отправлены не полностью");
-
-			byte[] _buffer = 
-			   Encoding.UTF8.GetBytes(message);
-
-			lock (__ObSync)
-			{
-				Response.BitFin   = 1;
-				Response.BitPcod  = WSFrameN13.TEXT;
-				Response.BitMask  = 0;
-				Response.PartBody = 0;				
-				Response.DataBody = _buffer;
-				Response.LengBody = 
-							 _buffer.Length;
-
-					__Writer.Write( Response );
-			}
+            throw new NotImplementedException("Message");
 		}
 		/// <summary>
-		/// Записываем данные в стандартный поток, если заголвок Content-Encoding
-		/// установлен в gzip декодируем данные в формате gzip(  быстрое сжатие  )
+        /// Не поодерживается, объект использкется для чтения данных
 		/// </summary>
 		/// <param name="message"></param>
 		public void Message(byte[] message)
 		{
-			Message(   message, 0, message.Length   );
+            throw new NotImplementedException("Message");
 		}
 		/// <summary>
-		/// Записываем данные в стандартный поток, если заголвок Content-Encoding
-		/// установлен в gzip декодируем данные в формате gzip(  быстрое сжатие  )
+		/// Не поодерживается, объект использкется для чтения данных
 		/// </summary>
 		/// <param name="message">массив данных</param>
 		/// <param name="offset">стартовая позиция</param>
 		/// <param name="length">количество которое необходимо записать</param>
 		public void Message(byte[] message, int offset, int length)
 		{
-			if (_out_next_)
-				throw new WSException("данные отправлены не полностью");
-
-			lock (__ObSync)
-			{
-				Response.BitFin   = 1;
-				Response.BitPcod  = WSFrameN13.BINNARY;
-				Response.BitMask  = 0;
-				Response.PartBody = offset;
-				Response.LengBody = length;
-				Response.DataBody = message;
-				
-					__Writer.Write( Response );
-			}
+            throw new NotImplementedException("Message");
 		}
 
 		private void HandlerHead()
 		{
 			if (__Reader.ReadHead())
 			{
-				if (Request.BitRsv1 == 1)
+                if (__Reader.__Frame.BitRsv1 == 1)
 					throw new WSException("Неверный бит rcv1",
 											WsError.HeaderFrameError,
 												WSClose.PolicyViolation);
-				if (Request.BitRsv2 == 1)
+                if (__Reader.__Frame.BitRsv2 == 1)
 					throw new WSException("Неверный бит rcv2",
 											WsError.HeaderFrameError,
 												WSClose.PolicyViolation);
-				if (Request.BitRsv3 == 1)
+                if (__Reader.__Frame.BitRsv3 == 1)
 					throw new WSException("Неверный бит rcv3",
 											WsError.HeaderFrameError,
 												 WSClose.PolicyViolation);
-				if (Request.BitMask == 0)
+                if (__Reader.__Frame.BitMask == 0)
 					throw new WSException("Неверный бит mask",
 											WsError.HeaderFrameError,
 												WSClose.PolicyViolation);
-				if (Request.LengBody < 0)
+                if (__Reader.__Frame.LengBody < 0)
 				{
-					string length = Request.LengBody.ToString("X");
+                    string length = __Reader.__Frame.LengBody.ToString("X");
 					throw new WSException("Длинна: " + length,
 											WsError.HeaderFrameError,
 												WSClose.PolicyViolation);
@@ -271,14 +208,14 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 			{
 				//if (Debug)
 				//WSDebug.DebugN13(__Reader._Frame);
-				switch (Request.BitPcod)
+                switch (__Reader.__Frame.BitPcod)
 				{
 					case WSFrameN13.TEXT:
 					if (_in_next)
 						throw new WSException("Неверный бит fin.", 
 												WsError.HeaderFrameError, 
 													WSClose.PolicyViolation);
-					if (Request.BitFin == 1)
+                        if (__Reader.__Frame.BitFin == 1)
 						Protocol.OnEventData(this);
 					else
 					{
@@ -289,8 +226,8 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 					case WSFrameN13.PING:
 					if (__Reader.__Frame.BitFin == 0)
 						throw new WSException("Неверный бит fin.", 
-											WsError.HeaderFrameError, 
-												WSClose.PolicyViolation);
+												WsError.HeaderFrameError, 
+													WSClose.PolicyViolation);
 
 						Protocol.NewContext(this);
 						Protocol.OnEventPing(this);
@@ -346,6 +283,17 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 												WsError.PcodNotSuported,
 													WSClose.UnsupportedData);
 				}
+
+                Request.Add(__Reader.__Frame);
+                            __Reader.__Frame = new WSFrameN13();
+
+                if (Log.Loging.Mode  >  Log.Log.Info)
+                    Log.Loging.AddMessage(
+                        "WS фрейм успешно обработан", "log.log", Log.Log.Info);
+                else
+                    Log.Loging.AddMessage(
+                        "WS фрейм успешно обработан" +
+                        "\r\n" + WSDebug.DebugN13(__Reader.__Frame), "log.log", Log.Log.Info);
 			}
 		}
 		protected void HandlerClose()
@@ -353,14 +301,14 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 			string message = string.Empty;
 			WSClose __close = WSClose.Abnormal;
 
-			if (Request.LengBody < 2)
+            if (__Reader.__Frame.LengBody < 2)
 				Protocol.Close();
 			else
 			{
-				int number = Request.DataBody[0] << 8;
-				number = Request.DataBody[1] | number;
+                int number = __Reader.__Frame.DataBody[0] << 8;
+                number = __Reader.__Frame.DataBody[1] | number;
 
-				if (number < 1000 || number > 1012)
+				if (number < 1000   ||  number > 1012)
 					Protocol.Close();
 				{
 					__close = 
@@ -368,8 +316,10 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 					Protocol.Close(true);
 				}
 			}
-			if (Request.LengBody > 2)
-				message = Encoding.UTF8.GetString(Request.DataBody, 2, (int)(Request.LengBody - 2));
+            if (__Reader.__Frame.LengBody > 2)
+                message = Encoding.UTF8.GetString(
+                                __Reader.__Frame.DataBody, 2, 
+                                    (int)(__Reader.__Frame.LengBody - 2));
 		}
 		protected void HandlerError(WSException _1_error)
 		{

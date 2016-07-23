@@ -126,7 +126,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			if (!Protocol.TaskResult.Jump)
 				return new HTTPContext(Protocol, Cancel);
 			else
-				return new WSContext_13(Protocol, Cancel);
+				return new WSContext_13_R(Protocol, Cancel);
 		}
 		/// <summary>
 		/// 
@@ -190,6 +190,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 															 error.Message, HTTPCode._500_));
 			}
 		}
+        #region sync
+
 		/// <summary>
 		/// 
 		/// </summary>
@@ -228,7 +230,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 						&& string.IsNullOrEmpty(
 									Response.TransferEncoding))
 					Response.ContentLength = ( int )msg.Length;
-					while (i++ < _count)
+				while (i++ < _count)
 				{
 					if (Protocol.State == States.Close
 						 || Protocol.State == States.Disconnect)
@@ -379,6 +381,8 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				return true;
 			});
 		}
+
+        #endregion
 		/// <summary>
 		/// Записывает строку в стандартный поток, если заголвок Content-Encoding
 		/// установлен в gzip декодируем данные в формате gzip(  быстрое сжатие  ) 
@@ -569,24 +573,28 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			{
 				switch (__Reader.__Frame.Pcod)
 				{
-					case HTTPFrame.DATA:
-						Protocol.NewContext(this);
+                    case HTTPFrame.DATA:
 						if (!Protocol.TaskResult.Jump)
-						{
+                        {
+                            
 							Protocol.OnEventData(this);
+
 
 							Log.Loging.AddMessage(
 								"Все данные Http запроса получены", "log.log", Log.Log.Info);
 						}
 						else
 						{
-							WSContext_13.Handshake(Request, Response);
+                            Protocol.queuemode = true;
+							WSContext_13_R.Handshake(
+                                        Request, Response);
 							Message(string.Empty);
 							End();
 
 							Log.Loging.AddMessage(
 								"Выполнен переход на WS протокол.", "log.log", Log.Log.Info);
-					}
+					    }
+                            Protocol.NewContext(Context());
 						break;
 						case HTTPFrame.CHUNK:
 							Protocol.OnEventChunk(this);
@@ -605,7 +613,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		private void HandlerError(HTTPException _1_error)
 		{
 			if (!Request.IsReq)
-				Protocol.NewContext(this);
+                Protocol.NewContext(Context());
 
 			if (_1_Error != null)
 			{

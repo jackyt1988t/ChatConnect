@@ -5,7 +5,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 {
 	static class WSDebug
 	{
-		public static void DebugN13(WSFrameN13 frame)
+		public static string DebugN13(WSFrameN13 frame)
 		{
 			StringBuilder debug = new StringBuilder(6000);
 			debug.AppendLine("*******Protcool N13*******");
@@ -78,10 +78,10 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			}
 			debug.AppendLine();
 			debug.AppendLine("*******Protcool N13*******");
-			/*   Вывод в консоль   */
-			Console.WriteLine(debug);
+			/*    Взврат строки   */
+            return debug.ToString();
 		}
-		public static void DebugSample(WSFrameSample frame)
+		public static string DebugSample(WSFrameSample frame)
 		{
 			StringBuilder debug = new StringBuilder(6000);
 			debug.AppendLine("*******Protcool Sample*******");
@@ -149,8 +149,8 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			}
 			debug.AppendLine();
 			debug.AppendLine("*******Protcool Sample*******");
-			/*   Вывод в консоль   */
-			Console.WriteLine(debug);
+            /*    Взврат строки   */
+            return debug.ToString();
 		}
 	}
 }

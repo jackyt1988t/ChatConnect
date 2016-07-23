@@ -13,13 +13,14 @@ namespace Example
 {
 	static class WSHandler
 	{
-		public static PHandlerEvent Data = (object obj, PEventArgs a) =>
+		public static PHandlerEvent Data = async (object obj, PEventArgs a) =>
 		{
-			WSContext_13 ctx =
-					a.sender as WSContext_13;
-
-			ctx.Message("Привет я плучил твое сообщение " + 
-							Encoding.UTF8.GetString(ctx.Request.DataBody));
+			WSContext_13_R ctx =
+					a.sender as WSContext_13_R;
+            
+            WSContext_13_W cntx = (WSContext_13_W)ctx.Context();
+            await cntx.AsMssg("Привет я плучил твое сообщение " + 
+							  Encoding.UTF8.GetString(ctx.Request[0].DataBody));
 		};
 		public static PHandlerEvent Error = (object sender, PEventArgs a) =>
 		{
@@ -32,10 +33,8 @@ namespace Example
 	}
 	static class HTTPHandler
 	{
-		static Queue<IContext> Container =
-									 new Queue<IContext>();
-		public static PHandlerEvent Data = async 
-									(object obj, PEventArgs a) =>
+		static Queue<IContext> Container = new Queue<IContext>();
+		public static PHandlerEvent Data = async (object obj, PEventArgs a) =>
 		{
 			try
 			{
@@ -97,7 +96,7 @@ namespace Example
     {
         static void Main(string[] args)
         {
-
+			Console.WriteLine("sdasdasd");
 			HTTProtocol.EventConnect += (object obj, PEventArgs a) =>
 			{
 				Console.WriteLine("HTTP");
@@ -126,7 +125,7 @@ namespace Example
 					}
 				};
 			};
-
+			
 			WServer Server = new WServer("0.0.0.0", 443, 2);
 		}
 	}

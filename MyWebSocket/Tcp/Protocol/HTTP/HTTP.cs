@@ -13,6 +13,10 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 {
     public class HTTProtocol : BaseProtocol
     {
+        private static readonly long WORK = 30 * 
+                                TimeSpan.TicksPerSecond;
+
+		private static readonly string S_OPEN    = "open";
 		private static readonly string S_WORK    = "work";
 		private static readonly string S_SEND    = "send";
 		private static readonly string S_DATA    = "data";
@@ -21,16 +25,23 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		private static readonly string S_CHUNK   = "chunk";
 		private static readonly string S_ERROR   = "error";
 		private static readonly string S_CLOSE   = "close";
-		private static readonly string S_CONNECT = "connect";
+		private static readonly string S_CONNECT = "connect";     
+
+		private static readonly 
+						  Dictionary<string, string> MESSAGE; 
+
+        internal bool queuemode = false;
 
 		/// <summary>
 		/// шифровать данные
 		/// </summary>
-		public static bool Security;
+		public static bool Security = true;
 		/// <summary>
 		/// Путь к сертификату
 		/// </summary>
-		public static string Path_Pem;
+        public static string Path_Pem = string.Empty;
+
+
 		/// <summary>
 		/// Возвращает поток данных
 		/// </summary>
@@ -206,18 +217,35 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			}
 		}
 
-		protected bool queuemode = false;
+        protected long timeclose = 
+              DateTime.Now.Ticks + WORK;
+        
 		protected object SyncEvent = new object();
 		protected static X509Certificate sertificate;
 		static HTTProtocol()
 		{
-			try
+			MESSAGE = new Dictionary<string, string>()
 			{
-				sertificate = X509Certificate.FromPKCS12(BIO.File("server.pfx", "r"), "Tv7bU9m");
-			}
-			catch (Exception error)
+				{ S_PING,    "PING" },
+				{ S_PONG,    "PONG" },
+				{ S_OPEN,    "Соединение открыто" },
+				{ S_WORK,    "Вход в цикл обработки" },
+				{ S_DATA,    "Получены входящие данные" },
+				{ S_CHUNK,   "Получены входящие данные" },
+				{ S_ERROR,   "Ошибка во время исполнения" },
+				{ S_CLOSE,   "Текущее Соединение закрыто" },
+				{ S_CONNECT, "Tcp/ip соединение утсановлено" }
+			};
+			if (Security) 
 			{
-				;
+				try 
+				{
+					sertificate = X509Certificate.FromPKCS12 (BIO.File ("server.pfx", "r"), "Tv7bU9m");
+				} catch (Exception err)
+				{
+                    Security = false;
+                    Log.Loging.AddMessage(err.Message + Log.Loging.NewLine + err.StackTrace, "log.log", Log.Log.Debug);
+				}
 			}
 		}
 		/// <summary>
@@ -225,43 +253,46 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// </summary>
 		/// <param name="tcp">tcp/ip соединеине</param>
 		public HTTProtocol(Socket tcp)
-        {
+            : base()
+            {
 			
-			Tcp = tcp;
-            State = 
-				States.Connection;
-					
-			__ObSync = new object();
-            TaskResult   =
-					new TaskResult();
-				Request  = new Header();
-                Response = new Header();
+		    	Tcp = tcp;
+                State = 
+                    States.Connection;
+                
+                Worker   =   StdWorker;
+                
+    			__ObSync = new object();
+                
+                
+                TaskResult   =
+	    				new TaskResult();
+		    		Request  = new Header();
+                    Response = new Header();
 			
-			TcpStream = new TcpStream();
-			Security = true;
-			if (Security)
-				SslStream = new SslStreamServer(TcpStream, 
-					sertificate, 
-							false, 
-								null, 
-									SslProtocols.Tls, 
-										SslStrength.All, 
-													true, 
-													(sender, cert, chain, depth, result) =>
-													{
-														return true;
-													});			
-			ContextRq =
-			ContextRs =
-				new HTTPContext( this, true );
-			AllContext = new Queue<IContext>();
+    			TcpStream = new TcpStream();
+	    		if (Security)
+		    		SslStream = new SslStreamServer(TcpStream, 
+			    		sertificate, 
+				    			false, 
+					    			null, 
+						    			SslProtocols.Tls, 
+							    			SslStrength.All, 
+								    					true, 
+									    				(sender, cert, chain, depth, result) =>
+										    			{
+											    			return true;
+												    	});			
+    			ContextRq =
+	    		ContextRs =
+		    		new HTTPContext( this, true );
+			    AllContext = new Queue<IContext>();
+    
+    			OnEventConnect();
+			
+    			Interlocked.CompareExchange(  ref state, 0, 3  );
 
-			OnEventConnect();
-			
-			Interlocked.CompareExchange(  ref state, 0, 3  );
-
-			
-		}
+		    }
 		/// <summary>
 		/// Освобождаем ресурсы перед очисткой
 		/// </summary>
@@ -269,34 +300,105 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		{
 			Dispose();
 		}
+
+        /// <summary>
+        /// Стандартный обработчик соединения.
+        /// </summary>
+        internal void StdWorker()
+        {
+            if (timeclose < DateTime.Now.Ticks)
+                Close(true);
+        }
 		/// <summary>
 		/// Создает новый контекст для обработки
 		/// </summary>
 		internal void NewContext(IContext cntx)
 		{
-			if (!queuemode)
+            if (queuemode)
+            {
+                ContextRq = cntx;
+            }
+            else
 			{
-				AllContext.Enqueue(ContextRq = cntx.Context());
+                lock (AllContext)
+				    AllContext.Enqueue(ContextRq = cntx);
 			}
 		}
-		
+
+		/// <summary>
+		/// Потокобезопасный запуск события OnOpen 
+		/// </summary>
+		protected internal void OnEventOpen(IContext cntx)
+		{
+			PHandlerEvent e;
+			lock (SyncEvent)
+				e = eventOnopen;
+			if (e != null)
+				e(this, new PEventArgs(MESSAGE[S_OPEN], S_OPEN, cntx));
+		}
+		/// <summary>
+		/// Raises the event ping event.
+		/// </summary>
+		/// <param name="cntx">Контекст</param>
+		internal void OnEventPing(IContext cntx)
+		{
+			PHandlerEvent e;
+			lock (SyncEvent)
+				e = __EventPing;
+			if (e != null)
+				e(this, new PEventArgs(MESSAGE[S_PONG], S_PONG, cntx));
+		}
+		/// <summary>
+		/// Raises the event pong event.
+		/// </summary>
+		/// <param name="cntx">Контекст</param>
+		internal void OnEventPong(IContext cntx)
+		{
+			PHandlerEvent e;
+			lock (SyncEvent)
+				e = __EventPong;
+			if (e != null)
+				e(this, new PEventArgs(MESSAGE[S_PING], S_PING, cntx));
+		}
 		/// <summary>
 		/// Потокобезопасный запуск события Work
 		/// желательно запускать в обработчике Work
 		/// </summary>
 		internal void OnEventWork()
 		{
-				if (ContextRs.Cancel)
-					(ContextRs = AllContext.Dequeue()).Refresh();
+            Worker();
 
-			string s = "work";
-			string m = "Цикл обработки";
-
+            if (!queuemode)
+            {
+                if (ContextRs.Cancel)
+                    (ContextRs = AllContext.Dequeue()).Refresh();
+            }
+            else
+            {
+                if (ContextRs == null)
+                {
+                    if (AllContext.Count > 0)
+                        lock (AllContext)
+                            (ContextRs = AllContext.Dequeue()).Refresh(); 
+                }
+                else
+                {
+                    if (ContextRs.Cancel)
+                    {
+                        if (AllContext.Count == 0)
+                            ContextRs = null;
+                        else
+                        lock (AllContext)
+                            (ContextRs = AllContext.Dequeue()).Refresh(); 
+                    }
+                     
+                }
+            }
 			PHandlerEvent e;
 			lock (SyncEvent)
 				e = eventWork;
 			if (e != null)
-				e(this, new PEventArgs(m, s));
+				e(this, new PEventArgs(MESSAGE[S_WORK], S_WORK));
 		}
 		/// <summary>
 		/// Потокобезопасный запуск события Data
@@ -304,15 +406,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// </summary>
 		internal void OnEventData(IContext cntx)
 		{
-
-			string s = "data";
-			string m = "Получены все данные";
-
 			PHandlerEvent e;
 			lock (SyncEvent)
 				e = eventData;
 			if (e != null)
-				e(this, new PEventArgs(s, m, cntx));
+				e(this, new PEventArgs(MESSAGE[S_DATA], S_DATA, cntx));
 		}
 		/// <summary>
 		/// Потокобезопасный запуск события Chunk
@@ -320,14 +418,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// </summary>
 		internal void OnEventChunk(IContext cntx)
 		{
-			string s = "сhunk";
-			string m = "Получена часть данных";
-
 			PHandlerEvent e;
 			lock (SyncEvent)
 				e = eventchunk;
 			if (e != null)
-				e(this, new PEventArgs(s, m, cntx));
+				e(this, new PEventArgs(MESSAGE[S_CHUNK], S_CHUNK, cntx));
 		}
 		/// <summary>
 		/// Потокобезопасный запуск события Close
@@ -335,31 +430,13 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// </summary>
 		protected internal void OnEventClose()
 		{
-			string s = "close";
-			string m = "Соединение было закрыто";
-
-			IContext[] cntx = AllContext.ToArray();
+			IContext[] cntx  =  AllContext.ToArray();
 
 			PHandlerEvent e;
 			lock (SyncEvent)
 				e = eventclose;
 			if (e != null)
-				e(this, new PEventArgs(s, m, cntx));
-		}
-		/// <summary>
-		/// Потокобезопасный запуск события OnOpen 
-		/// </summary>
-		protected internal void OnEventOpen(IContext cntx)
-		{
-
-			string s = "open";
-			string m = "Соединение было установлено, протокол ws";
-
-			PHandlerEvent e;
-			lock (SyncEvent)
-				e = eventOnopen;
-			if (e != null)
-				e(this, new PEventArgs(s, m, cntx));
+				e(this, new PEventArgs(MESSAGE[S_CLOSE], S_CLOSE, cntx));
 		}
 		/// <summary>
 		/// Потокобезопасный запуск события Error
@@ -367,15 +444,11 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// </summary>
 		protected internal void OnEventError(Exception error)
 		{
-
-			string s = "error";
-			string m = "Произошла ошибка во время исполнения";
-
 			PHandlerEvent e;
 			lock (SyncEvent)
 				e = eventerror;
 			if (e != null)
-				e(this, new PEventArgs(s, m, error));
+				e(this, new PEventArgs(MESSAGE[S_ERROR], S_ERROR, error));
 		}
 		/// <summary>
 		/// Потокобезопасный запуск события Connection
@@ -383,45 +456,23 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// </summary>
 		internal void OnEventConnect()
 		{
-
-			string s = "connect";
-			string m = "Соединение было установлено, протокол ws";
-
 			PHandlerEvent e;
 			lock (SyncEvent)
 				e = eventconnect;
 			if (e != null)
-				e(this, new PEventArgs(s, m, null));
+				e(this, new PEventArgs(MESSAGE[S_CONNECT], S_CONNECT, null));
 
-		}
-		internal void OnEventPing(IContext cntx)
-		{
-			//string m = "Получен фрейм Ping";
-			PHandlerEvent e;
-			lock (SyncEvent)
-				e = __EventPing;
-			if (e != null)
-				e(this, new PEventArgs(S_PING, string.Empty, cntx));
-		}
-		internal void OnEventPong(IContext cntx)
-		{
-			//string m = "Получен фрейм Pong";
-			PHandlerEvent e;
-			lock (SyncEvent)
-				e = __EventPong;
-			if (e != null)
-				e(this, new PEventArgs(S_PONG, string.Empty, cntx));
 		}
 
 		public override TaskResult HandlerProtocol()
         {
             try
             {
-				/*==================================================================
-					Запускает функцию обработки пользоватлеьских данных,в случае
-					если статус не был изменен выполняет переход к следующему
-					обраотчику, обработчику чтения данных.						   
-				===================================================================*/
+				    /*==================================================================
+					    Запускает функцию обработки пользоватлеьских данных,в случае
+					    если статус не был изменен выполняет переход к следующему
+					    обраотчику, обработчику чтения данных.						   
+				    ===================================================================*/
 				if (state == 0)
 				{
 					OnEventWork();
@@ -446,22 +497,22 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					if (Interlocked.CompareExchange(ref state, 0, 2) == 2)
 						return TaskResult;
 				}
-				/*============================================================
-                                        Обработчик ошибок
-                    Запускам функцию обработки ошибок. Если заголвоки были
-                    отправлены закрываем соединение, если нет отправляем 
-                    информацию о произошедшей ошибки. При ошибке клиента 
-                    400 или ошибке сервера 500 указываем серверу после 
-                    отправки данных закрыть моединение. 					   
-                ==============================================================*/
+				    /*================================================================
+                                            Обработчик ошибок
+                        Запускам функцию обработки ошибок. Если заголвоки были
+                        отправлены закрываем соединение, если нет отправляем 
+                        информацию о произошедшей ошибки. При ошибке клиента 
+                        400 или ошибке сервера 500 указываем серверу после 
+                        отправки данных закрыть моединение. 					   
+                    ==================================================================*/
 								if (state == 4)
 								{
 									OnEventError(Exception);
 									Interlocked.Exchange(ref state, 0);
 								}
-                /*============================================================
-                                        Закрываем соединеие						   
-                ==============================================================*/
+                    /*================================================================
+                                            Закрываем соединеие						   
+                    ==================================================================*/
 								if (state == 5)
 								{
 									if (!waitclose
@@ -499,6 +550,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
         }
 
 		#region ovverride
+
 		/// <summary>
 		/// Очищает данные связанные с объектом
 		/// </summary>
@@ -519,7 +571,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// <returns>информацию о текущем объекте</returns>
 		public override string ToString()
         {
-            return "HTTP";
+            return "Стандартный обработчик данных...";
         }
 		
 		#endregion

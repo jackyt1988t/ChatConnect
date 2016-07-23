@@ -51,6 +51,10 @@ namespace MyWebSocket.Tcp.Protocol
 			get;
 			protected set;
 		}
+        /// <summary>
+        /// Функция обработчик цикла
+        /// </summary>
+        public Action Worker;
 		/// <summary>
 		/// Объект для синхронизации
 		/// </summary>
@@ -75,6 +79,14 @@ namespace MyWebSocket.Tcp.Protocol
 			get;
 			protected set;
 		}
+        /// <summary>
+        /// Вермя старта открытия соединения
+        /// </summary>
+        public TimeSpan TimeOpen
+        {
+            get;
+            protected set;
+        }
 		/// <summary>
 		/// Время начала закрытия соединения
 		/// </summary>
@@ -134,6 +146,14 @@ namespace MyWebSocket.Tcp.Protocol
 		/// </summary>
 		protected bool waitclose = false;
 
+        /// <summary>
+        /// Создает экземпляр класса Base
+        /// </summary>
+        void Base()
+        {
+            TimeOpen = new TimeSpan(DateTime.Now.Ticks);
+        }
+
 		/// <summary>
 		/// Закрывает HTTP соединение, если оно еще не закрыто
 		/// </summary>
@@ -157,12 +177,16 @@ namespace MyWebSocket.Tcp.Protocol
 		/// <param name="error">Ошибка</param>
 		public void Error(Exception error)
 		{
+            
 			lock (__ObSync)
 			{
-				if (state > 4)
-					state = 7;
-				else
-					state = 4;
+                if (state > 4)
+                    state = 7;
+                else
+                {
+                    state = 4;
+                    Exception = error;
+                }
 			}
 		}
 		/// <summary>

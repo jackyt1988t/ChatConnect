@@ -2,7 +2,7 @@
 
 namespace MyWebSocket.Tcp.Protocol.WS
 {
-    class WSFrameN13
+    public class WSFrameN13
     {
         public const int TEXT     = 0x01;
 		public const int PING     = 0x09;

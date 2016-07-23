@@ -36,24 +36,26 @@ namespace MyWebSocket.Log
             message = "[" + DateTime.Now.ToString() + "] " 
 					+ mode.ToString() + ": " + message + ".";
                                     
-            StreamWriter writer = null;
-            try
-            {
-                FileInfo fileinfo = new FileInfo(path);
-                lock (ObjSync)
-                {
-                    if (fileinfo.Exists)
-                        writer = fileinfo.AppendText();
-                    else
-                        writer = fileinfo.CreateText();
-						writer.WriteLine(   message   );
-                }
-            }
-            finally
-            {
-                if (writer != null)
-                    writer.Close();
-            }
+			StreamWriter writer = null;
+			lock (ObjSync) 
+			{
+				try 
+				{
+					FileInfo fileinfo = new FileInfo (path);
+                
+					if (fileinfo.Exists)
+						writer = fileinfo.AppendText();
+					else
+						writer = fileinfo.CreateText();
+							writer.WriteLine (message);
+                
+				} 
+				finally 
+				{
+					if (writer != null)
+						writer.Close ();
+				}
+			}
         }
     }
 }
