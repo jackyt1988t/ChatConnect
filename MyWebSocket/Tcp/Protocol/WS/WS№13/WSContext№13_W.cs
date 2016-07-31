@@ -270,23 +270,11 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
             {
                 try
                 {
-                    WSFrameN13 _frame = new WSFrameN13()
-                                        {
-                                            BitFin  = WSFIN,
-                                            BitPcod = WSOPCOD,
-                                        };
-                               _frame.D__Body.Write(buffer, offset, length);
-                    
-                    __Writer.Write(
-                               _frame);
-
-                    if (Log.Loging.Mode  >  Log.Log.Info)
-                        Log.Loging.AddMessage(
-                            "WS данные успешно добавлены", "log.log", Log.Log.Info);
-                    else
-                        Log.Loging.AddMessage(
-                            "WS данные успешно добавлены" +
-                            "\r\n" + WSDebug.DebugN13(_frame), "log.log", Log.Log.Info);
+                    __Writer.Write(new WSFrameN13(buffer, offset, length)
+                                   {
+                                       BitFin  = WSFIN,
+                                       BitPcod = WSOPCOD,
+                                   });
                 }
                 catch (Exception error)
                 {

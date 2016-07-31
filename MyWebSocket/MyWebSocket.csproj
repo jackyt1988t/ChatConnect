@@ -61,6 +61,7 @@
     <Prefer32Bit>false</Prefer32Bit>
     <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
     <DefineConstants>TRACE</DefineConstants>
+    <Externalconsole>true</Externalconsole>
   </PropertyGroup>
   <PropertyGroup>
     <StartupObject>Example.Program</StartupObject>

@@ -185,6 +185,15 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			D__Head = new MemoryStream(0);
 			D__Body = new MemoryStream(length);
 		}
+        public WSFrameN13(byte[] buffer, int offset, int length)
+        {
+            D__Head = new MemoryStream(0);
+            D__Body = new MemoryStream(buffer, 
+                                           offset, 
+                                               length, 
+                                                   true, 
+                                                       true);
+        }
 
 		static public WSOpcod Convert(int ws_opcod)
 		{
@@ -213,6 +222,9 @@ namespace MyWebSocket.Tcp.Protocol.WS
 				return;
 			else
 				SetHead = true;
+
+            Log.Loging.AddMessage(
+                "Попытка установить WS заголвоки фрейма", "log.log", Log.Log.Info);
 
             LengHead = 2;
 			LengBody = 
@@ -262,11 +274,17 @@ namespace MyWebSocket.Tcp.Protocol.WS
 				D__Head.WriteByte((byte)(LengBody >> 08));
 				D__Head.WriteByte((byte)(LengBody >> 00));
 			}
+
+            Log.Loging.AddMessage(
+                "Заголвоки WS фрейма успешно установлены", "log.log", Log.Log.Info);
 		}
 		public void Encoding()
 		{
 			if ( BitMask == 1 && MaskVal == 0)
 			{
+                Log.Loging.AddMessage(
+                    "Попвтка установить маску фрейма сообщения", "log.log", Log.Log.Info);
+
 				MaskVal = 
     	                new Random().Next();
 
@@ -275,6 +293,8 @@ namespace MyWebSocket.Tcp.Protocol.WS
 				D__Mask[1] = (byte)(MaskVal >> 16);
 				D__Mask[2] = (byte)(MaskVal >> 08);
 				D__Mask[3] = (byte)(MaskVal >> 00);
+
+                D__Head.Write(   D__Mask, 0, 4   );
 
                 int lenght    = (int)
                                 D__Body.Length;
@@ -287,6 +307,9 @@ namespace MyWebSocket.Tcp.Protocol.WS
                     buffer[offset] = (byte)
                                      (buffer[offset] ^ D__Mask[PartBody++ % 4]);
 				}
+                Log.Loging.AddMessage(
+                    "Маска тела WS фрейма установлена" +
+                    "Данные тела сообщения успещно зашифрованы", "log.log", Log.Log.Info);
 			}
 		}
 		public override string ToString()

@@ -80,6 +80,9 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			int offset;
 			byte[] buffer;
 
+            Log.Loging.AddMessage(
+                "Попытка добавить WS данные", "log.log", Log.Log.Info);
+
 			_frame.InitData();
 			if (_frame.BitMask == 1)
 				_frame.Encoding();
@@ -122,6 +125,14 @@ namespace MyWebSocket.Tcp.Protocol.WS
 				{
 					// Добавить фрейм в коллекцию
 					__Frame.__Frames.Add(_frame);
+
+					if (Log.Loging.Mode  >  Log.Log.Info)
+                        Log.Loging.AddMessage(
+                            "WS данные успешно добавлены", "log.log", Log.Log.Info);
+                    else
+                        Log.Loging.AddMessage(
+                            "WS данные успешно добавлены" +
+                            "\r\n" + WSDebug.DebugN13(_frame), "log.log", Log.Log.Info);
 				}
 		}
 		/// <summary>
