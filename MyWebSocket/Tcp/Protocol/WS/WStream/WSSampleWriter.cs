@@ -19,7 +19,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 
 			set
 			{
-				lock (__Sync)
+				lock (obSync)
 				{
 					base.Position = value;
 					if (Count > MINRESIZE)
@@ -55,7 +55,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		{
 
 			int read;
-			lock (__Sync)
+			lock (obSync)
 			{
 				read = base.Read(buffer, start, length);
 				if (Count > MINRESIZE)
@@ -79,7 +79,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		public void Write(WSFrameSample frame)
 		{
 			_Frame = frame;
-			lock (__Sync)
+			lock (obSync)
 			{
 				Write(frame.DataHead);
 				Write(frame.DataBody);
@@ -91,7 +91,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		}
 		public override void Write(byte[] buffer, int start, int length)
 		{
-			lock (__Sync)
+			lock (obSync)
 			{
 				if (length > Clear)
 				{

@@ -60,7 +60,24 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// Поток шифрования данных
 		/// </summary>
 		public SslStreamServer SslStream;
-		
+
+        #region func
+        public Func<HTTProtocol, bool> FuncWork
+        {
+            get;
+            set;
+        }
+        public Func<Action, 
+                      Action,
+                        HTTProtocol, bool> FuncEndl
+        {
+            get;
+            set;
+        }
+
+        #endregion
+
+        #region event
 
 		event PHandlerEvent eventWork;
 		/// <summary>
@@ -217,8 +234,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			}
 		}
 
-        protected long timeclose = 
-              DateTime.Now.Ticks + WORK;
+        #endregion
         
 		protected object SyncEvent = new object();
 		protected static X509Certificate sertificate;
@@ -260,10 +276,12 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                 State = 
                     States.Connection;
                 
-                Worker   =   StdWorker;
                 
-    			__ObSync = new object();
-                
+    			ObSync = new object();
+                FuncWork = 
+                        HTTPContext.work;
+                FuncEndl = 
+                        HTTPContext.endl;
                 
                 TaskResult   =
 	    				new TaskResult();
@@ -286,6 +304,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
     			ContextRq =
 	    		ContextRs =
 		    		new HTTPContext( this, true );
+                
 			    AllContext = new Queue<IContext>();
     
     			OnEventConnect();
@@ -301,14 +320,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			Dispose();
 		}
 
-        /// <summary>
-        /// Стандартный обработчик соединения.
-        /// </summary>
-        internal void StdWorker()
-        {
-            if (timeclose < DateTime.Now.Ticks)
-                Close(true);
-        }
 		/// <summary>
 		/// Создает новый контекст для обработки
 		/// </summary>
@@ -366,8 +377,6 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// </summary>
 		internal void OnEventWork()
 		{
-            Worker();
-
             if (!queuemode)
             {
                 if (ContextRs.Cancel)
@@ -476,6 +485,9 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				if (state == 0)
 				{
 					OnEventWork();
+
+                    if (FuncWork(this))
+                        state = 5;
 					/*==================================================================
 						Проверяет сокет были получены данные или нет. Читаем данные 
 						из сокета, если есть данные обрабатываем  их. Когда данные
@@ -505,37 +517,27 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
                         400 или ошибке сервера 500 указываем серверу после 
                         отправки данных закрыть моединение. 					   
                     ==================================================================*/
-								if (state == 4)
-								{
-									OnEventError(Exception);
-									Interlocked.Exchange(ref state, 0);
-								}
+						if (state == 4)
+						{
+							OnEventError(Exception);
+                            Interlocked.CompareExchange( ref state, 0, 4 );
+						}
                     /*================================================================
                                             Закрываем соединеие						   
                     ==================================================================*/
-								if (state == 5)
-								{
-									if (!waitclose
-									  || TimeClose.Ticks  <  DateTime.Now.Ticks)
-										state = 7;
-									else
-									{
-										read();
-										write();
-										if (ContextRs.Cancel)
-											(ContextRs = 
-												AllContext.Dequeue()).Refresh();
-									}
-									
-									
-								}
-								if (state == 7)
-								{
-									OnEventClose();
-									if (Tcp.Connected)
-										Tcp.Close( 0 );
-										TaskResult.Option  =  TaskOption.Delete;
-								}
+						                if (state == 5)
+						                {
+                                            if (FuncEndl(read, write, this))
+								                state = 7;		
+						                }
+                        
+						    if (state == 7)
+						    {
+							    OnEventClose();
+							    if (Tcp.Connected)
+								    Tcp.Close( 0 );
+								    TaskResult.Option  =  TaskOption.Delete;
+						    }
             }
             catch (HTTPException err)
             {

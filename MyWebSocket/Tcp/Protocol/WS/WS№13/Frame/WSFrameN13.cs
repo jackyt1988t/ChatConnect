@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 namespace MyWebSocket.Tcp.Protocol.WS
 {
@@ -10,6 +11,15 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		public const int CLOSE    = 0x08;
 		public const int BINNARY  = 0x02;
 		public const int CONTINUE = 0x00;
+		
+		/// <summary>
+		/// бит FIN 
+		/// </summary>
+        public int BitFin
+        {
+            get;
+            set;
+        }
 		/// <summary>
 		/// Номер обработчика
 		/// </summary>
@@ -22,14 +32,6 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		/// Текущая позиция маски
 		/// </summary>
         public int MaskPos
-        {
-            get;
-            set;
-        }
-		/// <summary>
-		/// бит FIN 
-		/// </summary>
-        public int BitFin
         {
             get;
             set;
@@ -154,7 +156,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		/// <summary>
 		/// 
 		/// </summary>
-		public byte[] DataMask
+		public byte[] D__Mask
 		{
 			get;
 			set;
@@ -162,139 +164,134 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		/// <summary>
 		/// Буффер заголвоков
 		/// </summary>
-		public byte[] DataHead
+		public MemoryStream D__Head
         {
             get;
-            set;
+            private set;
         }
-		/// <summary>
-		/// Буффер тела
-		/// </summary>
-        public byte[] DataBody
+        public MemoryStream D__Body
         {
             get;
-            set;
+            private set;
         }
 
-		public void Reset()
+        public WSFrameN13()
+        {
+            D__Head = new MemoryStream(0);
+            D__Body = new MemoryStream(0);
+        }
+		public WSFrameN13(int length)
 		{
-			BitFin = 0;
-			Handler = 0;
-			BitRsv1 = 0;
-			BitRsv2 = 0;
-			BitRsv3 = 0;
-			BitPcod = 0;
-			BitMask = 0;
-			BitLeng = 0;
-			RecLeng = 0;
-			MaskVal = 0;
-			PartBody = 0;
-			PartHead = 0;
-			LengHead = 0;
-			LengBody = 0;
-			DataHead = null;
-			DataBody = null;
-			DataMask = null;
-			GetHead = false;
-			GetBody = false;
-			SetHead = false;
+			D__Head = new MemoryStream(0);
+			D__Body = new MemoryStream(length);
 		}
-		unsafe public void InitData()
+
+		static public WSOpcod Convert(int ws_opcod)
+		{
+			switch (ws_opcod)
+            {
+	            case WSFrameN13.TEXT:
+    	            return WSOpcod.Text;
+        	    case WSFrameN13.PING:
+            	    return WSOpcod.Ping;
+	            case WSFrameN13.PONG:
+    	            return WSOpcod.Pong;
+        	    case WSFrameN13.CLOSE:
+            	    return WSOpcod.Close;
+	            case WSFrameN13.BINNARY:
+    	            return WSOpcod.Binnary;
+        	    case WSFrameN13.CONTINUE:
+            	    return WSOpcod.Continue;
+	            default:
+    	            throw new WSException("Неизвестный опкод");
+            }
+		}
+
+		public void InitData()
 		{
 			if (SetHead)
 				return;
-						
+			else
+				SetHead = true;
+
             LengHead = 2;
-			SetHead = true;
-			if (BitMask == 1)
+			LengBody = 
+				D__Body.Length;
+
+			if ( BitMask == 1 )
             {
-				MaskVal = new Random().Next();
-                LengHead += 4;
+				LengHead += 4;
             }
-            if (LengBody <= 125)
+            if ( LengBody <= 125 )
             {
-                 BitLeng = (int)LengBody;
+                 BitLeng = 
+				 	(int)LengBody;
 			}
-            else if (LengBody <= 65556)
+            else if ( LengBody <= 65556 )
             {
-                BitLeng = 126;
-                LengHead += 2;
+                	BitLeng = 126;
+                	LengHead += 2;
             }
-            else if (LengBody >= 65557)
+            else if ( LengBody >= 65557 )
             {
-                BitLeng = 127;
-                LengHead += 8;
+                	BitLeng = 127;
+                	LengHead += 8;
             }
 			
-            int length = 0;
-            DataHead = new byte[LengHead];
+            D__Head = new MemoryStream((int)LengHead);
+			D__Head.WriteByte((byte)( BitFin  << 7 ));
+			D__Head.WriteByte((byte)( BitRsv1 << 6 ));
+			D__Head.WriteByte((byte)( BitRsv2 << 5 ));
+			D__Head.WriteByte((byte)( BitRsv3 << 4 ));
+			D__Head.WriteByte((byte)( BitPcod << 0 ));
 
-            DataHead[length] = (byte)(BitFin << 7);
-            DataHead[length] = (byte)(DataHead[length] | 
-										(BitRsv1 << 6));
-            DataHead[length] = (byte)(DataHead[length] | 
-										(BitRsv2 << 5));
-            DataHead[length] = (byte)(DataHead[length] | 
-										(BitRsv3 << 4));
-            DataHead[length] = (byte)(DataHead[length] | 
-										(BitPcod << 0));
-				length++;
-
-            DataHead[length] = (byte)(BitMask << 7);
-            DataHead[length] = (byte)(DataHead[length] | 
-										(BitLeng << 0));
-				length++;
+			D__Head.WriteByte((byte)( BitMask << 7 ));
+			D__Head.WriteByte((byte)( BitLeng << 0 ));
 
 			if (BitLeng == 127)
 			{
-				DataHead[length] = (byte)(LengBody >> 56);
-				length++;
-				DataHead[length] = (byte)(LengBody >> 48);
-				length++;
-				DataHead[length] = (byte)(LengBody >> 40);
-				length++;
-				DataHead[length] = (byte)(LengBody >> 32);
-				length++;
-				DataHead[length] = (byte)(LengBody >> 24);
-				length++;
-				DataHead[length] = (byte)(LengBody >> 16);
-				length++;
+				D__Head.WriteByte((byte)(LengBody >> 56));
+				D__Head.WriteByte((byte)(LengBody >> 48));
+				D__Head.WriteByte((byte)(LengBody >> 40));
+				D__Head.WriteByte((byte)(LengBody >> 32));
+				D__Head.WriteByte((byte)(LengBody >> 24));
+				D__Head.WriteByte((byte)(LengBody >> 16));
 			}
 			if (BitLeng >= 126)
 			{
-				DataHead[length] = (byte)(LengBody >> 08);
-				length++;
-				DataHead[length] = (byte)(LengBody >> 00);
-				length++;
+				D__Head.WriteByte((byte)(LengBody >> 08));
+				D__Head.WriteByte((byte)(LengBody >> 00));
 			}
-
-			if (BitMask == 1)
+		}
+		public void Encoding()
+		{
+			if ( BitMask == 1 && MaskVal == 0)
 			{
-				DataMask = new byte[4];
-				DataMask[0] = DataHead[length] = (byte)(MaskVal >> 24);
-				length++;
-				DataMask[1] = DataHead[length] = (byte)(MaskVal >> 16);
-				length++;
-				DataMask[2] = DataHead[length] = (byte)(MaskVal >> 08);
-				length++;
-				DataMask[3] = DataHead[length] = (byte)(MaskVal >> 00);
-				length++;
+				MaskVal = 
+    	                new Random().Next();
 
-				fixed (byte* target = DataBody)
+				D__Mask = new byte[ 4 ];
+				D__Mask[0] = (byte)(MaskVal >> 24);
+				D__Mask[1] = (byte)(MaskVal >> 16);
+				D__Mask[2] = (byte)(MaskVal >> 08);
+				D__Mask[3] = (byte)(MaskVal >> 00);
+
+                int lenght    = (int)
+                                D__Body.Length;
+                int offset    = (int)
+                                D__Body.Position;
+				byte[] buffer = D__Body.GetBuffer();
+
+                for (int i = offset; i < lenght; i++)
 				{
-					byte* pt = target + PartBody;
-						while (RecLeng < LengBody)
-						{
-							*pt = (byte)(*pt ^ DataMask[RecLeng % 4]);
-							pt++;
-							RecLeng++;
-						}
+                    buffer[offset] = (byte)
+                                     (buffer[offset] ^ D__Mask[PartBody++ % 4]);
 				}
 			}
 		}
 		public override string ToString()
 		{
-			return "WebSocket protocol version release N13";
+			return "This WebSocket protocol release №13. Supported version №13";
 		}
 	}
 }

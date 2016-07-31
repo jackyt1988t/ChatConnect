@@ -51,14 +51,10 @@ namespace MyWebSocket.Tcp.Protocol
 			get;
 			protected set;
 		}
-        /// <summary>
-        /// Функция обработчик цикла
-        /// </summary>
-        public Action Worker;
 		/// <summary>
 		/// Объект для синхронизации
 		/// </summary>
-		public object __ObSync
+		public object ObSync
 		{
 			get;
 			protected set;
@@ -149,7 +145,7 @@ namespace MyWebSocket.Tcp.Protocol
         /// <summary>
         /// Создает экземпляр класса Base
         /// </summary>
-        void Base()
+        public BaseProtocol()
         {
             TimeOpen = new TimeSpan(DateTime.Now.Ticks);
         }
@@ -158,15 +154,13 @@ namespace MyWebSocket.Tcp.Protocol
 		/// Закрывает HTTP соединение, если оно еще не закрыто
 		/// </summary>
 		/// <param name="wait">false если закрыть сразу</param>
-		public void Close(bool wait = false)
+        public void Close()
 		{
-			lock (__ObSync)
+			lock (ObSync)
 			{
 				if (state < 5)
 					state = 5;
 			}
-			if (wait)
-				waitclose = wait;
 
 			TimeClose = new TimeSpan(DateTime.Now.Ticks + 
 									 TimeSpan.TicksPerSecond * TIMEWAIT);
@@ -175,10 +169,10 @@ namespace MyWebSocket.Tcp.Protocol
 		/// Обрабатывает происходящие ошибки и назначает оьраьотчики
 		/// </summary>
 		/// <param name="error">Ошибка</param>
-		public void Error(Exception error)
+        public void Error(Exception error)
 		{
             
-			lock (__ObSync)
+			lock (ObSync)
 			{
                 if (state > 4)
                     state = 7;
@@ -189,6 +183,7 @@ namespace MyWebSocket.Tcp.Protocol
                 }
 			}
 		}
+
 		/// <summary>
 		/// Очищает управляемые ресурсы
 		/// </summary>
@@ -226,7 +221,7 @@ namespace MyWebSocket.Tcp.Protocol
 		protected SocketError Read()
 		{
 			SocketError error = SocketError.Success;
-				lock (TcpStream.Reader.__Sync)			
+				lock (TcpStream.Reader.obSync)			
 				{
 					int count = 
 					   LENGTHREAD;
@@ -263,7 +258,7 @@ namespace MyWebSocket.Tcp.Protocol
 		{
 			SocketError error = SocketError.Success;
 			
-				lock (TcpStream.Writer.__Sync)
+				lock (TcpStream.Writer.obSync)
 				{
 					int start =
 						(int)TcpStream.Writer.PointR;
@@ -296,7 +291,7 @@ namespace MyWebSocket.Tcp.Protocol
 		{
 			SocketError error = SocketError.Success;
 			
-				lock (TcpStream.Writer.__Sync)
+				lock (TcpStream.Writer.obSync)
 				{
 
 					if (TcpStream.Writer.Empty)

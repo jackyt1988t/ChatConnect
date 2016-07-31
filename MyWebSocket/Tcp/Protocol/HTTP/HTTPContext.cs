@@ -16,6 +16,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 {
 	public class HTTPContext : IContext
 	{
+
 		internal bool _to_;
 		internal bool _ow_;
 		/// <summary>
@@ -38,7 +39,15 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		{
 			get;
 			private set;
-		}
+        }
+        /// <summary>
+        /// Синхронизация текущего объекта
+        /// </summary>
+        public object ObSync
+        {
+            get;
+            private set;
+        }
 		/// <summary>
 		/// Входящие заголвоки
 		/// </summary>
@@ -55,14 +64,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			get;
 			private set;
 		}
-		/// <summary>
-		/// Синхронизация текущего объекта
-		/// </summary>
-		public object __ObSync
-		{
-			get;
-			private set;
-		}
+		
 		/// <summary>
 		/// Поток чтения
 		/// </summary>
@@ -85,11 +87,10 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		public HTTPContext(HTTProtocol protocol, bool ow)
 		{
 			_ow_ = ow;
-
+            ObSync = new object();
 			Request  = new Header();
 			Protocol =     protocol;
 			Response = new Header();
-			__ObSync = new object();
 
 				__Reader = new HTTPReader( Protocol.GetStream );
 				__Reader.Header = Request;
@@ -100,9 +101,38 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				__Writer = new HTTPWriter( Protocol.GetStream );
 				__Writer.Header = Response;	
 		}
+        static
+        public bool work (HTTProtocol protocol)
+        {
+            if (TimeSpan.TicksPerSecond * 9 +
+                protocol.TimeOpen.Ticks < DateTime.Now.Ticks)
+                return true;
+            
+            return false;
+        }
+        static
+        public bool endl (Action read, 
+                            Action write, 
+                              HTTProtocol protocol)
+        {
+            write();
+
+            if (protocol.ContextRs.Cancel)
+            {
+                if (protocol.AllContext.Count == 0)
+                    return true;
+                   (protocol.ContextRs= 
+                        protocol.AllContext.Dequeue()).Refresh();
+            } 
+            if (TimeSpan.TicksPerSecond * 9 + 
+                protocol.TimeClose.Ticks  <  DateTime.Now.Ticks)
+                    return true;
+            
+            return false;
+        }
 		public IContext Refresh()
 		{
-			lock (__ObSync)
+			lock (ObSync)
 			{
 				if (!_ow_)
 				{
@@ -112,7 +142,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 					__Writer.Stream.Dispose();
 
 					if (!Cancel)
-						__Writer.Stream  =  Protocol.GetStream;
+						__Writer.Stream   =   Protocol.GetStream;
 				}
 			}
 				return this;
@@ -128,12 +158,13 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			else
 				return new WSContext_13_R(Protocol, Cancel);
 		}
+
 		/// <summary>
 		/// 
 		/// </summary>
 		public void End()
 		{
-			lock (__ObSync)
+			lock (ObSync)
 			{
 				if (Cancel)
 					throw new HTTPException("Отправка данных закончена");
@@ -216,7 +247,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 			int _count = (int)(msg.Length / _chunk);
 			int length = (int)(msg.Length - _count * _chunk);
 
-			lock (__ObSync)
+			lock (ObSync)
 			{
 				if (_to_)
 					throw new HTTPException("Дождитесь окончание записи");
@@ -269,7 +300,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		public Task<bool> AsFile(string path)
 		{
 			
-			lock (__ObSync)
+			lock (ObSync)
 			{
 				if (_to_)
 					throw new HTTPException( "Дождитесь окончание записи " + path );
@@ -410,7 +441,7 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 		/// <param name="length">количество которое необходимо записать</param>
 		public void Message(byte[] message, int offset, int length)
 		{
-			lock (__ObSync)
+			lock (ObSync)
 			{
 				if (Cancel)
 					throw new HTTPException("Отправка данных закончена");

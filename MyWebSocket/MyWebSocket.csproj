@@ -121,7 +121,6 @@
     <Compile Include="Tcp\Protocol\WS\WSClose\CloseWS.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
-    <Compile Include="Tcp\Protocol\WS\WS.cs" />
     <Compile Include="Tcp\Protocol\WS\WSError\ErrorWS.cs" />
     <Compile Include="Tcp\Protocol\WS\WSData.cs" />
     <Compile Include="Tcp\Protocol\WS\WSClose\WSClose.cs" />
@@ -158,6 +157,7 @@
     <Compile Include="Tcp\Protocol\WS\WS№13\Frame\WSFrameN13.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
+    <Compile Include="Tcp\Protocol\WS\WS№13\Frame\WSFramesN13.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config">

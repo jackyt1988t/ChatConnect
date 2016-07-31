@@ -45,7 +45,7 @@ namespace MyWebSocket.Tcp.Protocol
 		/// <summary>
 		/// Закрыть текущий протокол
 		/// </summary>
-		void Close(bool wait);
+		void Close();
 		/// <summary>
 		/// Обработать ошибку протокола
 		/// </summary>

@@ -8,20 +8,20 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		public static string DebugN13(WSFrameN13 frame)
 		{
 			StringBuilder debug = new StringBuilder(6000);
-			debug.AppendLine("*******Protcool N13*******");
+			/*debug.AppendLine("*******Protcool N13*******");
 			if (frame.GetBody)
 				debug.AppendLine("Get Frame");
 			else
 				debug.AppendLine("Send Frame");
 			debug.AppendLine("Head byte");
-			for (int i = 0; i < frame.DataHead.Length; i++)
+			for (int i = 0; i < frame.D__Head.Length; i++)
 			{
-				debug.Append(frame.DataHead[i].ToString("X") + " ");
+				debug.Append(frame.D__Head[i].ToString("X") + " ");
 			}
 			debug.Append("[ ");
-			for (int i = 0; i < frame.DataHead.Length; i++)
+			for (int i = 0; i < frame.D__Head.Length; i++)
 			{
-				string bin = Convert.ToString(frame.DataHead[i], 2);
+				string bin = Convert.ToString(frame.D__Head[i], 2);
 				while (bin.Length < 8)
 				{
 					bin = "0" + bin;
@@ -77,14 +77,14 @@ namespace MyWebSocket.Tcp.Protocol.WS
 				debug.Append(frame.DataBody[i].ToString("X")  +  " ");
 			}
 			debug.AppendLine();
-			debug.AppendLine("*******Protcool N13*******");
+			debug.AppendLine("*******Protcool N13*******")*/;
 			/*    Взврат строки   */
             return debug.ToString();
 		}
 		public static string DebugSample(WSFrameSample frame)
 		{
 			StringBuilder debug = new StringBuilder(6000);
-			debug.AppendLine("*******Protcool Sample*******");
+			/*debug.AppendLine("*******Protcool Sample*******");
 			if (frame.GetsBody)
 				debug.AppendLine("Get Frame");
 			else
@@ -148,7 +148,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 				debug.Append(frame.DataBody[i].ToString("X")  +  " ");
 			}
 			debug.AppendLine();
-			debug.AppendLine("*******Protcool Sample*******");
+			debug.AppendLine("*******Protcool Sample*******")*/;
             /*    Взврат строки   */
             return debug.ToString();
 		}

@@ -55,7 +55,7 @@ namespace MyWebSocket.Tcp.Protocol
                     return (count - __p_w) + __p_r;
             }
         }
-        public object __Sync
+        public object obSync
         {
             get;
             private set;
@@ -68,7 +68,7 @@ namespace MyWebSocket.Tcp.Protocol
         {
             get
             {
-                lock (__Sync)
+                lock (obSync)
                 {
                     if (_loop)
                         return (count - __p_r) + __p_w;
@@ -121,7 +121,7 @@ namespace MyWebSocket.Tcp.Protocol
 
             set
             {
-                lock (__Sync)
+                lock (obSync)
                 {
                     if (value < 0)
                         throw new ArgumentOutOfRangeException("value");
@@ -159,7 +159,7 @@ namespace MyWebSocket.Tcp.Protocol
             }
             set
             {
-                lock (__Sync)
+                lock (obSync)
                 {
                     if (value < 0 || value > Count)
                         throw new ArgumentOutOfRangeException("value");
@@ -185,7 +185,7 @@ namespace MyWebSocket.Tcp.Protocol
             }
             set
             {
-                lock (__Sync)
+                lock (obSync)
                 {
                     if (value < 0 || value > Count)
                         throw new ArgumentOutOfRangeException("value");
@@ -238,7 +238,7 @@ namespace MyWebSocket.Tcp.Protocol
             base()
         {
             count = length;
-            __Sync = new object();
+            obSync = new object();
             _buffer = new byte[length];
         }
 
@@ -261,7 +261,7 @@ namespace MyWebSocket.Tcp.Protocol
         {
             if (resize < 0)
                 throw new ArgumentOutOfRangeException("length");
-            lock (__Sync)
+            lock (obSync)
             {
                 if (resize < Length)
                     throw new IOException("Не хватает места для перезаписи");
@@ -304,7 +304,7 @@ namespace MyWebSocket.Tcp.Protocol
                         
         public override void SetLength(long value)
         {
-            lock (__Sync)
+            lock (obSync)
             {
                 if (value > Clear)
                     throw new IOException("Недостаточно свободного места");
@@ -325,7 +325,7 @@ namespace MyWebSocket.Tcp.Protocol
 		/// <returns>-1 если достигнут конец потока</returns>
         public override int ReadByte()
         {
-            lock (__Sync)
+            lock (obSync)
             {
                 if (Empty)
                     return -1;
@@ -351,7 +351,7 @@ namespace MyWebSocket.Tcp.Protocol
                 throw new ArgumentOutOfRangeException("length");
             if ((offset + length) > buffer.Length)
                 throw new ArgumentOutOfRangeException("length + offset");
-            lock (__Sync)
+            lock (obSync)
             {
 				if (length  > Length)
                     length = (int)Length;
@@ -405,7 +405,7 @@ namespace MyWebSocket.Tcp.Protocol
                 throw new ArgumentOutOfRangeException("length");
             if ((offset + length) > buffer.Length)
                 throw new ArgumentOutOfRangeException("length + offset");
-            lock (__Sync)
+            lock (obSync)
             {
                 int i;
 				if (length > Clear)

@@ -1,10 +1,10 @@
 ﻿using System;
 using System.IO;
-using System.Security.Cryptography;
 using System.Text;
-using MyWebSocket.Tcp.Protocol.HTTP;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+
+using MyWebSocket.Tcp.Protocol.HTTP;
 
 namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 {
@@ -31,17 +31,20 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
         /// </summary>
         public bool Cancel
         {
-            get;
-            private set;
-        }       
+            get
+            {
+                return Response.isEnd;
+            }
+        }
+
         /// <summary>
         /// Синхронизация текущего объекта
         /// </summary>
-        public object __ObSync
+        public object ObSync
         {
             get;
             private set;
-        }       
+        }
         /// <summary>
         /// Поток записи
         /// </summary>
@@ -50,13 +53,15 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
             get;
         }
         /// <summary>
-        /// Информация об отправленных фреймах
+        /// Коллекция
         /// </summary>
-        public List<WSFrameN13> Response
+        public WSFramesN13 Response
         {
-            get;
-            private set;
-        }
+            get
+            {
+                return __Writer.__Frame;
+            }
+        }     
 
         /// <summary>
         /// Создает контекст получения, отправки данных
@@ -70,10 +75,8 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
         {
             _ow_ = ow;
 
-            __ObSync =     new object();
-            Protocol =         protocol;
-            Response = 
-                 new List<WSFrameN13>();
+            ObSync   =   new object();
+            Protocol =       protocol;
 
             if (!_ow_)
                 __Writer = new WSWriterN13(new MyStream(4096));
@@ -90,11 +93,17 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
         async
         public Task<bool> AsMssg(string s_data)
         {
+            int length;
+            int offset = 0;
             byte[] buffer = 
                 Encoding.UTF8.GetBytes( s_data );
-            return await AsyncMessage(buffer, 0,
-                                        buffer.Length, 
-                                            WSOpcod.Text);
+                   length     =     buffer.Length;
+
+            return await AsyncMessage(buffer, 
+                                          offset,
+                                              length,
+                                                  WSFin.Last,
+                                                      WSOpcod.Text);
         }
         /// <summary>
         /// Асинхронной отправляет строковый фрейм
@@ -105,9 +114,14 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
         async
         public Task<bool> AsMssg(byte[] buffer)
         {
-            return await AsyncMessage(buffer, 0, 
-                                        buffer.Length, 
-                                            WSOpcod.Binnary);
+            int offset = 0;
+            int length = buffer.Length;
+
+            return await AsyncMessage(buffer, 
+                                          offset,
+                                              length,
+                                                  WSFin.Last,
+                                                      WSOpcod.Binnary);
         }
 
         #endregion
@@ -117,14 +131,14 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
         /// <returns></returns>
         public IContext Context()
         {
-            throw new NotFiniteNumberException("Context");
+            throw new NotImplementedException("Context");
         }
         /// <summary>
         /// Сбрасывает выходной поток, если не использует основной
         /// </summary>
         public IContext Refresh()
         {
-            lock (__ObSync)
+            lock (ObSync)
             {
                 if (!_ow_)
                 {
@@ -144,14 +158,14 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
         /// </summary>
         public void End()
         {
-            Cancel = true;
+            throw new NotImplementedException("End");
         }
         /// <summary>
         /// 
         /// </summary>
         public void Handler()
         {
-            throw new NotFiniteNumberException("Handler");
+            throw new NotImplementedException("Handler");
         }
         /// <summary>
         /// Записывает в стандартный поток бинарный фрейм
@@ -159,8 +173,13 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
         /// <param name="buffer"></param>
         public void Message(byte[] buffer)
         {
-            Message(buffer, 0, 
-                        buffer.Length);
+            int offset = 0;
+            int length    =    buffer.Length;
+            Message(buffer, 
+                        offset, 
+                            length, 
+                                WSFin.Last, 
+                                    WSOpcod.Text);
         }
         /// <summary>
         /// Записывает в стандартный поток текстовый фрейм
@@ -168,13 +187,17 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
         /// <param name="s_data"></param>
         public void Message(string s_data)
         {
+            int offset = 0;
+            int length = 0;
             byte[] buffer = 
                 Encoding.UTF8.GetBytes(s_data);
+                   length    =    buffer.Length;
             
-            Message(buffer, 0, 
-                        buffer.Length, 
-                            WSFin.Last, 
-                                WSOpcod.Text);
+            Message(buffer, 
+                        offset, 
+                            length, 
+                                WSFin.Last, 
+                                    WSOpcod.Text);
         }
         /// <summary>
         /// Записывает в стандартный поток бинарный фрейм
@@ -182,14 +205,15 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
         /// <param name="message">массив данных</param>
         /// <param name="offset">стартовая позиция</param>
         /// <param name="length">количество которое необходимо записать</param>
-        public void Message(byte[] message, 
+        public void Message(byte[] buffer, 
                                     int offset, 
                                         int length)
         {
-            Message(message, offset, 
-                        message.Length, 
-                            WSFin.Last, 
-                                WSOpcod.Binnary);
+            Message(buffer, 
+                        offset, 
+                            length, 
+                                WSFin.Last, 
+                                    WSOpcod.Binnary);
         }
         /// <summary>
         /// Записывает в стандартный поток указанный фрейм
@@ -198,12 +222,12 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
         /// <param name="offset">стартовая позиция</param>
         /// <param name="length">количество которое необходимо записать</param>
         /// <param name="wsfin">указывает последоватьлность фрейма</param>
-        /// <param name="opcod">информация о текущем фрейме</param>
+        /// <param name="wsopcod">информация о текущем фрейме</param>
         public void Message(byte[] buffer, 
                                     int offset, 
                                         int length, 
                                             WSFin wsfin, 
-                                                WSOpcod opcod)
+                                                WSOpcod wsopcod)
         {
             int WSFIN = 0;
             switch (wsfin)
@@ -218,60 +242,43 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
                     throw new HTTPException("Неизвестный fin");
             }
 
-            int OPCOD = 0;
-            switch (opcod)
+            int WSOPCOD = 0;
+            switch (wsopcod)
             {
                 case WSOpcod.Text:
-                    OPCOD = WSFrameN13.TEXT;
+                    WSOPCOD = WSFrameN13.TEXT;
                     break;
                 case WSOpcod.Ping:
-                    OPCOD = WSFrameN13.PING;
+                    WSOPCOD = WSFrameN13.PING;
                     break;
                 case WSOpcod.Pong:
-                    OPCOD = WSFrameN13.PONG;
+                    WSOPCOD = WSFrameN13.PONG;
                     break;
                 case WSOpcod.Close:
-                    OPCOD = WSFrameN13.CLOSE;
+                    WSOPCOD = WSFrameN13.CLOSE;
                     break;
                 case WSOpcod.Binnary:
-                    OPCOD = WSFrameN13.BINNARY;
+                    WSOPCOD = WSFrameN13.BINNARY;
                     break;
                 case WSOpcod.Continue:
-                    OPCOD = WSFrameN13.CONTINUE;
+                    WSOPCOD = WSFrameN13.CONTINUE;
                     break;
                 default:
                     throw new HTTPException("Неизвестный opcod");
             }
-
-            if (WSFIN == 0)
-                _next_ = true;
-            
-            lock (__ObSync)
+            lock (ObSync)
             {
-                
-                if (Cancel)
-                    throw new HTTPException("Отправка данных закончена");
-
-                if (_next_ && OPCOD != WSFrameN13.CONTINUE)
-                    throw new HTTPException("Отправка данных закончена");
                 try
                 {
-                    WSFrameN13 frame = new WSFrameN13();
-                               frame.BitFin   = WSFIN;
-                               frame.BitPcod  = OPCOD;
-                               frame.BitMask  = 0;
-                               frame.PartBody = offset;
-                               frame.LengBody = length;
-                               frame.DataBody = buffer;
-
-
-                    if (WSFIN == 1)
-                        End();
-                    else
-                        _next_ = true;
+                    WSFrameN13 _frame = new WSFrameN13()
+                                        {
+                                            BitFin  = WSFIN,
+                                            BitPcod = WSOPCOD,
+                                        };
+                               _frame.D__Body.Write(buffer, offset, length);
                     
-                    Response.Add(frame);
-                    __Writer.Write(frame);
+                    __Writer.Write(
+                               _frame);
 
                     if (Log.Loging.Mode  >  Log.Log.Info)
                         Log.Loging.AddMessage(
@@ -279,7 +286,7 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
                     else
                         Log.Loging.AddMessage(
                             "WS данные успешно добавлены" +
-                            "\r\n" + WSDebug.DebugN13(frame), "log.log", Log.Log.Info);
+                            "\r\n" + WSDebug.DebugN13(_frame), "log.log", Log.Log.Info);
                 }
                 catch (Exception error)
                 {
@@ -298,28 +305,25 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
         /// <param name="_1_error">1 error.</param>
         protected void HandlerError(WSException _1_error)
         {
-            Protocol.Close(true);
+            Protocol.Close();
         }
         /// <summary>
         /// Aсинхронно отправляет данные разбивая их на фреймы
         /// </summary>
         /// <returns>true если отправка закончилпсь успехом</returns>
-        /// <param name="buffer">массив данных</param>
-        /// <param name="offset">стартовая позиция</param>
-        /// <param name="length">количество которое необходимо записать</param>
-        /// <param name="opcod">Опкод фрейма который необходимо отправить</param>
         async
         protected Task<bool> AsyncMessage(byte[] buffer, 
                                                 int offset, 
                                                     int length, 
-                                                        WSOpcod opcod)
+                                                        WSFin wsfin, 
+                                                            WSOpcod wsopcod)
         {
             int i = 0;
             int _chunk = 1000 * 32;
             int _count = (int)((length - offset) / _chunk);
             int recive = (int)((length - offset) - _count * _chunk);
 
-            lock (__ObSync)
+            lock (ObSync)
             {
                 if (_to_)
                     throw new HTTPException("Выполняется асинхронная операция");
@@ -329,6 +333,7 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 
             return await Task.Run<bool>(() =>
             {
+                    
                 while (i++ < _count)
                 {
                     if (Protocol.State == States.Close
@@ -337,20 +342,23 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 
                     if (i == 0 
                          && (_count > 1 || recive > 0))
-                        Message(buffer, i * _chunk + offset, 
-                                                        _chunk, 
-                                                            WSFin.Next, 
-                                                                    opcod);
+                        Message(buffer, 
+                                    (i * _chunk + offset), 
+                                                    _chunk, 
+                                                        WSFin.Next, 
+                                                            wsopcod);
                     else if (_count == i && recive == 0)
-                        Message(buffer, i * _chunk + offset, 
-                                                        _chunk, 
-                                                            WSFin.Next, 
-                                                                WSOpcod.Continue); 
+                        Message(buffer, 
+                                    (i * _chunk + offset), 
+                                                    _chunk, 
+                                                        WSFin.Next, 
+                                                            WSOpcod.Continue); 
                     else
-                        Message(buffer, i * _chunk + offset, 
-                                                        _chunk, 
-                                                            WSFin.Last, 
-                                                                WSOpcod.Continue);  
+                        Message(buffer, 
+                                    (i * _chunk + offset), 
+                                                    _chunk, 
+                                                        wsfin, 
+                                                            WSOpcod.Continue);  
                 }
                 if (recive > 0)
                 {
@@ -359,16 +367,22 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
                         return false;
                         
                     if (_count == 0)
-                        Message(buffer, i * _chunk + offset, 
-                                                        recive, 
-                                                            WSFin.Last, 
-                                                                    opcod); 
+                        Message(buffer, 
+                                    (i * _chunk + offset), 
+                                                    recive, 
+                                                        wsfin, 
+                                                            wsopcod); 
                     else
-                        Message(buffer, i * _chunk + offset, 
-                                                        recive, 
-                                                            WSFin.Last, 
-                                                                WSOpcod.Continue);
+                        Message(buffer, 
+                                    (i * _chunk + offset), 
+                                                    recive, 
+                                                        wsfin, 
+                                                            WSOpcod.Continue);
                 }
+                        Log.Loging.AddMessage(
+                            "Асинхронная отправка WS данных." +
+                            " Отправлено: " + length + " байт данных." , "log.log", Log.Log.Info);
+                
                 return true;
             });
         }

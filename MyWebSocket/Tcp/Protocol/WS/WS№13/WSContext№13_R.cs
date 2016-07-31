@@ -38,11 +38,16 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 		/// <summary>
 		/// Синхронизация текущего объекта
 		/// </summary>
-		public object __ObSync
+		public object ObSync
 		{
 			get;
 			private set;
 		}
+        public CloseWS __Close
+        {
+            get;
+            private set;
+        }
 		/// <summary>
 		/// Поток чтения
 		/// </summary>
@@ -50,31 +55,81 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 		{
 			get;
 		}
+        public MemoryStream __Stream
+        {
+            get;
+        }
         public List<WSFrameN13> Request
         {
             get;
             private set;
         }
-
-        /// <summary>
-        /// Создает контекст получения, отправки данных
-        /// </summary>
-        /// <param name="protocol">HTTP</param>
+            
         public WSContext_13_R(HTTProtocol protocol, bool ow)
         {
+            protocol
+                .FuncWork = work;
+            protocol
+                .FuncEndl = endl;
+
             _ow_ = ow;
+            ObSync = new object();
+            __Close = new CloseWS();
 
             Request  = 
                  new List<WSFrameN13>();
-
-            __ObSync =     new object();
             Protocol =         protocol;
-            
+
             __Reader = new WSReaderN13(Protocol.GetStream);
         }
+        public bool work (HTTProtocol protocol)
+        {
+            return false;
+        }
+        public bool endl (Action read, 
+                            Action write, 
+                              HTTProtocol protocol)
+        {
+            if (__Close.Req 
+                 && __Close.Res)
+            {
+                return true;
+            }
 
+            if (protocol.ContextRs == null)
+            {
+                if (protocol.AllContext.Count > 0)
+                    (protocol.ContextRs = 
+                        protocol.AllContext.Dequeue()).Refresh(); 
+            }
+            else
+            {
+                if (protocol.ContextRs.Cancel)
+                {
+                    if (protocol.AllContext.Count == 0)
+                        protocol.ContextRs = null;
+                    else
+                       (protocol.ContextRs = 
+                            protocol.AllContext.Dequeue()).Refresh(); 
+                }
+
+            }
+
+            if (__Close.Initiator == "Server")
+                read();
+            else if (__Close.Initiator == "Client")
+                write();
+            else
+                return true;
+            if (TimeSpan.TicksPerSecond * 9 + 
+                protocol.TimeClose.Ticks  <  DateTime.Now.Ticks)
+                return true;
+            
+            return false;
+        }
 		static
-		public void Handshake(Header request, Header response)
+		public void Handshake(Header request, 
+                                    Header response)
 		{
 			using (SHA1 crypt = SHA1.Create())
 			{
@@ -102,10 +157,16 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 		{
             IContext cntx;
             lock (Protocol.AllContext)
-                Protocol.AllContext.Enqueue(
-                    cntx = new WSContext_13_W(Protocol, false));
-            return cntx;
+                  Protocol.AllContext.Enqueue(
+                     cntx = new WSContext_13_W(Protocol, false));
+              return cntx;
 		}
+        public void Close(WSClose close)
+        {
+            __Close.Server(close, CloseWS.Message[close]);
+
+            Protocol.Close();
+        }
 		/// <summary>
 		/// 
 		/// </summary>
@@ -206,8 +267,16 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 		{
 			if (__Reader.ReadBody())
 			{
-				//if (Debug)
-				//WSDebug.DebugN13(__Reader._Frame);
+                Request.Add(__Reader.__Frame);
+				
+                if (Log.Loging.Mode  >  Log.Log.Info)
+                    Log.Loging.AddMessage(
+                        "WS фрейм успешно обработан", "log.log", Log.Log.Info);
+                else
+                    Log.Loging.AddMessage(
+                        "WS фрейм успешно обработан" +
+                        "\r\n" + WSDebug.DebugN13(__Reader.__Frame), "log.log", Log.Log.Info);
+
                 switch (__Reader.__Frame.BitPcod)
 				{
 					case WSFrameN13.TEXT:
@@ -242,13 +311,13 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 						Protocol.NewContext(this);
 						Protocol.OnEventPong(this);
 						break;
-					case WSFrameN13.CLOSE:
-					if (__Reader.__Frame.BitFin == 0)
-						throw new WSException("Неверный бит fin.", 
-												WsError.HeaderFrameError, 
-													WSClose.PolicyViolation);
+                    case WSFrameN13.CLOSE:
+                    if (__Reader.__Frame.BitFin == 0)
+                        throw new WSException("Неверный бит fin.", 
+                                                WsError.HeaderFrameError, 
+                                                    WSClose.PolicyViolation);
 
-					HandlerClose();
+                        //__Close.Parse(     __Reader.__Frame.DataBody       );
 
 					break;
 					case WSFrameN13.BINNARY:
@@ -284,46 +353,12 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 													WSClose.UnsupportedData);
 				}
 
-                Request.Add(__Reader.__Frame);
-                            __Reader.__Frame = new WSFrameN13();
-
-                if (Log.Loging.Mode  >  Log.Log.Info)
-                    Log.Loging.AddMessage(
-                        "WS фрейм успешно обработан", "log.log", Log.Log.Info);
-                else
-                    Log.Loging.AddMessage(
-                        "WS фрейм успешно обработан" +
-                        "\r\n" + WSDebug.DebugN13(__Reader.__Frame), "log.log", Log.Log.Info);
-			}
-		}
-		protected void HandlerClose()
-		{
-			string message = string.Empty;
-			WSClose __close = WSClose.Abnormal;
-
-            if (__Reader.__Frame.LengBody < 2)
-				Protocol.Close();
-			else
-			{
-                int number = __Reader.__Frame.DataBody[0] << 8;
-                number = __Reader.__Frame.DataBody[1] | number;
-
-				if (number < 1000   ||  number > 1012)
-					Protocol.Close();
-				{
-					__close = 
-						(WSClose)number;
-					Protocol.Close(true);
-				}
-			}
-            if (__Reader.__Frame.LengBody > 2)
-                message = Encoding.UTF8.GetString(
-                                __Reader.__Frame.DataBody, 2, 
-                                    (int)(__Reader.__Frame.LengBody - 2));
+                __Reader.__Frame = new WSFrameN13();	
+            }
 		}
 		protected void HandlerError(WSException _1_error)
 		{
-					Protocol.Close(true);
+            Close(WSClose.ProtocolError);
 		}
 	}
 }

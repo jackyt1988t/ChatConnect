@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using System.Collections.Generic;
 
 namespace MyWebSocket.Tcp.Protocol.WS
@@ -24,6 +25,11 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			get;
 			private set;
 		}
+        public string Initiator
+        {
+            get;
+            private set;
+        }
 		public string ServerHost
 		{
 			get;
@@ -101,15 +107,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 
 		public CloseWS()
 		{
-			
-		}
-		public CloseWS(string host, WSClose code)
-		{
-			ServerHost = host;
-			ServerData = 
-			     Message[code];
-			ServerCode = code;
-			CloseTime = DateTime.Now;
+            CloseTime = DateTime.Now;
 		}
 		static CloseWS()
 		{
@@ -129,35 +127,52 @@ namespace MyWebSocket.Tcp.Protocol.WS
 			Message.Add(WSClose.ServerError, "Произошла ошибка сервера");
 			Message.Add(WSClose.TLSHandshake, "не удалось совершить рукопожатие");
 		}
-		public void Server(WSClose code, string data, string host)
+        internal void Parse(byte[] data)
+        {
+            string message = string.Empty;
+            if (data.Length > 2)
+                message = 
+                    Encoding.UTF8.GetString(
+                            data, 2, data.Length - 2);
+            
+            if (data.Length < 2)
+                Client(  WSClose.Abnormal, message  );
+            else
+            {
+                int number = data[1] 
+                    | (data[0] << 8);
+
+                if (number >= 1000 && number <= 1012)
+                    Client( (WSClose)number, message );
+                else
+                    Client(  WSClose.Abnormal, message  );
+            }
+        }
+        internal void Server(WSClose code, string data)
 		{
-			if (Res)
+            if (Res)
 				return;
 			Res = true;
 			ServerCode = code;
 			ServerData = data;
-			ServerHost = host;
 			if (!Req)
 			{
-				
-				Host = host;
-				_InitCode = code;
+                _InitCode = code;
+                Initiator = "Server";
 				CloseTime = DateTime.Now;
 			}
 		}
-		public void Client(WSClose code, string data, string host)
+        internal void Client(WSClose code, string data)
 		{
 			if (Req)
 				return;
 			Req = true;
 			ClientCode = code;
 			ClientData = data;
-			ClientHost = host;
 			if (!Res)
 			{
-				
-				Host = host;
 				_InitCode = code;
+                Initiator = "Client";
 				CloseTime = DateTime.Now;
 			}
 		}

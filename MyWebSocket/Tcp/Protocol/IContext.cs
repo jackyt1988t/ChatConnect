@@ -14,7 +14,7 @@ namespace MyWebSocket.Tcp.Protocol
 		/// <summary>
 		/// Объект для синхронизации
 		/// </summary>
-		object __ObSync
+		object ObSync
 		{
 			get;
 		}

@@ -1,6 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text;
+using System.Collections.Generic;
+
 using MyWebSocket.Tcp;
 using MyWebSocket.Tcp.Protocol;
 
@@ -19,8 +20,8 @@ namespace Example
 					a.sender as WSContext_13_R;
             
             WSContext_13_W cntx = (WSContext_13_W)ctx.Context();
-            await cntx.AsMssg("Привет я плучил твое сообщение " + 
-							  Encoding.UTF8.GetString(ctx.Request[0].DataBody));
+            //await cntx.AsMssg("Привет я плучил твое сообщение " + 
+							  //Encoding.UTF8.GetString(ctx.Request[0].DataBody));
 		};
 		public static PHandlerEvent Error = (object sender, PEventArgs a) =>
 		{

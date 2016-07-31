@@ -2,11 +2,12 @@
 {
 	public enum WSOpcod : int
 	{
-		Text = 0,
-		Ping = 1,
-		Pong = 2,
-		Close = 3,
-		Binnary = 4,
-		Continue = 5
+		None = 0,
+		Text = 1,
+		Ping = 2,
+		Pong = 3,
+		Close = 4,
+		Binnary = 5,
+		Continue = 6
 	}
 }
