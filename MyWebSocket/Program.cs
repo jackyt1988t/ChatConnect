@@ -9,6 +9,7 @@ using MyWebSocket.Tcp.Protocol.HTTP;
 
 using MyWebSocket.Tcp.Protocol.WS;
 using MyWebSocket.Tcp.Protocol.WS.WS_13;
+using System.IO;
 
 namespace Example
 {
@@ -16,12 +17,25 @@ namespace Example
 	{
 		public static PHandlerEvent Data = async (object obj, PEventArgs a) =>
 		{
+            StringBuilder buf = 
+                    new StringBuilder();
 			WSContext_13_R ctx =
 					a.sender as WSContext_13_R;
             
             WSContext_13_W cntx = (WSContext_13_W)ctx.Context();
-            //await cntx.AsMssg("Привет я плучил твое сообщение " + 
-							  //Encoding.UTF8.GetString(ctx.Request[0].DataBody));
+            if (ctx.Request.Opcod == WSOpcod.Text)
+            {
+                for(int i = 0; i < ctx.Request.__Frames.Count; i++)
+                {
+                    using (StreamReader srr = 
+                               new StreamReader(ctx.Request.__Frames[i].Raw_Body))
+                        {
+                            buf.Append( srr.ReadToEnd() );
+                        }
+                }
+            }
+                Console.WriteLine(buf.ToString());
+            await cntx.AsMssg("Привет я плучил твое сообщение " + buf.ToString());
 		};
 		public static PHandlerEvent Error = (object sender, PEventArgs a) =>
 		{

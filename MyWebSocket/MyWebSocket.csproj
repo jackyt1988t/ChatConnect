@@ -76,7 +76,7 @@
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
     <Reference Include="ManagedOpenSsl">
-      <HintPath>..\..\123456\openssl-net-master\bin\Trace\ManagedOpenSsl.dll</HintPath>
+      <HintPath>..\..\..\..\..\media\desktop\E09E1DF49E1DC446\Users\Anton\Desktop\123456\openssl-net-master\bin\Trace\ManagedOpenSsl.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

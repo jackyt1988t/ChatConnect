@@ -4,12 +4,23 @@ using MyWebSocket.Tcp.Protocol.WS.WS_13;
 
 namespace MyWebSocket.Tcp.Protocol.WS
 {
+    /// <summary>
+    /// Класс WSWriterN13
+    /// </summary>
 	public class WSWriterN13 : Stream
 	{
-		
-		public Stream Stream;
-		public WSFramesN13 __Frame;
+        #region properties
+        /// <summary>
+        /// Основной поток
+        /// </summary>
+        internal Stream Stream;
+        /// <summary>
+        /// Коллекция прочитанных(форматированное сообщение) фреймов
+        /// </summary>
+        internal WSFramesN13 __Frames;
+        #endregion
 
+        #region properties Stream
 		/// <summary>
 		/// Возвращает длинну базового потока
 		/// </summary>
@@ -65,16 +76,27 @@ namespace MyWebSocket.Tcp.Protocol.WS
 				throw new NotImplementedException();
 			}
 		}
+        #endregion
 
+        #region constructor
+        /// <summary>
+        /// Создает экземпляр класса WSWriterN13
+        /// </summary>
+        /// <param name="stream">Основной поток записи данных</param>
 		public WSWriterN13(Stream stream) : 
 			base()
 		{
 			Stream = stream;
-			__Frame = new WSFramesN13();
+			__Frames = new WSFramesN13();
 		}
+        #endregion
 
-
-		public void Write(WSFrameN13 _frame)
+        #region all methods
+        /// <summary>
+        /// Записывает форматированные данные в поток
+        /// </summary>
+        /// <param name="__Frame">WS фрейм для инициализации данных</param>
+		public void Write(WSFrameN13 __Frame)
 		{
 			int lenght;
 			int offset;
@@ -83,48 +105,48 @@ namespace MyWebSocket.Tcp.Protocol.WS
             Log.Loging.AddMessage(
                 "Попытка добавить WS данные", "log.log", Log.Log.Info);
 
-			_frame.InitData();
-			if (_frame.BitMask == 1)
-				_frame.Encoding();
+			__Frame.InitData();
+			if (__Frame.BitMask == 1)
+				__Frame.Encoding();
 
-			if (__Frame.Opcod == WSOpcod.None)
+			if (__Frames.Opcod == WSOpcod.None)
 			{
-				if (_frame.BitFin == 1)
-					__Frame.isEnd = true;
+				if (__Frame.BitFin == 1)
+					__Frames.isEnd = true;
 				
-                __Frame.Opcod = WSFrameN13.Convert(_frame.BitPcod);
+                __Frames.Opcod = 
+                    WSFrameN13.Convert(__Frame.BitPcod);
 			}
 			else
 			{
-				if (_frame.BitFin == 1)
+				if (__Frame.BitFin == 1)
 				{
-					if (!__Frame.isEnd)
-						 __Frame.isEnd = true;
+					if (!__Frames.isEnd)
+						 __Frames.isEnd = true;
 					else
 						throw new WSException("Неправильный фрейм");
 				}
-				if (_frame.BitPcod != WSFrameN13.CONTINUE)
+				if (__Frame.BitPcod != WSFrameN13.CONTINUE)
 						throw new WSException("Неправильный опкод");
 			}
-
-            lenght = (int)
-                     _frame.LengHead;
+                
 			offset = 0;
-            buffer = _frame.D__Head.GetBuffer();
-			Stream.Write(buffer, offset, lenght);
-
             lenght = (int)
-                     _frame.D__Body.Length;
-            offset = (int)
-                     _frame.D__Body.Position;
-            buffer = _frame.D__Body.GetBuffer();
+                     __Frame.LengHead;
+            buffer = __Frame.Raw_Head.GetBuffer();
+			Stream.Write( buffer, offset, lenght );
 
-			Stream.Write(buffer, offset, lenght);
+            offset = 0;
+            lenght = (int)
+                     __Frame.Raw_Body.Length;
+            buffer = __Frame.Raw_Body.GetBuffer();
 
-				lock (__Frame)
+			Stream.Write( buffer, offset, lenght );
+
+				lock (__Frames)
 				{
 					// Добавить фрейм в коллекцию
-					__Frame.__Frames.Add(_frame);
+					__Frames.__Frames.Add(__Frame);
 
 					if (Log.Loging.Mode  >  Log.Log.Info)
                         Log.Loging.AddMessage(
@@ -132,7 +154,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
                     else
                         Log.Loging.AddMessage(
                             "WS данные успешно добавлены" +
-                            "\r\n" + WSDebug.DebugN13(_frame), "log.log", Log.Log.Info);
+                            "\r\n" + WSDebug.DebugN13(__Frame), "log.log", Log.Log.Info);
 				}
 		}
 		/// <summary>
@@ -182,5 +204,6 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		{
 			Stream.Write(  buffer, offset, length  );
 		}
+        #endregion
 	}
 }

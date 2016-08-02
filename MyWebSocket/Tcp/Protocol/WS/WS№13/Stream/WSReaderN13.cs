@@ -4,51 +4,86 @@ using MyWebSocket.Tcp.Protocol.WS.WS_13;
 
 namespace MyWebSocket.Tcp.Protocol.WS
 {
+    /// <summary>
+    /// Класс WSReaderN13
+    /// </summary>
     public class WSReaderN13
     {
-        public Stream Stream;
-        public WSFrameN13 __Frame;
-        public WSFramesN13 __Frames;
+        #region properties
+        /// <summary>
+        /// Основной поток
+        /// </summary>
+        internal Stream Stream;
+        /// <summary>
+        /// Последний прочитаный фрейм
+        /// </summary>
+        internal WSFrameN13 __Frame;
+        /// <summary>
+        /// Коллекция прочитанных(форматированное сообщение) фреймов
+        /// </summary>
+        internal WSFramesN13 __Frames;
+        #endregion
 
+        #region constructor
+        /// <summary>
+        /// Создает экземпляр класса WSReaderN13
+        /// </summary>
+        /// <param name="stream">Основной поток записи данных</param>
 		public WSReaderN13(Stream stream) :
 			base()
         {
 			Stream = stream;
             __Frame = new WSFrameN13();
+            __Frames = new WSFramesN13();
         }
+        #endregion
 
+        #region all methods
+        /// <summary>
+        /// Читает тело WS фрейма
+        /// </summary>
+        /// <returns><c>true</c>тело проситано</returns>
 		public bool ReadBody()
         {
-		    if ( __Frame.BitLeng == 0 )
-				return true;
-            
-            int lenght    = (int)
-                            (__Frame.LengBody - 
-                                __Frame.PartBody);
-            int offset    = (int)
-                            __Frame.D__Body.Position;
-			byte[] buffer = __Frame.D__Body.GetBuffer();
+            int lenght =
+                (int)(__Frame.LengBody -
+                      __Frame.PartBody);
+            int offset =
+                (int)(__Frame.PartBody);
+			byte[] buffer =
+                     __Frame.Raw_Body.GetBuffer();
 
-            __Frame.PartBody += Stream.Read(buffer, 
-											    offset, 
+            __Frame.PartBody += Stream.Read(buffer,
+											    offset,
 												    lenght);
 
-			if (__Frame.PartBody == __Frame.LengBody)
+            // Если true тело сообщение успешно получено...
+			if (__Frame.PartBody    ==    __Frame.LengBody)
 			{
-				if ( __Frame.BitMask == 1 )
-				{
-					
-					for (int part = 0;part < __Frame.LengBody; part++)
-					{
-						buffer[part] = 
-                            (byte)(buffer[part] ^ __Frame.D__Mask[part % 4]);
-					}
-				}
-				
-				return (__Frame.GetBody = true);
+                __Frame.Decoding();
+
+                lock (  __Frames  )
+                {
+                    // Добавить фрейм в коллекцию
+                    __Frames.__Frames.Add(__Frame);
+
+                    if (Log.Loging.Mode  >  Log.Log.Info)
+                        Log.Loging.AddMessage(
+                            "WS данные успешно получены", "log.log", Log.Log.Info);
+                    else
+                        Log.Loging.AddMessage(
+                            "WS данные успешно получены" +
+                            "\r\n" + WSDebug.DebugN13(__Frame), "log.log", Log.Log.Info);
+                }
+
+				return (__Frame.Get_Body = true);
 			}
             return false;
         }
+        /// <summary>
+        /// Читает Загловоки WS фрейма
+        /// </summary>
+        /// <returns><c>true</c>если заголвки прочитаны</returns>
         public bool ReadHead()
         {
 			int @char = 0;
@@ -76,7 +111,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
                     case 1:
 						__Frame.BitMask = (@char & 0x80) >> 7;
                         __Frame.BitLeng = (@char & 0x7F);
-			
+
 						if (__Frame.BitMask == 1)
 							__Frame.LengHead += 4;
                         if (__Frame.BitLeng == 127)
@@ -94,7 +129,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
                             __Frame.Handler += 9;
                             __Frame.LengBody = __Frame.BitLeng;
                         }
-						
+
 						break;
                     case 2:
                         /*  Обработчик.  */
@@ -139,43 +174,64 @@ namespace MyWebSocket.Tcp.Protocol.WS
                     case 10:
                         /*  Обработчик.  */
                         __Frame.Handler += 1;
-						
+
 						__Frame.MaskVal = @char << 24;
-						__Frame.D__Mask = new byte[4];
-						__Frame.D__Mask[0] = (byte)@char;		
+						__Frame.Raw_Mask = new byte[4];
+						__Frame.Raw_Mask[0] = (byte)@char;
                         break;
                     case 11:
                         /*  Обработчик.  */
                         __Frame.Handler += 1;
-						
+
 						__Frame.MaskVal = __Frame.MaskVal | (@char << 16);
-						__Frame.D__Mask[1] = (byte)@char;   		
+						__Frame.Raw_Mask[1] = (byte)@char;
                         break;
                     case 12:
                         /*  Обработчик.  */
                         __Frame.Handler += 1;
 						__Frame.MaskVal = __Frame.MaskVal | (@char << 08);
-						__Frame.D__Mask[2] = (byte)@char;								
+						__Frame.Raw_Mask[2] = (byte)@char;
                         break;
                     case 13:
 						__Frame.MaskVal = __Frame.MaskVal | (@char << 00);
-						__Frame.D__Mask[3] = (byte)@char;							
+						__Frame.Raw_Mask[3] = (byte)@char;
                         break;
                 }
 
                 __Frame.PartHead++;
-                __Frame.D__Body.WriteByte( (byte)@char );
+                __Frame.Raw_Head.WriteByte( (byte)@char );
 
-                if (__Frame.PartHead == __Frame.LengHead)
+                // Если true заг-ки сообщения успешно получены.
+                if (__Frame.PartHead    ==    __Frame.LengHead)
                 {
-						if (__Frame.LengBody > 0)
-							__Frame.D__Body.SetLength( __Frame.LengBody );
+                    if (__Frames.Opcod == WSOpcod.None)
+                    {
+                        if (__Frame.BitFin == 1)
+                            __Frames.isEnd = true;
 
-					return (__Frame.GetHead = true);
+                        __Frames.Opcod = 
+                                WSFrameN13.Convert(__Frame.BitPcod);
+                    }
+                    else
+                    {
+                        if (__Frame.BitFin == 1)
+                        {
+                            if (!__Frames.isEnd)
+                                 __Frames.isEnd = true;
+                            else
+                                throw new WSException("Неправильный фрейм");
+                        }
+                        if (__Frame.BitPcod != WSFrameN13.CONTINUE)
+                                throw new WSException("Неправильный опкод");
+                    }
+						if (__Frame.LengBody > 0)
+							__Frame.Raw_Body.SetLength(  __Frame.LengBody  );
+
+					return (__Frame.Get_Head = true);
                 }
             }
             return false;
         }
+        #endregion
     }
-	
 }

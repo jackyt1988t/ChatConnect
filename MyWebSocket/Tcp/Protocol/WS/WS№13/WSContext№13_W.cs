@@ -59,7 +59,7 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
         {
             get
             {
-                return __Writer.__Frame;
+                return __Writer.__Frames;
             }
         }     
 
@@ -281,7 +281,7 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
                     Protocol.Close();
                         Log.Loging.AddMessage(
                             "Ошибка при записи данных WS" +
-                            error.Message + ".\r\n" + error.StackTrace, "log.log", Log.Log.Fatal);
+                            error.Message + ".\r\n" + error.StackTrace, "log.log", Log.Log.Debug);
 
                 }
             }
@@ -322,31 +322,50 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
             return await Task.Run<bool>(() =>
             {
                     
-                while (i++ < _count)
+                for(i = 0; i < _count; i++)
                 {
                     if (Protocol.State == States.Close
                          || Protocol.State == States.Disconnect)
                         return false;
 
-                    if (i == 0 
-                         && (_count > 1 || recive > 0))
-                        Message(buffer, 
-                                    (i * _chunk + offset), 
-                                                    _chunk, 
-                                                        WSFin.Next, 
-                                                            wsopcod);
-                    else if (_count == i && recive == 0)
-                        Message(buffer, 
-                                    (i * _chunk + offset), 
-                                                    _chunk, 
-                                                        WSFin.Next, 
-                                                            WSOpcod.Continue); 
-                    else
-                        Message(buffer, 
-                                    (i * _chunk + offset), 
-                                                    _chunk, 
-                                                        wsfin, 
-                                                            WSOpcod.Continue);  
+                    if (i == 0)
+                    {
+                        if (recive == 0)
+                            Message(buffer, 
+                                        (i * _chunk + offset), 
+                                                        _chunk, 
+                                                            wsfin, 
+                                                                wsopcod);
+                        else
+                        {
+                            Message(buffer, 
+                                        (i * _chunk + offset), 
+                                                        _chunk, 
+                                                            WSFin.Next, 
+                                                                wsopcod);
+                        }
+                        continue;
+                    }
+                    if (i == (_count - 1))
+                    {
+                        if (recive == 0)
+                            Message(buffer, 
+                                        (i * _chunk + offset), 
+                                                        _chunk, 
+                                                            wsfin, 
+                                                                WSOpcod.Continue);
+                        else
+                            Message(buffer, 
+                                        (i * _chunk + offset), 
+                                                        _chunk, 
+                                                            WSFin.Next, 
+                                                                WSOpcod.Continue);
+                    }
+                            Message(buffer, 
+                                        (i * _chunk + offset), 
+                                                        _chunk, 
+                                                            WSFin.Next, 
+                                                                WSOpcod.Continue);  
                 }
                 if (recive > 0)
                 {
@@ -354,18 +373,18 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
                          || Protocol.State == States.Disconnect)
                         return false;
                         
-                    if (_count == 0)
-                        Message(buffer, 
-                                    (i * _chunk + offset), 
-                                                    recive, 
-                                                        wsfin, 
-                                                            wsopcod); 
-                    else
-                        Message(buffer, 
-                                    (i * _chunk + offset), 
-                                                    recive, 
-                                                        wsfin, 
-                                                            WSOpcod.Continue);
+                        if (_count == 0)
+                            Message(buffer, 
+                                        (i * _chunk + offset), 
+                                                        recive, 
+                                                           wsfin, 
+                                                               wsopcod); 
+                        else
+                            Message(buffer, 
+                                        (i * _chunk + offset), 
+                                                        recive, 
+                                                            wsfin, 
+                                                                WSOpcod.Continue);
                 }
                         Log.Loging.AddMessage(
                             "Асинхронная отправка WS данных." +

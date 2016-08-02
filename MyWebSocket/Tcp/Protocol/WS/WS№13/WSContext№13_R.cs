@@ -32,7 +32,7 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 		{
 			get
 			{
-				return false;
+                return false;
 			}
 		}		
 		/// <summary>
@@ -48,6 +48,13 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
             get;
             private set;
         }
+        public WSFramesN13 Request
+        {
+            get
+            { 
+                return __Reader.__Frames;
+            }
+        }
 		/// <summary>
 		/// Поток чтения
 		/// </summary>
@@ -59,11 +66,6 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
         {
             get;
         }
-        public List<WSFrameN13> Request
-        {
-            get;
-            private set;
-        }
             
         public WSContext_13_R(HTTProtocol protocol, bool ow)
         {
@@ -73,12 +75,9 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
                 .FuncEndl = endl;
 
             _ow_ = ow;
-            ObSync = new object();
-            __Close = new CloseWS();
-
-            Request  = 
-                 new List<WSFrameN13>();
-            Protocol =         protocol;
+            ObSync   = new object();
+            __Close  = new CloseWS();
+            Protocol =      protocol;
 
             __Reader = new WSReaderN13(Protocol.GetStream);
         }
@@ -121,9 +120,9 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
                 write();
             else
                 return true;
-            if (TimeSpan.TicksPerSecond * 9 + 
-                protocol.TimeClose.Ticks  <  DateTime.Now.Ticks)
-                return true;
+                if (TimeSpan.TicksPerSecond * 9 + 
+                    protocol.TimeClose.Ticks  <  DateTime.Now.Ticks)
+                    return true;
             
             return false;
         }
@@ -174,11 +173,11 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 		{
 			try
 			{
-				if (!__Reader.__Frame.GetHead)
+				if (!__Reader.__Frame.Get_Head)
 				{
 					HandlerHead();
 				}
-				if (!__Reader.__Frame.GetBody && __Reader.__Frame.GetHead)
+				if (!__Reader.__Frame.Get_Body && __Reader.__Frame.Get_Head)
 				{
 					HandlerBody();
 				}
@@ -188,23 +187,27 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 			{
 				HandlerError(error);
 
-				Log.Loging.AddMessage("Ошибка об-тки WS запроса " +
-									  "Ошибка: " + error.Message, "log.log", Log.Log.Info);
+				Log.Loging.AddMessage(
+                    "Ошибка об-тки WS запроса " +
+				    "Ошибка: " + error.Message, "log.log", Log.Log.Info);
 			}
 			catch (IOException error)
 			{
-				Log.Loging.AddMessage("Ошибка об-тки WS запроса " +
-									  "Ошибка: " + error.Message, "log.log", Log.Log.Debug);
+				Log.Loging.AddMessage(
+                    "Ошибка об-тки WS запроса " +
+					 "Ошибка: " + error.Message, "log.log", Log.Log.Debug);
 
-				HandlerError(new WSException("Ошибка получения http данных " +
-											 "Ошибка: " + error.Message,
-													WsError.CriticalError,
-															WSClose.Abnormal));
+				HandlerError(
+                    new WSException("Ошибка получения http данных " +
+									    "Ошибка: " + error.Message,
+											    WsError.CriticalError,
+												        WSClose.Abnormal));
 			}
 			finally
 			{
-                if (__Reader.__Frame.GetHead && __Reader.__Frame.GetBody)
-					Log.Loging.AddMessage("WS запрос обработан.", "log.log", Log.Log.Info);
+                if (__Reader.__Frame.Get_Head && __Reader.__Frame.Get_Body)
+					Log.Loging.AddMessage(
+                        "WS запрос обработан...", "log.log", Log.Log.Info);
 			}
 		}
 		/// <summary>
@@ -240,26 +243,27 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 			{
                 if (__Reader.__Frame.BitRsv1 == 1)
 					throw new WSException("Неверный бит rcv1",
-											WsError.HeaderFrameError,
-												WSClose.PolicyViolation);
+											  WsError.HeaderFrameError,
+												  WSClose.PolicyViolation);
                 if (__Reader.__Frame.BitRsv2 == 1)
 					throw new WSException("Неверный бит rcv2",
-											WsError.HeaderFrameError,
-												WSClose.PolicyViolation);
+											  WsError.HeaderFrameError,
+												  WSClose.PolicyViolation);
                 if (__Reader.__Frame.BitRsv3 == 1)
 					throw new WSException("Неверный бит rcv3",
-											WsError.HeaderFrameError,
+											  WsError.HeaderFrameError,
 												 WSClose.PolicyViolation);
                 if (__Reader.__Frame.BitMask == 0)
 					throw new WSException("Неверный бит mask",
-											WsError.HeaderFrameError,
-												WSClose.PolicyViolation);
+											  WsError.HeaderFrameError,
+												  WSClose.PolicyViolation);
                 if (__Reader.__Frame.LengBody < 0)
 				{
-                    string length = __Reader.__Frame.LengBody.ToString("X");
+                    string length = 
+                             __Reader.__Frame.LengBody.ToString("X");
 					throw new WSException("Длинна: " + length,
-											WsError.HeaderFrameError,
-												WSClose.PolicyViolation);
+											  WsError.HeaderFrameError,
+												  WSClose.PolicyViolation);
 				}
 			}
 		}
@@ -267,16 +271,6 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 		{
 			if (__Reader.ReadBody())
 			{
-                Request.Add(__Reader.__Frame);
-				
-                if (Log.Loging.Mode  >  Log.Log.Info)
-                    Log.Loging.AddMessage(
-                        "WS фрейм успешно обработан", "log.log", Log.Log.Info);
-                else
-                    Log.Loging.AddMessage(
-                        "WS фрейм успешно обработан" +
-                        "\r\n" + WSDebug.DebugN13(__Reader.__Frame), "log.log", Log.Log.Info);
-
                 switch (__Reader.__Frame.BitPcod)
 				{
 					case WSFrameN13.TEXT:
@@ -353,7 +347,9 @@ namespace MyWebSocket.Tcp.Protocol.WS.WS_13
 													WSClose.UnsupportedData);
 				}
 
-                __Reader.__Frame = new WSFrameN13();	
+                __Reader.__Frame = new WSFrameN13();
+                if (__Reader.__Frames.isEnd)
+                    __Reader.__Frames = new WSFramesN13();
             }
 		}
 		protected void HandlerError(WSException _1_error)

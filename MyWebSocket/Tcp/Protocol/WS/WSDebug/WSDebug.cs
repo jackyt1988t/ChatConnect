@@ -7,21 +7,23 @@ namespace MyWebSocket.Tcp.Protocol.WS
 	{
 		public static string DebugN13(WSFrameN13 frame)
 		{
+            int len;
+            byte[] buf; 
 			StringBuilder debug = new StringBuilder(6000);
-			/*debug.AppendLine("*******Protcool N13*******");
-			if (frame.GetBody)
-				debug.AppendLine("Get Frame");
-			else
-				debug.AppendLine("Send Frame");
+			debug.AppendLine("*******Protcool N13*******");
 			debug.AppendLine("Head byte");
-			for (int i = 0; i < frame.D__Head.Length; i++)
+
+            len = (int)
+                  frame.Raw_Head.Length;
+            buf = frame.Raw_Head.GetBuffer();
+            for (  int i = 0; i < len; i++  )
 			{
-				debug.Append(frame.D__Head[i].ToString("X") + " ");
+                debug.Append(buf[i].ToString("X") + " ");
 			}
 			debug.Append("[ ");
-			for (int i = 0; i < frame.D__Head.Length; i++)
+            for (  int i = 0; i < len; i++  )
 			{
-				string bin = Convert.ToString(frame.D__Head[i], 2);
+                string bin = Convert.ToString(buf[i], 2);
 				while (bin.Length < 8)
 				{
 					bin = "0" + bin;
@@ -65,19 +67,22 @@ namespace MyWebSocket.Tcp.Protocol.WS
 				debug.AppendLine();
 			else
 				debug.AppendLine(" --> " + frame.MaskVal.ToString());
-			  debug.Append("LENG: 0x" + frame.BitLeng.ToString("X") +
+			    debug.Append("LENG: 0x" + frame.BitLeng.ToString("X") +
 							 "(" +  frame.BitLeng.ToString()  + ")");
 			if (frame.BitLeng < 126)
 				debug.AppendLine();
 			else
 				debug.AppendLine(" --> " + frame.LengBody.ToString());
 			debug.AppendLine("Body byte");
-			for (int i = 0; i < frame.DataBody.Length; i++)
+            len = (int)
+                  frame.Raw_Body.Length;
+            buf = frame.Raw_Body.GetBuffer();
+            for (  int i = 0; i < len; i++  )
 			{
-				debug.Append(frame.DataBody[i].ToString("X")  +  " ");
+                debug.Append(buf[i].ToString("X")  +  " ");
 			}
 			debug.AppendLine();
-			debug.AppendLine("*******Protcool N13*******")*/;
+			debug.AppendLine("*******Protcool N13*******");
 			/*    Взврат строки   */
             return debug.ToString();
 		}

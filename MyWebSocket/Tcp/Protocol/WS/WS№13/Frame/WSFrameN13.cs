@@ -1,19 +1,44 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 
 namespace MyWebSocket.Tcp.Protocol.WS
 {
+    /// <summary>
+    /// Класс WSFrameN13
+    /// </summary>
     public class WSFrameN13
     {
+        #region const
+        /// <summary>
+        /// Фрейм TEXT
+        /// </summary>
         public const int TEXT     = 0x01;
-		public const int PING     = 0x09;
-		public const int PONG     = 0x0A;
-		public const int CLOSE    = 0x08;
-		public const int BINNARY  = 0x02;
-		public const int CONTINUE = 0x00;
-		
+        /// <summary>
+        /// Фрейм PING
+        /// </summary>
+        public const int PING     = 0x09;
+        /// <summary>
+        /// Фрейм PONG
+        /// </summary>
+        public const int PONG     = 0x0A;
+        /// <summary>
+        /// Фрейм CLOSE
+        /// </summary>
+        public const int CLOSE    = 0x08;
+        /// <summary>
+        /// Фрейм BINNARY
+        /// </summary>
+        public const int BINNARY  = 0x02;
+        /// <summary>
+        /// Фрейм CONTINUE
+        /// </summary>
+        public const int CONTINUE = 0x00;
+        #endregion
+
+        #region properties
 		/// <summary>
-		/// бит FIN 
+		/// бит FIN
 		/// </summary>
         public int BitFin
         {
@@ -68,11 +93,6 @@ namespace MyWebSocket.Tcp.Protocol.WS
             get;
             set;
         }
-		public int RecLeng
-		{
-			get;
-			set;
-		}
 		/// <summary>
 		/// Показывает установлена маска тела или нет
 		/// </summary>
@@ -98,9 +118,9 @@ namespace MyWebSocket.Tcp.Protocol.WS
             set;
         }
 		/// <summary>
-		/// 
+		///
 		/// </summary>
-		public bool SetHead
+		public bool Set_Head
 		{
 			get;
 			private set;
@@ -108,7 +128,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		/// <summary>
 		/// Если заголвоки получены true
 		/// </summary>
-        public bool GetHead
+        public bool Get_Head
         {
             get;
             set;
@@ -116,7 +136,16 @@ namespace MyWebSocket.Tcp.Protocol.WS
 		/// <summary>
 		/// Если тело получено true
 		/// </summary>
-        public bool GetBody
+        public bool Get_Body
+        {
+            get;
+            set;
+        }
+        /// <summary>
+        /// Текущая позиция при (де)кодирования
+        /// </summary>
+        /// <value>The position.</value>
+        public long Position
         {
             get;
             set;
@@ -154,47 +183,74 @@ namespace MyWebSocket.Tcp.Protocol.WS
             set;
         }
 		/// <summary>
-		/// 
+		///
 		/// </summary>
-		public byte[] D__Mask
+		public byte[] Raw_Mask
 		{
 			get;
 			set;
 		}
+        /// <summary>
+        /// Буффер тела
+        /// </summary>
+        public MemoryStream Raw_Body
+        {
+            get;
+            private set;
+        }
 		/// <summary>
 		/// Буффер заголвоков
 		/// </summary>
-		public MemoryStream D__Head
-        {
-            get;
-            private set;
-        }
-        public MemoryStream D__Body
+		public MemoryStream Raw_Head
         {
             get;
             private set;
         }
 
+        private bool _decode = false;
+        private bool _encode = false;
+        #endregion
+
+        #region constructor
+        /// <summary>
+        /// Создает экземпляр класса WSFrameN13
+        /// </summary>
         public WSFrameN13()
         {
-            D__Head = new MemoryStream(0);
-            D__Body = new MemoryStream(0);
+            Raw_Head = new MemoryStream(0);
+            Raw_Body = new MemoryStream(0);
         }
+        /// <summary>
+        /// Создает экземпляр класса WSFrameN13
+        /// </summary>
+        /// <param name="length">Длинна Raw_Body потока данных</param>
 		public WSFrameN13(int length)
 		{
-			D__Head = new MemoryStream(0);
-			D__Body = new MemoryStream(length);
+			Raw_Head = new MemoryStream(0);
+			Raw_Body = new MemoryStream(length);
 		}
+        /// <summary>
+        /// Создает экземпляр класса WSFrameN13
+        /// </summary>
+        /// <param name="buffer">Буффер Raw_Body потока данных</param>
+        /// <param name="offset">Начальная позиция</param>
+        /// <param name="length">Количество инициализированных байт</param>
         public WSFrameN13(byte[] buffer, int offset, int length)
         {
-            D__Head = new MemoryStream(0);
-            D__Body = new MemoryStream(buffer, 
-                                           offset, 
-                                               length, 
-                                                   true, 
+            Raw_Head = new MemoryStream(0);
+            Raw_Body = new MemoryStream(buffer,
+                                           offset,
+                                               length,
+                                                   true,
                                                        true);
         }
+        #endregion
 
+        #region all methods
+        /// <summary>
+        /// Конвертирует число в WSOpcod
+        /// </summary>
+        /// <param name="ws_opcod">WSOpcod</param>
 		static public WSOpcod Convert(int ws_opcod)
 		{
 			switch (ws_opcod)
@@ -215,20 +271,22 @@ namespace MyWebSocket.Tcp.Protocol.WS
     	            throw new WSException("Неизвестный опкод");
             }
 		}
-
+        /// <summary>
+        /// Иницмализирует заголвки сообщения
+        /// </summary>
 		public void InitData()
 		{
-			if (SetHead)
+			if (Set_Head)
 				return;
 			else
-				SetHead = true;
+				Set_Head = true;
 
             Log.Loging.AddMessage(
                 "Попытка установить WS заголвоки фрейма", "log.log", Log.Log.Info);
 
             LengHead = 2;
-			LengBody = 
-				D__Body.Length;
+			LengBody =
+				Raw_Body.Length;
 
 			if ( BitMask == 1 )
             {
@@ -236,7 +294,7 @@ namespace MyWebSocket.Tcp.Protocol.WS
             }
             if ( LengBody <= 125 )
             {
-                 BitLeng = 
+                 BitLeng =
 				 	(int)LengBody;
 			}
             else if ( LengBody <= 65556 )
@@ -249,72 +307,105 @@ namespace MyWebSocket.Tcp.Protocol.WS
                 	BitLeng = 127;
                 	LengHead += 8;
             }
-			
-            D__Head = new MemoryStream((int)LengHead);
-			D__Head.WriteByte((byte)( BitFin  << 7 ));
-			D__Head.WriteByte((byte)( BitRsv1 << 6 ));
-			D__Head.WriteByte((byte)( BitRsv2 << 5 ));
-			D__Head.WriteByte((byte)( BitRsv3 << 4 ));
-			D__Head.WriteByte((byte)( BitPcod << 0 ));
 
-			D__Head.WriteByte((byte)( BitMask << 7 ));
-			D__Head.WriteByte((byte)( BitLeng << 0 ));
+            Raw_Head = new MemoryStream((int)LengHead);
+            Raw_Head.WriteByte((byte)(( BitFin  << 7 ) | 
+                                      ( BitRsv1 << 6 ) |
+			                          ( BitRsv2 << 5 ) |
+			                          ( BitRsv3 << 4 ) |
+                                      ( BitPcod << 0 )));
+
+			Raw_Head.WriteByte((byte)(( BitMask << 7 ) |
+                                      ( BitLeng << 0 )));
 
 			if (BitLeng == 127)
 			{
-				D__Head.WriteByte((byte)(LengBody >> 56));
-				D__Head.WriteByte((byte)(LengBody >> 48));
-				D__Head.WriteByte((byte)(LengBody >> 40));
-				D__Head.WriteByte((byte)(LengBody >> 32));
-				D__Head.WriteByte((byte)(LengBody >> 24));
-				D__Head.WriteByte((byte)(LengBody >> 16));
+				Raw_Head.WriteByte((byte)(LengBody >> 56));
+				Raw_Head.WriteByte((byte)(LengBody >> 48));
+				Raw_Head.WriteByte((byte)(LengBody >> 40));
+				Raw_Head.WriteByte((byte)(LengBody >> 32));
+				Raw_Head.WriteByte((byte)(LengBody >> 24));
+				Raw_Head.WriteByte((byte)(LengBody >> 16));
 			}
 			if (BitLeng >= 126)
 			{
-				D__Head.WriteByte((byte)(LengBody >> 08));
-				D__Head.WriteByte((byte)(LengBody >> 00));
+				Raw_Head.WriteByte((byte)(LengBody >> 08));
+				Raw_Head.WriteByte((byte)(LengBody >> 00));
 			}
 
             Log.Loging.AddMessage(
                 "Заголвоки WS фрейма успешно установлены", "log.log", Log.Log.Info);
 		}
+        /// <summary>
+        /// Кодирует тело сообщения в соотвествии с маской
+        /// </summary>
 		public void Encoding()
 		{
-			if ( BitMask == 1 && MaskVal == 0)
+            if ( BitMask == 1 && !_encode)
 			{
+                _encode = true;
                 Log.Loging.AddMessage(
-                    "Попвтка установить маску фрейма сообщения", "log.log", Log.Log.Info);
+                    "Попвтка закодировать фрейм сообщения", "log.log", Log.Log.Info);
 
-				MaskVal = 
+				MaskVal =
     	                new Random().Next();
 
-				D__Mask = new byte[ 4 ];
-				D__Mask[0] = (byte)(MaskVal >> 24);
-				D__Mask[1] = (byte)(MaskVal >> 16);
-				D__Mask[2] = (byte)(MaskVal >> 08);
-				D__Mask[3] = (byte)(MaskVal >> 00);
+				Raw_Mask = new byte[ 4 ];
+				Raw_Mask[0] = (byte)(MaskVal >> 24);
+				Raw_Mask[1] = (byte)(MaskVal >> 16);
+				Raw_Mask[2] = (byte)(MaskVal >> 08);
+				Raw_Mask[3] = (byte)(MaskVal >> 00);
 
-                D__Head.Write(   D__Mask, 0, 4   );
+                Raw_Head.Write(   Raw_Mask, 0, 4   );
 
-                int lenght    = (int)
-                                D__Body.Length;
-                int offset    = (int)
-                                D__Body.Position;
-				byte[] buffer = D__Body.GetBuffer();
+                int lenght    = 
+                           (int)Raw_Body.Length;
+				byte[] buffer = Raw_Body.GetBuffer();
 
-                for (int i = offset; i < lenght; i++)
+                for (int offset = 0; offset < lenght; offset++)
 				{
-                    buffer[offset] = (byte)
-                                     (buffer[offset] ^ D__Mask[PartBody++ % 4]);
+                    buffer[offset] = (byte)(buffer[offset] ^ Raw_Mask[Position++ % 4]);
 				}
+
                 Log.Loging.AddMessage(
                     "Маска тела WS фрейма установлена" +
                     "Данные тела сообщения успещно зашифрованы", "log.log", Log.Log.Info);
 			}
 		}
+        /// <summary>
+        /// Расшифровывает тело сообщения в сотвествии с маской
+        /// </summary>
+        public void Decoding()
+        {
+            if (BitMask == 1 && !_decode)
+            {
+                _decode = true;
+                Log.Loging.AddMessage(
+                    "Попвтка раскодировать фрейм сообщения", "log.log", Log.Log.Info);
+
+                Raw_Head.Write(   Raw_Mask, 0, 4   );
+
+                int lenght    = 
+                           (int)Raw_Body.Length;
+                byte[] buffer = Raw_Body.GetBuffer();
+
+                for (int offset = 0; offset < lenght; offset++)
+                {
+                    buffer[offset] = (byte)(buffer[offset] ^ Raw_Mask[Position++ % 4]);
+                }
+
+                Log.Loging.AddMessage(
+                    "Данные тела сообщения успещно расшифрованы", "log.log", Log.Log.Info);
+            }
+        }
+        /// <summary>
+        /// Строковое предстовление текщуего экземпляра класса
+        /// </summary>
+        /// <returns>строковое представление</returns>
 		public override string ToString()
 		{
 			return "This WebSocket protocol release №13. Supported version №13";
 		}
+        #endregion
 	}
 }

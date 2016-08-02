@@ -597,26 +597,28 @@ namespace MyWebSocket.Tcp.Protocol.HTTP
 				else
 				{
 					SocketError error;
-					if ((error = Read()) != SocketError.Success)
-					{
-						// проверка является данная ошибка критической
-						if (error == SocketError.WouldBlock
-						 || error == SocketError.NoBufferSpaceAvailable)
-						{
-							Handler();
-						}
-						else
-						{
-							/*         Текущее подключение было закрыто сброшено или разорвано          */
-							if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
-																   || error == SocketError.ConnectionAborted)
-								Close();
-							else
-							{
-								Error(new HTTPException("Ошибка чтения http данных: " + error.ToString(), HTTPCode._500_));
-							}
-						}
-					}
+                    if ((error = Read()) != SocketError.Success)
+                    {
+                        // проверка является данная ошибка критической
+                        if (error == SocketError.WouldBlock
+                        || error == SocketError.NoBufferSpaceAvailable)
+                        {
+                            Handler();
+                        }
+                        else
+                        {
+                            /*         Текущее подключение было закрыто сброшено или разорвано          */
+                            if (error == SocketError.Disconnecting || error == SocketError.ConnectionReset
+                            || error == SocketError.ConnectionAborted)
+                                Close();
+                            else
+                            {
+                                Error(new HTTPException("Ошибка чтения http данных: " + error.ToString(), HTTPCode._500_));
+                            }
+                        }
+                    }
+                    else
+                        Handler();
 				}
 			}
 						else
